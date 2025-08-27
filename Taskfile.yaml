@@ -1,0 +1,108 @@
+version: '3'
+
+tasks:
+  cleanup:
+    desc: "Cleans up the socket"
+    cmds:
+      - rm -rf /tmp/cryptobroker.sock
+
+  run:
+    desc: "Runs the server locally"
+    deps: [build-go]
+    cmds:
+      - defer: {task: cleanup}
+      - CRYPTO_BROKER_PROFILES_DIR=$(pwd)/profiles ./bin/cryptobroker-server
+
+  # see: "go tool dist list" for supported architectures in case you need to add another
+  build-arch:
+    desc: Build Go binary for multiple platforms
+    cmds:
+      - GOOS=windows GOARCH=386 go build -o bin/cryptobroker-server-windows-x86.exe cmd/server/server.go
+      - GOOS=linux GOARCH=arm64 go build -o bin/cryptobroker-server-linux-arm64 cmd/server/server.go
+      - GOOS=linux GOARCH=amd64 go build -o bin/cryptobroker-server-linux-amd64 cmd/server/server.go
+    sources:
+      - cmd/server/server.go
+      - internal/**/*.go
+      - go.mod
+      - go.sum
+    generates:
+      - bin/cryptobroker-server-windows-x86.exe
+      - bin/cryptobroker-server-linux-arm64
+      - bin/cryptobroker-server-linux-amd64
+
+  build-go:
+    desc: "Builds the Go server binary"
+    cmds:
+      - go build -o bin/cryptobroker-server cmd/server/server.go
+    sources:
+      - cmd/server/server.go
+      - internal/**/*.go
+      - go.mod
+      - go.sum
+    generates:
+      - bin/cryptobroker-server
+
+  build:
+    desc: "Builds the Docker image"
+    vars:
+      TAG: '{{.TAG| default "latest"}}'
+    dotenv: ['.env']
+    cmds:
+      - docker buildx build --build-arg="CRYPTO_BROKER_PROFILES_DIR"=profiles -t server_app:{{.TAG}} .
+
+  proto:
+    desc: "Generates Go stubs from proto files"
+    cmds:
+      - git submodule update --init --recursive
+      - protoc --go_out=. --go-grpc_out=. protobuf/messages.proto
+
+  ci:
+    desc: "Runs local continuous integration checks on source code"
+    dotenv: ['.env']
+    cmds:
+      - go fmt ./...
+      - go vet ./...
+      - CRYPTO_BROKER_PROFILES_DIR=$(pwd)/profiles go test ./... -skip E2E -cover
+      - CRYPTO_BROKER_PROFILES_DIR={{.DIR}}/profiles go test ./... -run E2E -cover
+      - govulncheck ./...
+
+  example-profile:
+    desc: "Command generates example Profiles.yaml file in profiles/ dir."
+    cmds:
+      - touch profiles/Profiles.yaml
+      - |
+        cat <<EOF > profiles/Profiles.yaml
+        ---
+        - Name: Default
+          Settings:
+            CryptoLibrary: native
+          API:
+            HashData:
+              HashAlg: sha3-512
+            SignCertificate:
+              SignAlg: ecdsa
+              HashAlg: sha-512
+              Validity:
+                ValidNotBeforeOffset: -1h
+                ValidNotAfterOffset: 8760h
+              KeyConstraints:
+                Subject:
+                  RSA:
+                    MinKeySize: 2048
+                    MaxKeySize: 4096
+                  ECDSA:
+                    MinKeySize: 256
+                    MaxKeySize: 521
+                Issuer:
+                  RSA:
+                    MinKeySize: 3072
+                    MaxKeySize: 8192
+                  ECDSA:
+                    MinKeySize: 384
+                    MaxKeySize: 521
+              KeyUsage:         [digitalSignature, keyEncipherment]
+              ExtendedKeyUsage: [clientAuth]
+              BasicConstraints:
+                CA: false
+        EOF
+    silent: true
