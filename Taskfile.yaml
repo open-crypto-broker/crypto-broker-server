@@ -1,6 +1,27 @@
 version: '3'
 
 tasks:
+
+  # This command may require to be run with "sudo". 
+  # User should have $GOPATH/bin dir in $PATH.
+  #
+  # Additional resources:
+  # - https://go.dev/doc/install
+  # - https://protobuf.dev/getting-started/gotutorial/
+  # - https://protobuf.dev/installation/
+  # - https://go.dev/doc/tutorial/govulncheck
+  tools:
+    desc: "Downloads all required tools required to develop project"
+    cmds:
+      - go install golang.org/x/vuln/cmd/govulncheck@latest
+      - go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+      - apt install -y protobuf-compiler
+
+      # depending whether command was run with or without "sudo", it may
+      # influence whether this step succeds. In case of error, please manually
+      # check if tools are installed correctly (with or without "sudo" command)
+      - protoc --version && govulncheck --version && protoc-gen-go --version
+
   cleanup:
     desc: "Cleans up the socket"
     cmds:
