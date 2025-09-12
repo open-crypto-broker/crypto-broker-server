@@ -51,7 +51,7 @@ tasks:
       - bin/cryptobroker-server-linux-arm64
       - bin/cryptobroker-server-linux-amd64
 
-  build-go:
+  build:
     desc: "Builds the Go server binary"
     cmds:
       - go build -o bin/cryptobroker-server cmd/server/server.go
@@ -63,7 +63,7 @@ tasks:
     generates:
       - bin/cryptobroker-server
 
-  build:
+  build-docker:
     desc: "Builds the Docker image"
     vars:
       TAG: '{{.TAG| default "latest"}}'
