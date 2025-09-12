@@ -54,7 +54,16 @@ func LoadProfiles(profilesFileName string) error {
 		return fmt.Errorf("could not unmarshal YAML profile, err: %w", err)
 	}
 
+	if profiles, err = convertRawProfilesData(rawProfiles); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func convertRawProfilesData(rawProfiles []rawProfile) (map[string]Profile, error) {
 	finalProfiles := make(map[string]Profile, len(rawProfiles))
+	var err error
 	for _, rp := range rawProfiles {
 		p, errConversion := rp.mapToProfile()
 		if errConversion != nil {
@@ -63,16 +72,18 @@ func LoadProfiles(profilesFileName string) error {
 			continue
 		}
 
+		if _, ok := finalProfiles[p.Name]; ok {
+			return nil, fmt.Errorf("duplicate profile name: %s", p.Name)
+		}
+
 		finalProfiles[p.Name] = p
 	}
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	profiles = finalProfiles
-
-	return nil
+	return finalProfiles, nil
 }
 
 // Retrieve returns Profile by its name or returns non-nil error if any
