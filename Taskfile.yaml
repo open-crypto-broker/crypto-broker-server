@@ -51,7 +51,7 @@ tasks:
       - bin/cryptobroker-server-linux-arm64
       - bin/cryptobroker-server-linux-amd64
 
-  build-go:
+  build:
     desc: "Builds the Go server binary"
     cmds:
       - go build -o bin/cryptobroker-server cmd/server/server.go
@@ -63,7 +63,7 @@ tasks:
     generates:
       - bin/cryptobroker-server
 
-  build:
+  build-docker:
     desc: "Builds the Docker image"
     vars:
       TAG: '{{.TAG| default "latest"}}'
@@ -84,7 +84,7 @@ tasks:
       - go fmt ./...
       - go vet ./...
       - CRYPTO_BROKER_PROFILES_DIR=$(pwd)/profiles go test ./... -skip E2E -cover
-      - CRYPTO_BROKER_PROFILES_DIR={{.DIR}}/profiles go test ./... -run E2E -cover
+      - CRYPTO_BROKER_PROFILES_DIR=$(pwd)/profiles go test ./... -run E2E -cover
       - govulncheck ./...
 
   example-profile:

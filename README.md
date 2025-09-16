@@ -56,7 +56,7 @@ task example-profile
 To build server binary in the `/bin` directory use
 
 ```shell
-task build-go
+task build
 ```
 
 This will also save a checksum of all the file `sources` in the Taskfile cache `.task`. This means that, if no new changes are done, re-running the task will not build the binary again. For building the binaries for few other architectures, use the other command:
@@ -78,7 +78,7 @@ task proto
 For building the image for local use, you can use the command:
 
 ```shell
-task build [TAG=opt]
+task build-docker [TAG=opt]
 ```
 
 The TAG argument is optional and will apply a custom image tag to the built images. If not specified, it defaults to `latest`. This will create a local image tagged as `server_app:TAG`, which will be saved in your local Docker repository. If you want to modify or append args to the build command, please refer to the one from the Taskfile.

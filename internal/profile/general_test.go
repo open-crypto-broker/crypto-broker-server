@@ -121,3 +121,105 @@ func TestRetrieve(t *testing.T) {
 		})
 	}
 }
+
+func Test_convertRawProfilesData(t *testing.T) {
+	tests := []struct {
+		name        string
+		rawProfiles []rawProfile
+		want        map[string]Profile
+		wantErr     bool
+	}{
+		{
+			name: "convertRawProfilesData() succeeds if provided valid raw profiles",
+			rawProfiles: []rawProfile{
+				{
+					Name: "Default",
+					Settings: rawProfileSettings{
+						CryptoLibrary: "native",
+					},
+					API: rawProfileAPI{
+						HashData: rawProfileAPIHashData{
+							HashAlg: "sha3-512",
+						},
+						SignData: rawProfileAPISignData{
+							SignAlg: "ecdsa",
+						},
+					},
+				},
+			},
+			want: map[string]Profile{
+				"Default": {
+					Name:     "Default",
+					Settings: ProfileSettings{CryptoLibrary: "native"},
+					API: ProfileAPI{
+						SignCertificate: ProfileAPISignCertificate{
+							SignAlg:            "",
+							HashAlg:            "",
+							SignatureAlgorithm: 0,
+							Validity:           ProfileAPISignCertificateValidity{NotBeforeOffset: 0, NotAfterOffset: 0},
+							KeyConstraints: ProfileAPISignCertificateKeyConstraints{
+								Subject: map[c10y.Algorithm]c10y.BitSizeConstraints(nil),
+								Issuer:  map[c10y.Algorithm]c10y.BitSizeConstraints(nil)},
+							KeyUsage:         []x509.KeyUsage(nil),
+							ExtendedKeyUsage: []x509.ExtKeyUsage(nil),
+							BasicConstraints: ProfileAPISignCertificateBasicConstraints{CA: false, PathLenConstraint: 0}},
+						HashData: ProfileAPIHashData{HashAlg: "sha3-512"},
+						SignData: ProfileAPISignData{SignAlg: "ecdsa"},
+					}},
+			},
+			wantErr: false,
+		},
+		{
+			name: "convertRawProfilesData() returns error if there are duplicate profile names",
+			rawProfiles: []rawProfile{
+				{
+					Name: "Default",
+					Settings: rawProfileSettings{
+						CryptoLibrary: "native",
+					},
+					API: rawProfileAPI{
+						HashData: rawProfileAPIHashData{
+							HashAlg: "sha3-512",
+						},
+						SignData: rawProfileAPISignData{
+							SignAlg: "ecdsa",
+						},
+					},
+				},
+				{
+					Name: "Default",
+					Settings: rawProfileSettings{
+						CryptoLibrary: "native",
+					},
+					API: rawProfileAPI{
+						HashData: rawProfileAPIHashData{
+							HashAlg: "sha3-256",
+						},
+						SignData: rawProfileAPISignData{
+							SignAlg: "ecdsa",
+						},
+					},
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, gotErr := convertRawProfilesData(tt.rawProfiles)
+			if gotErr != nil {
+				if !tt.wantErr {
+					t.Errorf("convertRawProfilesData() failed: %v", gotErr)
+				}
+				return
+			}
+			if tt.wantErr {
+				t.Fatal("convertRawProfilesData() succeeded unexpectedly")
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("convertRawProfilesData() = %#v,\n want %#v", got, tt.want)
+			}
+		})
+	}
+}
