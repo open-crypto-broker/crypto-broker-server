@@ -37,7 +37,7 @@ git config core.hooksPath .githooks
 
 This commit hook will make sure the code follows the standard formatting and keep everything consistent.
 
-Additionally, please download all required tools for project development. This may require using "sudo". Please read docs of [tools](./Taskfile.yaml) for more info.  
+Additionally, please download all required tools for project development. This may require using "sudo". Please read docs of [tools](./Taskfile.yaml) for more info.
 
 ```bash
 task tools
