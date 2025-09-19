@@ -37,7 +37,9 @@ git config core.hooksPath .githooks
 
 This commit hook will make sure the code follows the standard formatting and keep everything consistent.
 
-Additionally, please download all required tools for project development. This may require using "sudo". Please read docs of [tools](./Taskfile.yaml) for more info.
+Additionally, please download all required tools for project development.
+Please inspect the different tasks of [tools](./Taskfile.yaml) for more information which Go modules will be downloaded and installed.
+Installation of the necessary tools is supported automatically for Linux and macOS.
 
 ```bash
 task tools
@@ -59,11 +61,8 @@ To build server binary in the `/bin` directory use
 task build
 ```
 
-This will also save a checksum of all the file `sources` in the Taskfile cache `.task`. This means that, if no new changes are done, re-running the task will not build the binary again. For building the binaries for few other architectures, use the other command:
-
-```shell
-task build-arch
-```
+This will also save a checksum of all the file `sources` in the Taskfile cache `.task`.
+This means that, if no new changes are done, re-running the task will not build the binary again.
 
 This repository uses a submodule for the proto files in `/protobuf` directory.
 

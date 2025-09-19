@@ -21,7 +21,7 @@ tasks:
     desc: "Download and install pre-built protobuf compiler"
     cmds:
       - task: install-protobuf-compiler-linux-amd64
-      - task: install-protobuf-compiler-darwin-amd64
+      - task: install-protobuf-compiler-darwin
 
   install-protobuf-compiler-linux-amd64:
     desc: "Download and install pre-built protobuf compiler for Linux"
@@ -41,27 +41,19 @@ tasks:
       # Reload .bashrc
       - source $HOME/.bashrc
 
-  install-protobuf-compiler-darwin-amd64:
+  install-protobuf-compiler-darwin:
     desc: "Download and install protobuf compiler for Apple/macOS"
     internal: true
-    platforms: ["darwin/amd64"]
+    platforms: ["darwin"]
     cmds:
       - brew install protobuf
 
-  # Add Go binary folder to .bashrc if it does not already exists
-  bash-add-go-path:
-    desc: "Add Go binary folder to .bashrc if it does not already exists"
-    internal: true
-    platforms: ["linux/amd64"]
-    cmds:
-      - grep -qx 'export PATH="$PATH:$HOME/go/bin"' ~/.bashrc || echo 'export PATH="$PATH:$HOME/go/bin"' >> ~/.bashrc
-
-  # Public task to install Go modules needed to protobuf and gRPC generation
+  # Public task to install Go modules needed for protobuf and gRPC generation
   install-go-protoc-modules:
     desc: "Install Go modules for protobuf and gRPC support"
     cmds:
       - task: install-go-protoc-modules-linux-amd64
-      - task: install-go-protoc-modules-darwin-amd64
+      - task: install-go-protoc-modules-darwin
 
   install-go-protoc-modules-linux-amd64:
     desc: "Install Go modules for protobuf and gRPC support for Linux"
@@ -72,20 +64,28 @@ tasks:
       - go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
       - go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
-  install-go-protoc-modules-darwin-amd64:
+  install-go-protoc-modules-darwin:
     desc: "Install Go modules for protobuf and gRPC support for Apple/macOS"
     internal: true
-    platforms: ["darwin/amd64"]
+    platforms: ["darwin"]
     cmds:
       - brew install protoc-gen-go
       - brew install protoc-gen-go-grpc
+
+  bash-add-go-path:
+    desc: "Add Go binary folder to .bashrc if it does not already exists"
+    internal: true
+    platforms: ["linux/amd64"]
+    cmds:
+      - grep -qx 'export PATH="$PATH:$(go env GOPATH)/bin"' ~/.bashrc || echo 'export PATH="$PATH:$(go env GOPATH)/bin"' >> ~/.bashrc
+      - source ~/.bashrc
 
   # Public task to install Go vulnerability checking tool
   install-go-vulnerability-check:
     desc: "Install Go vulnerability checking tool"
     cmds:
       - task: install-go-vulnerability-check-linux-amd64
-      - task: install-go-vulnerability-check-darwin-amd64
+      - task: install-go-vulnerability-check-darwin
 
   install-go-vulnerability-check-linux-amd64:
     desc: "Install Go vulnerability checking tool for Linux"
@@ -95,10 +95,10 @@ tasks:
     cmds:
       - go install golang.org/x/vuln/cmd/govulncheck@latest
 
-  install-go-vulnerability-check-darwin-amd64:
+  install-go-vulnerability-check-darwin:
     desc: "Install Go vulnerability checking tool for Apple/macOS"
     internal: true
-    platforms: ["darwin/amd64"]
+    platforms: ["darwin"]
     cmds:
       - brew install govulncheck
 
@@ -115,12 +115,11 @@ tasks:
       - defer: {task: cleanup-socket}
       - CRYPTO_BROKER_PROFILES_DIR=$(pwd)/profiles ./bin/cryptobroker-server
 
-  ################# Build Crypto Server ####################
+  ################# Build Crypto Broker Server ####################
   build:
     desc: "Builds Crypto Broker server binary"
     cmds:
       - cmd: go build -o bin/cryptobroker-server cmd/server/server.go
-        platforms: [linux/amd64, darwin/amd64]
     sources:
       - cmd/server/server.go
       - internal/**/*.go
