@@ -160,6 +160,7 @@ tasks:
 
   unit-test:
     desc: "Run unit-tests"
+    deps: ["example-profile"]
     cmds:
       - CRYPTO_BROKER_PROFILES_DIR=$(pwd)/profiles go test ./... -skip E2E -cover
       - CRYPTO_BROKER_PROFILES_DIR=$(pwd)/profiles go test ./... -run E2E -cover
@@ -220,4 +221,3 @@ tasks:
               BasicConstraints:
                 CA: false
         EOF
-    silent: true
