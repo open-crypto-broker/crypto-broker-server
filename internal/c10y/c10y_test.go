@@ -2,7 +2,6 @@ package c10y
 
 import (
 	"crypto/x509"
-	"crypto/x509/pkix"
 	"encoding/pem"
 	"reflect"
 	"testing"
@@ -696,81 +695,6 @@ kLCBYOHSXIZVDr/GFND1zYDbMky/HNWFo0RxhEZL7ihtvugnHhGuOno=
 		t.Run(tt.name, func(t *testing.T) {
 			if err := ValidatePrivateKey(tt.args.privKey, tt.args.constraintsByAlg); (err != nil) != tt.wantErr {
 				t.Errorf("ValidatePrivateKey() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func TestParseSubjectFromString(t *testing.T) {
-	type args struct {
-		subject string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    pkix.Name
-		wantErr bool
-	}{
-		{
-			name: "Send valid Subjec string",
-			args: args{
-				subject: pkix.Name{
-					Country:      []string{"DE"},
-					Province:     []string{"BA"},
-					Organization: []string{"SAP"},
-					CommonName:   "MyCert",
-					SerialNumber: "01234556",
-				}.String(),
-			},
-			want: pkix.Name{
-				Country:      []string{"DE"},
-				Province:     []string{"BA"},
-				Organization: []string{"SAP"},
-				CommonName:   "MyCert",
-				SerialNumber: "01234556",
-			},
-			wantErr: false,
-		},
-		{
-			name: "Use double comma and some spaces on Subject",
-			args: args{
-				subject: "SERIALNUMBER=01234556; CN=MyCert; O=SAP ;ST=BA ; C=DE",
-			},
-			want: pkix.Name{
-				Country:      []string{"DE"},
-				Province:     []string{"BA"},
-				Organization: []string{"SAP"},
-				CommonName:   "MyCert",
-				SerialNumber: "01234556",
-			},
-			wantErr: false,
-		},
-		{
-			name: "Invalid separator on some fields",
-			args: args{
-				subject: "SERIALNUMBER=01234556-CN=MyCert;O=SAP-ST=BA;C=DE",
-			},
-			want:    pkix.Name{},
-			wantErr: true,
-		},
-		{
-			name: "Invalid format string",
-			args: args{
-				subject: "SERIALNUMBER=01234556;WrongField=MyCert;O=SAP;ST=BA;C=DE",
-			},
-			want:    pkix.Name{},
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := ParseSubjectFromString(tt.args.subject)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ParseSubjectFromString() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ParseSubjectFromString() = %v, want %v", got, tt.want)
 			}
 		})
 	}

@@ -1,6 +1,9 @@
 package c10y
 
 import (
+	"crypto/x509/pkix"
+	"encoding/asn1"
+	"reflect"
 	"testing"
 )
 
@@ -353,6 +356,83 @@ G3XM0iYE0H/fX6JnVHervw+RTAtYLkYZT/Hecyyvam9CBvVwL1Z2Ly8AfPhvEOw8
 			if (err != nil) != tt.wantErr {
 				t.Errorf("LibraryNative.ParseRSAPrivateKeyFromPEM() error = %v, wantErr %v", err, tt.wantErr)
 				return
+			}
+		})
+	}
+}
+
+func TestLibraryNative_composeAttributeTypeAndValue(t *testing.T) {
+	tests := []struct {
+		name string // description of this test case
+		// Named input parameters for target function.
+		part    string
+		want    []pkix.AttributeTypeAndValue
+		wantErr bool
+	}{
+		{
+			name:    "composeAttributeTypeAndValue() returns nil error & nil pkix.AttributeTypeAndValue if the part is empty",
+			part:    "  ",
+			want:    nil,
+			wantErr: false,
+		},
+		{
+			name:    "composeAttributeTypeAndValue() returns nil error & pkix.AttributeTypeAndValue if the part is valid",
+			part:    "C=DE",
+			want:    []pkix.AttributeTypeAndValue{{Type: asn1.ObjectIdentifier{2, 5, 4, 6}, Value: "DE"}},
+			wantErr: false,
+		},
+		{
+			name:    "composeAttributeTypeAndValue() returns nil error & pkix.AttributeTypeAndValue if the part is valid with spaces around =",
+			part:    "C = DE",
+			want:    []pkix.AttributeTypeAndValue{{Type: asn1.ObjectIdentifier{2, 5, 4, 6}, Value: "DE"}},
+			wantErr: false,
+		},
+		{
+			name:    "composeAttributeTypeAndValue() returns nil error & pkix.AttributeTypeAndValue if the part is valid",
+			part:    "O=SAP SE",
+			want:    []pkix.AttributeTypeAndValue{{Type: asn1.ObjectIdentifier{2, 5, 4, 10}, Value: "SAP SE"}},
+			wantErr: false,
+		},
+		{
+			name:    "composeAttributeTypeAndValue() returns nil error & pkix.AttributeTypeAndValue if the part is valid",
+			part:    "OU=SAP Cloud Platform Certificate Service Test Clients",
+			want:    []pkix.AttributeTypeAndValue{{Type: asn1.ObjectIdentifier{2, 5, 4, 11}, Value: "SAP Cloud Platform Certificate Service Test Clients"}},
+			wantErr: false,
+		},
+		{
+			name:    "composeAttributeTypeAndValue() returns nil error & pkix.AttributeTypeAndValue if the part is valid",
+			part:    "L=test",
+			want:    []pkix.AttributeTypeAndValue{{Type: asn1.ObjectIdentifier{2, 5, 4, 7}, Value: "test"}},
+			wantErr: false,
+		},
+		{
+			name:    "composeAttributeTypeAndValue() returns nil error & pkix.AttributeTypeAndValue if the part is valid",
+			part:    "CN=test",
+			want:    []pkix.AttributeTypeAndValue{{Type: asn1.ObjectIdentifier{2, 5, 4, 3}, Value: "test"}},
+			wantErr: false,
+		},
+		{
+			name:    "composeAttributeTypeAndValue() returns non-nil error & nil pkix.AttributeTypeAndValue if the part is invalid #1",
+			part:    "ABC=def",
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := NewLibraryNative()
+			got, gotErr := service.composeAttributeTypeAndValue(tt.part)
+			if gotErr != nil {
+				if !tt.wantErr {
+					t.Errorf("composeAttributeTypeAndValue() failed: %v", gotErr)
+				}
+				return
+			}
+			if tt.wantErr {
+				t.Fatal("composeAttributeTypeAndValue() succeeded unexpectedly")
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("composeAttributeTypeAndValue() = %v, want %v", got, tt.want)
 			}
 		})
 	}
