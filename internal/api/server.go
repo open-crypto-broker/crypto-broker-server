@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"crypto/x509"
-	"crypto/x509/pkix"
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
@@ -190,14 +189,9 @@ func (server *CryptoBrokerServer) sign(clientInput signClientInput, p profile.Pr
 		notAfterOffset = p.API.SignCertificate.Validity.NotAfterOffset
 	}
 
-	var subject pkix.Name
+	var subject string
 	if clientInput.subject != nil {
-		subject, err = c10y.ParseSubjectFromString(*clientInput.subject)
-		if err != nil {
-			return nil, fmt.Errorf("error while parsing the custom subject %w", err)
-		}
-	} else {
-		subject = csr.Subject
+		subject = *clientInput.subject
 	}
 
 	optsProfile := c10y.SignProfileOpts{

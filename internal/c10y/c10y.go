@@ -9,7 +9,6 @@ import (
 	"encoding/asn1"
 	"encoding/pem"
 	"fmt"
-	"strings"
 	"time"
 )
 
@@ -53,7 +52,7 @@ type SignAPIOpts struct {
 	CACert                *x509.Certificate
 	PrivateKey            any
 	CSR                   *x509.CertificateRequest
-	Subject               pkix.Name
+	Subject               string
 	CrlDistributionPoints []string
 }
 
@@ -118,47 +117,6 @@ func ParsePrivateKeyFromPEM(key []byte) (any, error) {
 	}
 
 	return parsedKey, nil
-}
-
-func ParseSubjectFromString(subject string) (pkix.Name, error) {
-	newSubject := pkix.Name{}
-	fields := strings.Split(subject, ",")
-	if len(fields) < 2 {
-		// Split by semicolon instead
-		fields = strings.Split(subject, ";")
-	}
-	if len(fields) < 2 {
-		return pkix.Name{}, fmt.Errorf("invalid separator used. Only single comma ',' or semicolon ';' are valid subject separators. Subject: %s", subject)
-	}
-	for _, v := range fields {
-		arr := strings.Split(v, "=")
-		if len(arr) != 2 {
-			return pkix.Name{}, fmt.Errorf("invalid subject component %s. Only the 'key=value,key=value' format is accepted as string.", v)
-		}
-		key, val := strings.TrimSpace(arr[0]), strings.TrimSpace(arr[1])
-		switch key {
-		case "CN":
-			newSubject.CommonName = val
-		case "SERIALNUMBER":
-			newSubject.SerialNumber = val
-		case "C":
-			newSubject.Country = append(newSubject.Country, val)
-		case "L":
-			newSubject.Locality = append(newSubject.Locality, val)
-		case "ST", "S":
-			newSubject.Province = append(newSubject.Province, val)
-		case "STREET":
-			newSubject.StreetAddress = append(newSubject.StreetAddress, val)
-		case "O":
-			newSubject.Organization = append(newSubject.Organization, val)
-		case "OU":
-			newSubject.OrganizationalUnit = append(newSubject.OrganizationalUnit, val)
-		default:
-			// Unknown attribute, return an error
-			return pkix.Name{}, fmt.Errorf("Error while parsing custom subject, unkown attribute %s:%s", key, val)
-		}
-	}
-	return newSubject, nil
 }
 
 // MapKeyUsageToExtension maps x509.KeyUsage to pkix.Extension or returns non-nil error if any

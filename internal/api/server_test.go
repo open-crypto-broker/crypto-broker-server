@@ -199,7 +199,6 @@ TLMhGrEVDwuywR+ol4Sg2cogP86upiZzWv4a1J+0ySFUyBDOEjicmfo=
 			Province:     []string{"BA"},
 			Organization: []string{"SAP"},
 			CommonName:   "MyCert",
-			SerialNumber: "01234556",
 		}.String()
 		beforeOffset := "-1h"
 		afterOffset := "24h"

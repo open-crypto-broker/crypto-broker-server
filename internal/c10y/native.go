@@ -6,13 +6,25 @@ import (
 	"crypto/sha3"
 	"crypto/sha512"
 	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/asn1"
 	"encoding/pem"
 	"fmt"
+	"strings"
 	"time"
 )
 
 // LibraryNative is entity that knows how to perform cryptographic operations using std golang lib
 type LibraryNative struct{}
+
+var oidMap = map[string]asn1.ObjectIdentifier{
+	"C":  {2, 5, 4, 6},
+	"ST": {2, 5, 4, 8},
+	"O":  {2, 5, 4, 10},
+	"OU": {2, 5, 4, 11},
+	"L":  {2, 5, 4, 7},
+	"CN": {2, 5, 4, 3},
+}
 
 // NewLibraryNative returns pointer to Native.
 func NewLibraryNative() *LibraryNative {
@@ -54,7 +66,6 @@ func (service *LibraryNative) SignCertificate(profileOpts SignProfileOpts, apiOp
 	// Note that serial number is auto generated as desired by CreateCertificate when SerialNumber key is set to nil
 	clientCRTTemplate := x509.Certificate{
 		SignatureAlgorithm:    profileOpts.SignatureAlgorithm,
-		Subject:               apiOpts.Subject,
 		NotBefore:             notBefore,
 		NotAfter:              notAfter,
 		KeyUsage:              finalKU,
@@ -64,6 +75,17 @@ func (service *LibraryNative) SignCertificate(profileOpts SignProfileOpts, apiOp
 		IsCA:                  profileOpts.BasicConstraints.IsCA,
 		MaxPathLen:            profileOpts.BasicConstraints.PathLenConstraint,
 		MaxPathLenZero:        profileOpts.BasicConstraints.PathLenConstraint == 0,
+	}
+
+	if apiOpts.Subject != "" {
+		rawSubject, err := service.buildRawSubjectExactOrder(apiOpts.Subject, ",")
+		if err != nil {
+			return nil, fmt.Errorf("error while building subject from string: %w", err)
+		}
+
+		clientCRTTemplate.RawSubject = rawSubject
+	} else {
+		clientCRTTemplate.Subject = apiOpts.CSR.Subject
 	}
 
 	// create client certificate from template and CA public key - DER format
@@ -132,4 +154,44 @@ func (service *LibraryNative) hashSHA3(sha3 *sha3.SHA3, dataToHash []byte) (Hash
 	}
 
 	return Hash(fmt.Sprintf("%x", sha3.Sum(nil))), nil
+}
+
+// buildRawSubjectExactOrder parses a subject and returns a DER encoded RDNSequence preserving order and duplicates.
+func (service *LibraryNative) buildRawSubjectExactOrder(input, sep string) ([]byte, error) {
+	parts := strings.Split(input, sep)
+	var rdns pkix.RDNSequence
+
+	for _, part := range parts {
+		rdn, err := service.composeAttributeTypeAndValue(part)
+		if err != nil {
+			return nil, fmt.Errorf("error while building raw subject: %w", err)
+		}
+
+		if rdn != nil {
+			rdns = append(rdns, rdn)
+		}
+	}
+
+	return asn1.Marshal(rdns)
+}
+
+// composeAttributeTypeAndValue composes a AttributeTypeAndValue from a part of the subject
+func (service *LibraryNative) composeAttributeTypeAndValue(part string) ([]pkix.AttributeTypeAndValue, error) {
+	part = strings.TrimSpace(part)
+	if part == "" {
+		return nil, nil
+	}
+
+	kv := strings.SplitN(part, "=", 2)
+	if len(kv) != 2 {
+		return nil, fmt.Errorf("invalid subject component: %q", part)
+	}
+
+	k, v := strings.TrimSpace(kv[0]), strings.TrimSpace(kv[1])
+	oid, ok := oidMap[k]
+	if !ok {
+		return nil, fmt.Errorf("unsupported subject attribute: %q", k)
+	}
+
+	return []pkix.AttributeTypeAndValue{{Type: oid, Value: v}}, nil
 }
