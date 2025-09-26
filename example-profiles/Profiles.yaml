@@ -1,0 +1,32 @@
+---
+- Name: Default
+  Settings:
+    CryptoLibrary: native
+  API:
+    HashData:
+      HashAlg: sha3-512
+    SignCertificate:
+      SignAlg: ecdsa
+      HashAlg: sha-512
+      Validity:
+        ValidNotBeforeOffset: -1h
+        ValidNotAfterOffset: 8760h
+      KeyConstraints:
+        Subject:
+          RSA:
+            MinKeySize: 2048
+            MaxKeySize: 4096
+          ECDSA:
+            MinKeySize: 256
+            MaxKeySize: 521
+        Issuer:
+          RSA:
+            MinKeySize: 3072
+            MaxKeySize: 8192
+          ECDSA:
+            MinKeySize: 384
+            MaxKeySize: 521
+      KeyUsage:         [digitalSignature, keyEncipherment]
+      ExtendedKeyUsage: [clientAuth]
+      BasicConstraints:
+        CA: false
