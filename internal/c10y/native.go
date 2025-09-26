@@ -85,7 +85,7 @@ func (service *LibraryNative) SignCertificate(profileOpts SignProfileOpts, apiOp
 
 		clientCRTTemplate.RawSubject = rawSubject
 	} else {
-		clientCRTTemplate.Subject = apiOpts.CSR.Subject
+		clientCRTTemplate.RawSubject = apiOpts.CSR.RawSubject
 	}
 
 	// create client certificate from template and CA public key - DER format
