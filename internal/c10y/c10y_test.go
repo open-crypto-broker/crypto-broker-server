@@ -17,15 +17,6 @@ var bb = []byte(`ɥsɐɥ oʇ sɹǝʇɔɐɹɐɥɔ ʎɹɐɹʇᴉqɹɐ ǝɯoS
 ║╚═╗╚╝╣║╝║╝═╩╔╩║
 ╚══╩══╩══╩═════╝`)
 
-// BenchmarkLibraryNative_HashSHA3_256 to run benchmark:
-// go test -benchmem -run=^$ -bench ^BenchmarkLibraryNative_HashSHA3_256$ github.com/open-crypto-broker/crypto-broker-server/internal/c10y
-func BenchmarkLibraryNative_HashSHA3_256(b *testing.B) {
-	service := NewLibraryNative()
-	for i := 0; i < b.N; i++ {
-		service.HashSHA3_256(bb)
-	}
-}
-
 func TestParseX509Cert(t *testing.T) {
 	type args struct {
 		rawCert []byte

@@ -1,11 +1,158 @@
 package c10y
 
 import (
+	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"encoding/pem"
+	"os"
 	"reflect"
 	"testing"
+	"time"
 )
+
+// BenchmarkLibraryNative_HashSHA3_256 to run benchmark:
+// go test -benchmem -run=^$ -bench ^BenchmarkLibraryNative_HashSHA3_256$ github.com/open-crypto-broker/crypto-broker-server/internal/c10y
+func BenchmarkLibraryNative_HashSHA3_256(b *testing.B) {
+	service := NewLibraryNative()
+	for b.Loop() {
+		service.HashSHA3_256(bb)
+	}
+}
+
+func BenchmarkLibraryNative_HashSHA3_384(b *testing.B) {
+	service := NewLibraryNative()
+	for b.Loop() {
+		service.HashSHA3_384(bb)
+	}
+}
+
+func BenchmarkLibraryNative_HashSHA3_512(b *testing.B) {
+	service := NewLibraryNative()
+	for b.Loop() {
+		service.HashSHA3_512(bb)
+	}
+}
+
+func BenchmarkLibraryNative_HashSHA_256(b *testing.B) {
+	service := NewLibraryNative()
+	for b.Loop() {
+		service.HashSHA_256(bb)
+	}
+}
+
+func BenchmarkLibraryNative_HashSHA_384(b *testing.B) {
+	service := NewLibraryNative()
+	for b.Loop() {
+		service.HashSHA_384(bb)
+	}
+}
+
+func BenchmarkLibraryNative_HashSHA_512(b *testing.B) {
+	service := NewLibraryNative()
+	for b.Loop() {
+		service.HashSHA_512(bb)
+	}
+}
+
+func BenchmarkLibraryNative_HashSHA_512_256(b *testing.B) {
+	service := NewLibraryNative()
+	for b.Loop() {
+		service.HashSHA_512_256(bb)
+	}
+}
+
+func BenchmarkLibraryNative_HashShake_128(b *testing.B) {
+	service := NewLibraryNative()
+	for b.Loop() {
+		service.HashShake_128(16, bb)
+	}
+}
+
+func BenchmarkLibraryNative_HashShake_256(b *testing.B) {
+	service := NewLibraryNative()
+	for b.Loop() {
+		service.HashShake_256(32, bb)
+	}
+}
+
+func BenchmarkLibraryNative_SignCertificate(b *testing.B) {
+	notAfter, err := time.ParseDuration("8760h")
+	if err != nil {
+		b.Fatalf("could not parse duration, err: %s", err.Error())
+	}
+	notBefore, err := time.ParseDuration("-1h")
+	if err != nil {
+		b.Fatalf("could not parse duration, err: %s", err.Error())
+	}
+
+	service := NewLibraryNative()
+	optsProfile := SignProfileOpts{
+		BasicConstraints: SignProfileBasicConstraints{
+			IsCA:              false,
+			PathLenConstraint: -1,
+		},
+		SignatureAlgorithm: x509.ECDSAWithSHA512,
+		Validity: SignProfileValidity{
+			NotBefore: notBefore,
+			NotAfter:  notAfter,
+		},
+		KeyUsage:         []x509.KeyUsage{x509.KeyUsageDigitalSignature, x509.KeyUsageKeyEncipherment},
+		ExtendedKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}
+
+	caCert, err := os.ReadFile("../../../crypto-broker-deployment/testing/certificates/test-ca/root-CA-ecdsa.pem")
+	if err != nil {
+		b.Fatalf("could not read CA cert, err: %s", err.Error())
+	}
+	caCertParsed, err := ParseX509Cert(caCert)
+	if err != nil {
+		b.Fatalf("could not parse CA cert, err: %s", err.Error())
+	}
+
+	caPrivateKey, err := os.ReadFile("../../../crypto-broker-deployment/testing/certificates/test-ca/root-CA-ecdsa-private-key.pem")
+	if err != nil {
+		b.Fatalf("could not read CA private key, err: %s", err.Error())
+	}
+	caPrivateKeyParsed, err := ParsePrivateKeyFromPEM(caPrivateKey)
+	if err != nil {
+		b.Fatalf("could not parse CA private key, err: %s", err.Error())
+	}
+
+	csrBytes, err := os.ReadFile("../../../crypto-broker-deployment/testing/certificates/test-csr/test-client.csr")
+	if err != nil {
+		b.Fatalf("could not read CSR, err: %s", err.Error())
+	}
+
+	block, _ := pem.Decode([]byte(csrBytes))
+	if block == nil {
+		b.Fatalf("could not decode CSR as PEM file")
+	}
+
+	csrParsed, err := x509.ParseCertificateRequest(block.Bytes)
+	if err != nil {
+		b.Fatalf("could not parse CSR, err: %s", err.Error())
+	}
+
+	if err = csrParsed.CheckSignature(); err != nil {
+		b.Fatalf("invalid certificate request signature, err: %s", err.Error())
+	}
+
+	optsAPI := SignAPIOpts{
+		CSR:        csrParsed,
+		CACert:     caCertParsed,
+		PrivateKey: caPrivateKeyParsed,
+		Subject:    "C=DE, O=SAP SE, OU=SAP Cloud Platform Certificate Service Test Clients, OU=Dev, OU=cf-us10-staging-certificate-service, L=test, CN=test",
+		// CrlDistributionPoints: []string{"http://example.com/crl"},
+	}
+
+	for b.Loop() {
+		_, err := service.SignCertificate(optsProfile, optsAPI)
+		if err != nil {
+			b.Fatalf("could not sign certificate, err: %s", err.Error())
+		}
+	}
+}
 
 func TestLibraryNative_HashSHA3_256(t *testing.T) {
 	type args struct {
