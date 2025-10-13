@@ -17,7 +17,7 @@ tasks:
       - protoc --version && protoc-gen-go --version && govulncheck --version
 
   run-benchmarks:
-    desc: "Command runs benchmarks."
+    desc: "Command runs benchmarks. For this to work, you need to have the deployment repository in the same parent directory as this repository."
     cmds:
       - CRYPTO_BROKER_PROFILES_DIR=$(pwd)/example-profiles go test ./... -run=^$ -bench=.
 
