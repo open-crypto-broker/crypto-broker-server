@@ -139,7 +139,7 @@ tasks:
       TAG: '{{.TAG | default "latest"}}'
     dotenv: ['.env']
     cmds:
-      - docker buildx build --build-arg="CRYPTO_BROKER_PROFILES_DIR"=example-profiles -t server_app:{{.TAG}} .
+      - docker buildx build --build-arg="CRYPTO_BROKER_PROFILES_DIR=example-profiles" -t ghcr.io/open-crypto-broker/server_app:{{.TAG}} .
 
   proto:
     desc: "Generates Go stubs from proto files"
