@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
@@ -16,13 +16,12 @@ import (
 
 // CryptoBrokerServer defines crypto broker's server
 type CryptoBrokerServer struct {
-	logger *log.Logger
 	protobuf.CryptoBrokerServer
 	cryptographicEngineNative *c10y.LibraryNative
 }
 
-func NewCryptoBrokerServer(c10yNative *c10y.LibraryNative, logger *log.Logger) *CryptoBrokerServer {
-	return &CryptoBrokerServer{cryptographicEngineNative: c10yNative, logger: logger}
+func NewCryptoBrokerServer(c10yNative *c10y.LibraryNative) *CryptoBrokerServer {
+	return &CryptoBrokerServer{cryptographicEngineNative: c10yNative}
 }
 
 // Hash contains data hashing logic
@@ -31,18 +30,22 @@ func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRe
 
 	reqProfile, err := profile.Retrieve(req.Profile)
 	if err != nil {
+		slog.Debug(err.Error())
+
 		return nil, fmt.Errorf("could not retireve profile, err: %w", err)
 	}
 
 	hashedBytes, err := server.hash(req.Input, reqProfile)
 	if err != nil {
+		slog.Debug(err.Error())
+
 		return nil, fmt.Errorf("error while hashing data: %s", err.Error())
 	}
 
 	timestampEndpointEnd := time.Now()
 	durationElapsedEndpoint := timestampEndpointEnd.Sub(timestampEndpointStart)
 
-	server.logDuration("Hash", durationElapsedEndpoint)
+	server.logDuration(ctx, "Hash", durationElapsedEndpoint)
 
 	return &protobuf.HashResponse{
 		HashValue:     string(hashedBytes),
@@ -57,6 +60,8 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 
 	reqProfile, err := profile.Retrieve(req.Profile)
 	if err != nil {
+		slog.Debug(err.Error())
+
 		return nil, fmt.Errorf("could not retireve profile, err: %w", err)
 	}
 
@@ -71,13 +76,15 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 	}
 	clientCRTRaw, err := server.sign(input, reqProfile)
 	if err != nil {
+		slog.Debug(err.Error())
+
 		return nil, fmt.Errorf("error while signing data: %s", err.Error())
 	}
 
 	timestampEndpointEnd := time.Now()
 	durationElapsedEndpoint := timestampEndpointEnd.Sub(timestampEndpointStart)
 
-	server.logDuration("Sign", durationElapsedEndpoint)
+	server.logDuration(ctx, "Sign", durationElapsedEndpoint)
 
 	return &protobuf.SignResponse{
 		SignedCertificate: base64.StdEncoding.EncodeToString(clientCRTRaw),
@@ -106,62 +113,42 @@ func (server *CryptoBrokerServer) sign(clientInput signClientInput, p profile.Pr
 	case c10y.LibNative:
 		s = server.cryptographicEngineNative
 	default:
-		err := fmt.Errorf("unknown '%s' library value, available values: %v",
+		return nil, fmt.Errorf("unknown '%s' library value, available values: %v",
 			p.Settings.CryptoLibrary, c10y.SupportedCryptographicLibraries)
-		server.logger.Println(err)
-
-		return nil, err
 	}
 
 	block, _ := pem.Decode([]byte(clientInput.csr))
 	if block == nil {
-		err := fmt.Errorf("could not decode CSR as PEM file")
-		server.logger.Println(err)
-
-		return nil, err
+		return nil, fmt.Errorf("could not decode CSR as PEM file")
 	}
 
 	csr, err := x509.ParseCertificateRequest(block.Bytes)
 	if err != nil {
-		err := fmt.Errorf("could not parse certificate request, err: %s", err)
-		server.logger.Println(err)
-
-		return nil, err
+		return nil, fmt.Errorf("could not parse certificate request, err: %s", err)
 	}
 
 	if err = csr.CheckSignature(); err != nil {
-		err := fmt.Errorf("invalid certificate request signature, err: %s", err)
-		server.logger.Println(err)
-
-		return nil, err
+		return nil, fmt.Errorf("invalid certificate request signature, err: %s", err)
 	}
 
 	// Check whether the public key in CSR is secure enough according to profile
 	if err = c10y.ValidatePublicKey(csr.PublicKey, p.API.SignCertificate.KeyConstraints.Subject); err != nil {
-		server.logger.Println(err)
-		return nil, err
+		return nil, fmt.Errorf("invalid public key, err: %w", err)
 	}
 
 	caPrivateKey, err := c10y.ParsePrivateKeyFromPEM([]byte(clientInput.caPrivateKey))
 	if err != nil {
-		err := fmt.Errorf("could not parse private key, err: %s", err)
-		server.logger.Println(err)
-
-		return nil, err
+		return nil, fmt.Errorf("could not parse private key, err: %s", err)
 	}
 
 	// Check whether the private key from the CA is secure enough according to profile
 	if err = c10y.ValidatePrivateKey(caPrivateKey, p.API.SignCertificate.KeyConstraints.Issuer); err != nil {
-		server.logger.Println(err)
 		return nil, err
 	}
 
 	cert, err := c10y.ParseX509Cert([]byte(clientInput.caCert))
 	if err != nil {
-		err = fmt.Errorf("could not parse x.509 CA cert from request, err: %w", err)
-		server.logger.Println(err)
-
-		return nil, err
+		return nil, fmt.Errorf("could not parse x.509 CA cert from request, err: %w", err)
 	}
 
 	// Parse the custom durations
@@ -216,10 +203,7 @@ func (server *CryptoBrokerServer) sign(clientInput signClientInput, p profile.Pr
 	}
 	clientCRTRaw, err := s.SignCertificate(optsProfile, optsAPI)
 	if err != nil {
-		err := fmt.Errorf("could not create certificate, err: %s", err)
-		server.logger.Println(err)
-
-		return nil, err
+		return nil, fmt.Errorf("could not create certificate, err: %s", err)
 	}
 
 	return clientCRTRaw, nil
@@ -246,11 +230,8 @@ func (server *CryptoBrokerServer) hash(data []byte, p profile.Profile) (c10y.Has
 	case c10y.LibNative:
 		h = server.cryptographicEngineNative
 	default:
-		err := fmt.Errorf("unknown '%s' library value, available values: %v",
+		return "", fmt.Errorf("unknown '%s' library value, available values: %v",
 			p.Settings.CryptoLibrary, c10y.SupportedCryptographicLibraries)
-		server.logger.Println(err)
-
-		return "", err
 	}
 
 	var (
@@ -277,22 +258,16 @@ func (server *CryptoBrokerServer) hash(data []byte, p profile.Profile) (c10y.Has
 	case c10y.SHAKE_256:
 		hash, err = h.HashShake_256(32, data)
 	default:
-		err := fmt.Errorf("unknown '%s' algorithm value, available values: %v", p.API.HashData.HashAlg, c10y.HashDataAlgorithmsSupported)
-		server.logger.Println(err)
-
-		return "", err
+		return "", fmt.Errorf("unknown '%s' algorithm value, available values: %v", p.API.HashData.HashAlg, c10y.HashDataAlgorithmsSupported)
 	}
 
 	if err != nil {
-		err := fmt.Errorf("could not hash provided bytes, err: %s", err)
-		server.logger.Println(err)
-
-		return "", err
+		return "", fmt.Errorf("could not hash provided bytes, err: %s", err)
 	}
 
 	return hash, nil
 }
 
-func (srv *CryptoBrokerServer) logDuration(methodName string, duration time.Duration) {
-	srv.logger.Printf("Server's %s method took: %fµs\n", methodName, float64(duration.Nanoseconds())/1000.0)
+func (srv *CryptoBrokerServer) logDuration(ctx context.Context, methodName string, duration time.Duration) {
+	slog.LogAttrs(ctx, slog.LevelDebug, "time measurement", slog.String("method", methodName), slog.Float64("duration", float64(duration.Nanoseconds())/1000.0))
 }

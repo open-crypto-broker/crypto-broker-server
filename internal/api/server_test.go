@@ -10,8 +10,7 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
-	"io"
-	"log"
+	"log/slog"
 	"net"
 	"strings"
 	"testing"
@@ -37,9 +36,8 @@ func bufDialer(context.Context, string) (net.Conn, error) {
 // TestCryptoBrokerServer_Hash_E2E tests the Hash method of the gRPC API.
 func TestCryptoBrokerServer_Hash_E2E(t *testing.T) {
 	// Mock dependencies
-	logger := log.New(io.Discard, "gRPC tester ", log.Ldate|log.Lmicroseconds)
 	libraryNative := c10y.NewLibraryNative()
-	grpcConnector := NewCryptoBrokerServer(libraryNative, logger)
+	grpcConnector := NewCryptoBrokerServer(libraryNative)
 
 	// Start a mock gRPC server
 	lis = bufconn.Listen(bufSize)
@@ -47,7 +45,7 @@ func TestCryptoBrokerServer_Hash_E2E(t *testing.T) {
 	protobuf.RegisterCryptoBrokerServer(s, grpcConnector)
 	go func() {
 		if err := s.Serve(lis); err != nil {
-			log.Fatalf("Server exited with error: %v", err)
+			slog.Error("Server exited with error", slog.String("error", err.Error()))
 		}
 	}()
 	defer s.Stop()
@@ -85,10 +83,8 @@ func TestCryptoBrokerServer_Hash_E2E(t *testing.T) {
 // TestCryptoBrokerServer_Sign_E2E tests the Sign method of the gRPC API.
 func TestCryptoBrokerServer_Sign_E2E(t *testing.T) {
 	// Mock dependencies
-	logger := log.New(io.Discard, "gRPC tester ", log.Ldate|log.Lmicroseconds)
-
 	libraryNative := c10y.NewLibraryNative()
-	grpcConnector := NewCryptoBrokerServer(libraryNative, logger)
+	grpcConnector := NewCryptoBrokerServer(libraryNative)
 
 	// Start a mock gRPC server
 	lis = bufconn.Listen(bufSize)
@@ -96,7 +92,7 @@ func TestCryptoBrokerServer_Sign_E2E(t *testing.T) {
 	protobuf.RegisterCryptoBrokerServer(s, grpcConnector)
 	go func() {
 		if err := s.Serve(lis); err != nil {
-			log.Fatalf("Server exited with error: %v", err)
+			slog.Error("Server exited with error", slog.String("error", err.Error()))
 		}
 	}()
 	defer s.Stop()
