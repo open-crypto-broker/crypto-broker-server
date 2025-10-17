@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path"
 
@@ -24,10 +25,14 @@ var profiles map[string]Profile
 func init() {
 	profilesDirFullOSPath := os.Getenv(env.PROFILES_DIRECTORY)
 	if !path.IsAbs(profilesDirFullOSPath) {
+		slog.Debug(fmt.Sprintf("please provide full OS path to profiles directory through %s environment variable", env.PROFILES_DIRECTORY))
+
 		panic(fmt.Sprintf("please provide full OS path to profiles directory through %s environment variable", env.PROFILES_DIRECTORY))
 	}
 	root, err := os.OpenRoot(profilesDirFullOSPath)
 	if err != nil {
+		slog.Debug(fmt.Sprintf("could not open dir: %s, err: %s", profilesDirFullOSPath, err.Error()))
+
 		panic(fmt.Errorf("could not open dir: %s, err: %w", profilesDirFullOSPath, err))
 	}
 

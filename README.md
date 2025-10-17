@@ -19,6 +19,19 @@ At the moment, two methods of deployment are supported:
 
 Documentation on how to deploy the server on these methods can be found on the [deployment repository](https://github.com/open-crypto-broker/crypto-broker-deployment)
 
+### Environment Variables
+
+The Crypto Broker Server supports several environment variables for configuration:
+
+| Variable | Required | Default | Description | Valid Values |
+|----------|----------|---------|-------------|--------------|
+| `CRYPTO_BROKER_PROFILES_DIR` | Yes | - | Full OS path to directory containing profile files in YAML format | Any valid directory path |
+| `CRYPTO_BROKER_LOG_LEVEL` | No | `info` | Log level for the server | `debug`, `info`, `warn`, `error` |
+| `CRYPTO_BROKER_LOG_FORMAT` | No | `json` | Log output format | `json`, `text` |
+| `CRYPTO_BROKER_LOG_OUTPUT` | No | `stdout` | Log output destination | `stdout`, `stderr` |
+
+**Note:** If invalid values are provided for any of the optional environment variables, the server will panic during startup.
+
 ## Development
 
 This section covers how to contribute to the project and develop it further.
