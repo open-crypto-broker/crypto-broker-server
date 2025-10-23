@@ -108,7 +108,7 @@
     CryptoLibrary: native
   API:
     HashData:
-      HashAlg: sha3-512          
+      HashAlg: sha-512 # Using sha-512 as sha3-512 is not yet supported in Go crypto in combination with ecdsa         
     SignCertificate:
       SignAlg: ecdsa
       HashAlg: sha3-512
@@ -117,16 +117,16 @@
         ValidNotAfterOffset: 8760h
       KeyConstraints:
         Subject:
-          #RSA: # Not accepted
-          #  MinKeySize: 8192    
-          #  MaxKeySize: 8192
+          RSA: # Not accepted, but kept for structure
+            MinKeySize: 8192    
+            MaxKeySize: 8192
           ECDSA:
             MinKeySize: 521
             MaxKeySize: 521
         Issuer:
-          #RSA: # Not accepted
-          #  MinKeySize: 8192
-          #  MaxKeySize: 8192
+          RSA: # Not accepted, but kept for structure
+            MinKeySize: 8192
+            MaxKeySize: 8192
           ECDSA:
             MinKeySize: 521
             MaxKeySize: 521
