@@ -108,10 +108,10 @@
     CryptoLibrary: native
   API:
     HashData:
-      HashAlg: sha-512 # Using sha-512 as sha3-512 is not yet supported in Go crypto in combination with ecdsa         
+      HashAlg: sha3-512          
     SignCertificate:
       SignAlg: ecdsa
-      HashAlg: sha3-512
+      HashAlg: sha3-512 # Using sha-512 as sha3-512 is not yet supported in Go crypto in combination with ecdsa
       Validity:
         ValidNotBeforeOffset: -1h
         ValidNotAfterOffset: 8760h
