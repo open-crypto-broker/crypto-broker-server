@@ -105,6 +105,8 @@ To run benchmarks, run
 task run-benchmarks
 ```
 
+More info on benchmarks can be found in [testing](https://pkg.go.dev/testing@go1.25.3#hdr-Benchmarks) pkg. For detailed description of bench output see [proposal](https://go.googlesource.com/proposal/+/master/design/14313-benchmark-format.md).
+
 For some of benchmarks, you need to have the [deployment repository](https://github.com/open-crypto-broker/crypto-broker-deployment) in the same parent directory as this repository.
 
 For running the server locally (e.g. for testing with the libraries' CLI), change directory to project root & run server with following command. This will first [compile the Go Code](#compiling-the-go-binaries) if any of the Go files have been changed and then run the server with the default profiles dir:

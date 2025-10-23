@@ -16,6 +16,11 @@ tasks:
     cmds:
       - protoc --version && protoc-gen-go --version && govulncheck --version
 
+
+  # More about benchmarks:
+  # - https://pkg.go.dev/testing@go1.25.3#hdr-Benchmarks
+  # - https://go.googlesource.com/proposal/+/master/design/14313-benchmark-format.md
+  # - go help testflag
   run-benchmarks:
     desc: "Command runs benchmarks. For this to work, you need to have the deployment repository in the same parent directory as this repository."
     cmds:
