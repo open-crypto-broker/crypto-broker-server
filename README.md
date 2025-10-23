@@ -58,12 +58,6 @@ Installation of the necessary tools is supported automatically for Linux and mac
 task tools
 ```
 
-Also generate example file with profiles into `profiles/` dir using
-
-```bash
-task example-profile
-```
-
 ### Building
 
 #### Compiling the binary file
