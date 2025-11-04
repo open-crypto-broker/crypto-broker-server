@@ -84,7 +84,6 @@ func TestRetrieve(t *testing.T) {
 								c10y.ECDSA: {MinKeySize: 256, MaxKeySize: 521},
 							},
 							Issuer: map[c10y.Algorithm]c10y.BitSizeConstraints{
-								c10y.RSA:   {MinKeySize: 3072, MaxKeySize: 8192},
 								c10y.ECDSA: {MinKeySize: 384, MaxKeySize: 521},
 							},
 						},
