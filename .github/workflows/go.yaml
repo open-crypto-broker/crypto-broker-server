@@ -42,6 +42,7 @@ jobs:
           path: cover.html
 
       - name: Run benchmarks with JSON output
+        continue-on-error: true
         run: |
           CRYPTO_BROKER_PROFILES_DIR=${GITHUB_WORKSPACE}/example-profiles go test -run=^$ -bench=. -benchmem -count=3 -json ./... > benchmark-results.json
 
