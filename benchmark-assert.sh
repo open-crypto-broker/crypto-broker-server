@@ -14,25 +14,20 @@ extract_benchmark_result() {
     local bench_name="$1"
     local results_file="$2"
     
-    # Find lines containing benchmark results for this specific benchmark
-    # Look for lines that contain the benchmark name and "ns/op"
     grep -F "$bench_name" "$results_file" | grep "ns/op" | grep '"Action":"output"' | sed -n 's/.*"Output":"\([^"]*\)".*/\1/p' | sed 's/\\n/\n/g' | sed 's/\\t/\t/g'
 }
 
-# Function to check if a benchmark failed
 benchmark_failed() {
     local bench_name="$1"
     local results_file="$2"
     
-    # Check if there's a "fail" action for this benchmark
-    if grep -q "\"Test\":\"$bench_name\"" "$results_file" && grep -q '"Action":"fail"' "$results_file"; then
+    if grep "\"Test\":\"$bench_name\"" "$results_file" | grep -q '"Action":"fail"'; then
         return 0  # true - benchmark failed
     else
         return 1  # false - benchmark did not fail
     fi
 }
 
-# Function to assert benchmark performance
 assert_benchmark() {
     local bench_name="$1"
     local max_ns_per_op="$2"
@@ -46,8 +41,10 @@ assert_benchmark() {
         return 1
     fi
 
+    # Get the last (most recent) result line
     local output_line=$(echo "$output_lines" | tail -1)
 
+    # Parse metrics from the output line using sed regex
     # Extract ns/op value (number before "ns/op")
     local ns_per_op=$(echo "$output_line" | sed -n 's/.* \([0-9]\+\) ns\/op.*/\1/p' | sed 's/,//g')
     
@@ -65,6 +62,7 @@ assert_benchmark() {
         return 1
     fi
 
+    # Perform assertions - check if performance is WORSE than threshold
     if (( $(echo "$ns_per_op > $max_ns_per_op" | bc -l 2>/dev/null || echo "0") )); then
         echo "❌ $bench_name: ns/op ($ns_per_op) exceeds threshold ($max_ns_per_op)"
         return 1
@@ -96,6 +94,7 @@ run_benchmark_assertion() {
     fi
 }
 
+# Run assertions for all benchmarks with automatic failure handling
 run_benchmark_assertion "BenchmarkLibraryNative_HashSHA3_256" 4000 10
 run_benchmark_assertion "BenchmarkLibraryNative_HashSHA3_384" 4500 10
 run_benchmark_assertion "BenchmarkLibraryNative_HashSHA3_512" 5000 10
