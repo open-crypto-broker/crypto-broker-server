@@ -28,6 +28,7 @@ benchmark_failed() {
     fi
 }
 
+# Function to assert benchmark performance
 assert_benchmark() {
     local bench_name="$1"
     local max_ns_per_op="$2"
@@ -45,8 +46,8 @@ assert_benchmark() {
     local output_line=$(echo "$output_lines" | tail -1)
 
     # Parse metrics from the output line using sed regex
-    # Extract ns/op value (number before "ns/op")
-    local ns_per_op=$(echo "$output_line" | sed -n 's/.* \([0-9]\+\) ns\/op.*/\1/p' | sed 's/,//g')
+    # Extract ns/op value (number before "ns/op") - handle decimal numbers
+    local ns_per_op=$(echo "$output_line" | sed -n 's/.* \([0-9.]\+\) ns\/op.*/\1/p' | sed 's/,//g')
     
     # Extract allocs/op value (number before "allocs/op")  
     local allocs_per_op=$(echo "$output_line" | sed -n 's/.* \([0-9]\+\) allocs\/op.*/\1/p' | sed 's/,//g')
