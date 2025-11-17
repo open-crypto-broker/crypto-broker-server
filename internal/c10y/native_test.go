@@ -324,6 +324,158 @@ JLFlCR8pW4jVERN6wUotELx/7PvCp4BinWRFwA128Zm3rpZUC5ij3SBfg7Rya6om
 	}
 }
 
+func BenchmarkLibraryNative_SignCertificate_NIST_SECP521R1_NIST_SECP521R1(b *testing.B) {
+	notAfter, err := time.ParseDuration("8760h")
+	if err != nil {
+		b.Fatalf("could not parse duration, err: %s", err.Error())
+	}
+	notBefore, err := time.ParseDuration("-1h")
+	if err != nil {
+		b.Fatalf("could not parse duration, err: %s", err.Error())
+	}
+
+	service := NewLibraryNative()
+	optsProfile := SignProfileOpts{
+		BasicConstraints: SignProfileBasicConstraints{
+			IsCA:              false,
+			PathLenConstraint: -1,
+		},
+		SignatureAlgorithm: x509.ECDSAWithSHA512,
+		Validity: SignProfileValidity{
+			NotBefore: notBefore,
+			NotAfter:  notAfter,
+		},
+		KeyUsage:         []x509.KeyUsage{x509.KeyUsageDigitalSignature, x509.KeyUsageKeyEncipherment},
+		ExtendedKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}
+
+	caCert := []byte(`Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            73:2e:df:5b:b6:30:25:66:20:e5:80:b5:54:82:be:db:b9:72:f3:26
+        Signature Algorithm: ecdsa-with-SHA512
+        Issuer: C=DE, ST=Bavaria, O=Test-Organization, OU=Test-Organization-CA, CN=Test-Organization-Root-CA
+        Validity
+            Not Before: Jan  1 01:01:01 2023 GMT
+            Not After : Jan  1 01:01:01 2033 GMT
+        Subject: C=DE, ST=Bavaria, O=Test-Organization, OU=Test-Organization-CA, CN=Test-Organization-Root-CA
+        Subject Public Key Info:
+            Public Key Algorithm: id-ecPublicKey
+                Public-Key: (521 bit)
+                pub:
+                    04:01:11:95:d7:5b:41:94:4d:15:05:36:d6:56:fc:
+                    8c:95:29:8d:a4:b6:50:6d:93:1f:70:85:74:5c:66:
+                    0b:01:68:eb:a2:c8:ec:d1:7a:2a:00:1b:72:e9:41:
+                    cf:8f:be:15:b0:fb:7d:c6:f4:0e:d8:f3:1e:b7:49:
+                    fa:78:f8:39:46:91:63:00:f8:8e:3b:fc:67:b8:04:
+                    89:0f:46:60:cf:21:3e:cc:af:01:72:5b:6c:cb:22:
+                    52:8f:a5:72:c5:cd:59:ae:1a:ed:99:86:60:f1:2f:
+                    24:34:5c:64:e6:90:10:b8:02:7d:2f:74:8c:03:d3:
+                    e3:9c:9e:7c:b9:08:b2:01:16:ab:8e:5b:28
+                ASN1 OID: secp521r1
+                NIST CURVE: P-521
+        X509v3 extensions:
+            X509v3 Basic Constraints: critical
+                CA:TRUE, pathlen:1
+            X509v3 Key Usage: critical
+                Digital Signature, Certificate Sign, CRL Sign
+            X509v3 Subject Key Identifier: 
+                26:31:1C:05:F4:5A:BE:88:F4:52:32:6C:03:FA:FA:9D:B1:9C:F4:72
+            X509v3 Authority Key Identifier: 
+                26:31:1C:05:F4:5A:BE:88:F4:52:32:6C:03:FA:FA:9D:B1:9C:F4:72
+    Signature Algorithm: ecdsa-with-SHA512
+    Signature Value:
+        30:81:88:02:42:01:48:22:62:b1:78:1f:a2:b7:fb:5b:ea:6a:
+        cb:57:2a:37:e1:9e:fd:76:78:d3:99:ba:ff:80:c2:8d:10:d5:
+        13:ea:60:78:59:c4:5e:71:e6:0c:a4:c3:47:25:86:0c:ba:c1:
+        f9:aa:07:e2:a6:74:01:c4:9f:82:d3:a0:d5:f4:72:5d:68:02:
+        42:01:f0:2b:ff:17:fe:d3:27:4b:49:9f:41:69:c2:d0:81:6c:
+        d5:b3:95:4a:73:e9:32:63:db:0c:f9:7b:8b:7c:d1:dc:e2:0c:
+        a5:e5:fc:75:55:9b:fa:6f:8a:05:d4:45:90:be:0f:31:3d:d3:
+        3b:43:72:d8:47:e7:9c:87:9b:eb:0c:86:e1
+-----BEGIN CERTIFICATE-----
+MIIC7DCCAk2gAwIBAgIUcy7fW7YwJWYg5YC1VIK+27ly8yYwCgYIKoZIzj0EAwQw
+fjELMAkGA1UEBhMCREUxEDAOBgNVBAgMB0JhdmFyaWExGjAYBgNVBAoMEVRlc3Qt
+T3JnYW5pemF0aW9uMR0wGwYDVQQLDBRUZXN0LU9yZ2FuaXphdGlvbi1DQTEiMCAG
+A1UEAwwZVGVzdC1Pcmdhbml6YXRpb24tUm9vdC1DQTAeFw0yMzAxMDEwMTAxMDFa
+Fw0zMzAxMDEwMTAxMDFaMH4xCzAJBgNVBAYTAkRFMRAwDgYDVQQIDAdCYXZhcmlh
+MRowGAYDVQQKDBFUZXN0LU9yZ2FuaXphdGlvbjEdMBsGA1UECwwUVGVzdC1Pcmdh
+bml6YXRpb24tQ0ExIjAgBgNVBAMMGVRlc3QtT3JnYW5pemF0aW9uLVJvb3QtQ0Ew
+gZswEAYHKoZIzj0CAQYFK4EEACMDgYYABAERlddbQZRNFQU21lb8jJUpjaS2UG2T
+H3CFdFxmCwFo66LI7NF6KgAbculBz4++FbD7fcb0DtjzHrdJ+nj4OUaRYwD4jjv8
+Z7gEiQ9GYM8hPsyvAXJbbMsiUo+lcsXNWa4a7ZmGYPEvJDRcZOaQELgCfS90jAPT
+45yefLkIsgEWq45bKKNmMGQwEgYDVR0TAQH/BAgwBgEB/wIBATAOBgNVHQ8BAf8E
+BAMCAYYwHQYDVR0OBBYEFCYxHAX0Wr6I9FIybAP6+p2xnPRyMB8GA1UdIwQYMBaA
+FCYxHAX0Wr6I9FIybAP6+p2xnPRyMAoGCCqGSM49BAMEA4GMADCBiAJCAUgiYrF4
+H6K3+1vqastXKjfhnv12eNOZuv+Awo0Q1RPqYHhZxF5x5gykw0clhgy6wfmqB+Km
+dAHEn4LToNX0cl1oAkIB8Cv/F/7TJ0tJn0FpwtCBbNWzlUpz6TJj2wz5e4t80dzi
+DKXl/HVVm/pvigXURZC+DzE90ztDcthH55yHm+sMhuE=
+-----END CERTIFICATE-----
+`)
+	caCertParsed, err := ParseX509Cert(caCert)
+	if err != nil {
+		b.Fatalf("could not parse CA cert, err: %s", err.Error())
+	}
+
+	caPrivateKey := []byte(`-----BEGIN EC PRIVATE KEY-----
+MIHcAgEBBEIAsaSvwGS0nfPXCBX7MY0nt2VYYkOrf1dygvH8oIxyDE9LyWJ7eDBx
+T77tKXW71fO1Kq0WOcocNp89wg6PMsUFZxWgBwYFK4EEACOhgYkDgYYABAERlddb
+QZRNFQU21lb8jJUpjaS2UG2TH3CFdFxmCwFo66LI7NF6KgAbculBz4++FbD7fcb0
+DtjzHrdJ+nj4OUaRYwD4jjv8Z7gEiQ9GYM8hPsyvAXJbbMsiUo+lcsXNWa4a7ZmG
+YPEvJDRcZOaQELgCfS90jAPT45yefLkIsgEWq45bKA==
+-----END EC PRIVATE KEY-----
+`)
+	caPrivateKeyParsed, err := ParsePrivateKeyFromPEM(caPrivateKey)
+	if err != nil {
+		b.Fatalf("could not parse CA private key, err: %s", err.Error())
+	}
+
+	csrBytes := []byte(`-----BEGIN CERTIFICATE REQUEST-----
+MIIB5zCCAUgCAQAwgaIxCzAJBgNVBAYTAkRFMREwDwYDVQQKDAhUZXN0IE9yZzEl
+MCMGA1UECwwcVGVzdCBPcmcgQ2VydGlmaWNhdGUgU2VydmljZTEMMAoGA1UECwwD
+RGV2MSEwHwYDVQQLDBhzdGFnaW5nLWNlcnRpZmljYXRlcy0xMDExDTALBgNVBAcM
+BHRlc3QxGTAXBgNVBAMMEHRlc3QtY29tbW9uLW5hbWUwgZswEAYHKoZIzj0CAQYF
+K4EEACMDgYYABAG4J9e+RaevFWbipbgZTrdvVWgjc11uGM/XTODgHZf3W08OnL3i
+c91AC6m+ul7iRUKV7Feyf7jGuvR9xiqghfMR+wCaI9S0SoOff/M7JCDIDAcB6TVl
+wY9xlUF9z25XXnGHq6v18AQ+kKGPZQJ8eZYQWqMo48hzbmAV8M7dzEmIaGcltqAA
+MAoGCCqGSM49BAMEA4GMADCBiAJCAbck1OvqQkWqeRcBRQRwXDs2EEtLWMZJCGsO
+gab0fPVu7Kh8nMW9pdk5/P1z5UpgpcZkSNQDduCxSDr1pnsTXtI3AkIBBRaUW2og
+xz4as/yt+3tVfrJa9Yaf3TjDqlTlncA8kJ3hhsRX5U/dwEJv2/ZMO7MWh12XUrQL
+8rifvki0agFlvWQ=
+-----END CERTIFICATE REQUEST-----
+`)
+
+	block, _ := pem.Decode([]byte(csrBytes))
+	if block == nil {
+		b.Fatalf("could not decode CSR as PEM file")
+	}
+
+	csrParsed, err := x509.ParseCertificateRequest(block.Bytes)
+	if err != nil {
+		b.Fatalf("could not parse CSR, err: %s", err.Error())
+	}
+
+	if err = csrParsed.CheckSignature(); err != nil {
+		b.Fatalf("invalid certificate request signature, err: %s", err.Error())
+	}
+
+	optsAPI := SignAPIOpts{
+		CSR:        csrParsed,
+		CACert:     caCertParsed,
+		PrivateKey: caPrivateKeyParsed,
+		Subject:    "C=DE, O=SAP SE, OU=SAP Cloud Platform Certificate Service Test Clients, OU=Dev, OU=cf-us10-staging-certificate-service, L=test, CN=test",
+		// CrlDistributionPoints: []string{"http://example.com/crl"},
+	}
+
+	for b.Loop() {
+		_, err := service.SignCertificate(optsProfile, optsAPI)
+		if err != nil {
+			b.Fatalf("could not sign certificate, err: %s", err.Error())
+		}
+	}
+}
+
 func TestLibraryNative_HashSHA3_256(t *testing.T) {
 	type args struct {
 		dataToHash []byte
