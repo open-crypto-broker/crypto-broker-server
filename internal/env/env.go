@@ -17,4 +17,16 @@ const (
 	// LOG_OUTPUT is environment variable that should contain log output.
 	// Valid values are denoted in internal/clog package
 	LOG_OUTPUT = "CRYPTO_BROKER_LOG_OUTPUT"
+
+	// BENCHMARK_SIGN_CERTIFICATE_CA_CERT is environment variable that should contain full OS path
+	// to CA certificate file used in benchmark tests for signing certificates.
+	BENCHMARK_SIGN_CERTIFICATE_CA_CERT = "CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_CA_CERT"
+
+	// BENCHMARK_SIGN_CERTIFICATE_PRIVATE_KEY is environment variable that should contain full OS path
+	// to CA private key file used in benchmark tests for signing certificates.
+	BENCHMARK_SIGN_CERTIFICATE_PRIVATE_KEY = "CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_PRIVATE_KEY"
+
+	// BENCHMARK_SIGN_CERTIFICATE_CSR is environment variable that should contain full OS path
+	// to CSR file used in benchmark tests for signing certificates.
+	BENCHMARK_SIGN_CERTIFICATE_CSR = "CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_CSR"
 )
