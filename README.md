@@ -29,6 +29,9 @@ The Crypto Broker Server supports several environment variables for configuratio
 | `CRYPTO_BROKER_LOG_LEVEL` | No | `info` | Log level for the server | `debug`, `info`, `warn`, `error` |
 | `CRYPTO_BROKER_LOG_FORMAT` | No | `json` | Log output format | `json`, `text` |
 | `CRYPTO_BROKER_LOG_OUTPUT` | No | `stdout` | Log output destination | `stdout`, `stderr` |
+| `CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_CA_CERT` | No | - | Full OS path to CA certificate file used in benchmark tests for signing certificates | Any valid file path |
+| `CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_PRIVATE_KEY` | No | - | Full OS path to CA private key file used in benchmark tests for signing certificates | Any valid file path |
+| `CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_CSR` | No | - | Full OS path to CSR file used in benchmark tests for signing certificates | Any valid file path |
 
 **Note:** If invalid values are provided for any of the optional environment variables, the server will panic during startup.
 

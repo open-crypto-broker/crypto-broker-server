@@ -9,6 +9,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/open-crypto-broker/crypto-broker-server/internal/env"
 )
 
 // BenchmarkLibraryNative_HashSHA3_256 to run benchmark:
@@ -101,7 +103,7 @@ func BenchmarkLibraryNative_SignCertificate(b *testing.B) {
 		ExtendedKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 	}
 
-	caCert, err := os.ReadFile("../../../crypto-broker-deployment/testing/certificates/test-ca/root-CA-ecdsa.pem")
+	caCert, err := os.ReadFile(os.Getenv(env.BENCHMARK_SIGN_CERTIFICATE_CA_CERT))
 	if err != nil {
 		b.Fatalf("could not read CA cert, err: %s", err.Error())
 	}
@@ -110,7 +112,7 @@ func BenchmarkLibraryNative_SignCertificate(b *testing.B) {
 		b.Fatalf("could not parse CA cert, err: %s", err.Error())
 	}
 
-	caPrivateKey, err := os.ReadFile("../../../crypto-broker-deployment/testing/certificates/test-ca/root-CA-ecdsa-private-key.pem")
+	caPrivateKey, err := os.ReadFile(os.Getenv(env.BENCHMARK_SIGN_CERTIFICATE_PRIVATE_KEY))
 	if err != nil {
 		b.Fatalf("could not read CA private key, err: %s", err.Error())
 	}
@@ -119,7 +121,7 @@ func BenchmarkLibraryNative_SignCertificate(b *testing.B) {
 		b.Fatalf("could not parse CA private key, err: %s", err.Error())
 	}
 
-	csrBytes, err := os.ReadFile("../../../crypto-broker-deployment/testing/certificates/test-csr/test-client.csr")
+	csrBytes, err := os.ReadFile(os.Getenv(env.BENCHMARK_SIGN_CERTIFICATE_CSR))
 	if err != nil {
 		b.Fatalf("could not read CSR, err: %s", err.Error())
 	}
