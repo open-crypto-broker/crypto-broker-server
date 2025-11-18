@@ -43,14 +43,15 @@ assert_benchmark() {
     fi
 
     # Get the last (most recent) result line
-    local output_line=$(echo "$output_lines" | tail -1)
+    # Metrics may be wrapped across two lines (allocs/op on next line); join last two lines.
+    local metrics_line=$(echo "$output_lines" | tail -2 | paste -sd ' ' -)
 
-    # Parse metrics from the output line using sed regex
+    # Parse ns/op value (accept tabs/spaces) using a robust pattern.
     # Extract ns/op value (number before "ns/op") - handle decimal numbers
-    local ns_per_op=$(echo "$output_line" | sed -n 's/.* \([0-9.]\+\) ns\/op.*/\1/p' | sed 's/,//g')
+    local ns_per_op=$(echo "$metrics_line" | sed -E 's/.*[[:space:]]([0-9]+(\.[0-9]+)?)[[:space:]]+ns\/op.*/\1/' | sed 's/,//g')
     
-    # Extract allocs/op value (number before "allocs/op")  
-    local allocs_per_op=$(echo "$output_line" | sed -n 's/.* \([0-9]\+\) allocs\/op.*/\1/p' | sed 's/,//g')
+    # Parse allocs/op value from joined line.
+    local allocs_per_op=$(echo "$metrics_line" | sed -E 's/.*[[:space:]]([0-9]+)[[:space:]]+allocs\/op.*/\1/' | sed 's/,//g')
 
     # Validate that we got numeric values
     if ! [[ "$ns_per_op" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
