@@ -17,11 +17,9 @@ RUN go build -o app ./cmd/server
 ## Deploy
 FROM alpine
 
-ARG CRYPTO_BROKER_PROFILES_DIR
-
 WORKDIR /app
 
 COPY --from=build /app/app .
-COPY --from=build /app/${CRYPTO_BROKER_PROFILES_DIR} ./profiles
+COPY --from=build /app/example-profiles ./profiles
 
 ENTRYPOINT ["./app"]
