@@ -228,14 +228,13 @@ type BitSizeConstraints struct {
 	MaxKeySize int
 }
 
-// ValidatePublicKey takes public key from CSR and
-// checks its underlying algorithm against acceptable interval of bit size
+// ValidatePublicKey takes public key and validates it against given constraints map
 func ValidatePublicKey(pubKey any, constraintsByAlg map[Algorithm]BitSizeConstraints) error {
 	switch pkey := pubKey.(type) {
 	case *ecdsa.PublicKey:
 		constraints, ok := constraintsByAlg[ECDSA]
 		if !ok {
-			return fmt.Errorf("missing key constraints for %s", ECDSA)
+			return fmt.Errorf("%w for '%s' algorithm", ErrMissingKeyConstraints, ECDSA)
 		}
 
 		params := pkey.Params()
@@ -253,7 +252,7 @@ func ValidatePublicKey(pubKey any, constraintsByAlg map[Algorithm]BitSizeConstra
 	case *rsa.PublicKey:
 		constraints, ok := constraintsByAlg[RSA]
 		if !ok {
-			return fmt.Errorf("missing key constraints for %s", RSA)
+			return fmt.Errorf("%w for '%s' algorithm", ErrMissingKeyConstraints, RSA)
 		}
 
 		bitSize := pkey.N.BitLen()
@@ -273,14 +272,13 @@ func ValidatePublicKey(pubKey any, constraintsByAlg map[Algorithm]BitSizeConstra
 	}
 }
 
-// ValidatePrivateKey takes the private key from the CA and
-// checks its underlying algorithm against acceptable interval of bit size
+// ValidatePrivateKey takes private key and validates it against given constraints map
 func ValidatePrivateKey(privKey any, constraintsByAlg map[Algorithm]BitSizeConstraints) error {
 	switch pkey := privKey.(type) {
 	case *ecdsa.PrivateKey:
 		constraints, ok := constraintsByAlg[ECDSA]
 		if !ok {
-			return fmt.Errorf("missing key constraints for %s", ECDSA)
+			return fmt.Errorf("%w for '%s' algorithm", ErrMissingKeyConstraints, ECDSA)
 		}
 
 		params := pkey.Params()
@@ -298,7 +296,7 @@ func ValidatePrivateKey(privKey any, constraintsByAlg map[Algorithm]BitSizeConst
 	case *rsa.PrivateKey:
 		constraints, ok := constraintsByAlg[RSA]
 		if !ok {
-			return fmt.Errorf("missing key constraints for %s", RSA)
+			return fmt.Errorf("%w for '%s' algorithm", ErrMissingKeyConstraints, RSA)
 		}
 
 		bitSize := pkey.N.BitLen()
