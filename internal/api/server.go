@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -133,6 +134,10 @@ func (server *CryptoBrokerServer) sign(clientInput signClientInput, p profile.Pr
 
 	// Check whether the public key in CSR is secure enough according to profile
 	if err = c10y.ValidatePublicKey(csr.PublicKey, p.API.SignCertificate.KeyConstraints.Subject); err != nil {
+		if errors.Is(err, c10y.ErrMissingKeyConstraints) {
+			return nil, fmt.Errorf("profile does not contain key constraints for algorithm used in the CSR's public key, err: %w", err)
+		}
+
 		return nil, fmt.Errorf("invalid public key, err: %w", err)
 	}
 
@@ -143,6 +148,10 @@ func (server *CryptoBrokerServer) sign(clientInput signClientInput, p profile.Pr
 
 	// Check whether the private key from the CA is secure enough according to profile
 	if err = c10y.ValidatePrivateKey(caPrivateKey, p.API.SignCertificate.KeyConstraints.Issuer); err != nil {
+		if errors.Is(err, c10y.ErrMissingKeyConstraints) {
+			return nil, fmt.Errorf("profile does not contain key constraints for algorithm used in the CA's private key, err: %w", err)
+		}
+
 		return nil, err
 	}
 
