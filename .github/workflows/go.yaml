@@ -44,7 +44,7 @@ jobs:
       - name: Run benchmarks with JSON output
         continue-on-error: true
         run: |
-          CRYPTO_BROKER_PROFILES_DIR=${GITHUB_WORKSPACE}/example-profiles go test -run=^$ -bench='BenchmarkLibraryNative_(Hash|SignCertificate_NIST_SECP521R1_RSA4096|SignCertificate_NIST_SECP521R1_NIST_SECP521R1)' -benchmem -count=3 -json ./... > benchmark-results.json
+          CRYPTO_BROKER_PROFILES_DIR=${GITHUB_WORKSPACE}/example-profiles go test -run=^$ -bench='BenchmarkLibraryNative_(Hash|SignCertificate_NIST_SECP521R1_RSA4096|SignCertificate_NIST_SECP521R1_NIST_SECP521R1)' -benchmem -json ./... > benchmark-results.json
 
       - name: Assert benchmark performance
         continue-on-error: true
