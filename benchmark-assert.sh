@@ -35,7 +35,8 @@ assert_benchmark() {
     local max_allocs_per_op="$3"
 
     # Extract benchmark output lines
-    local output_lines=$(extract_benchmark_result "$bench_name" "$RESULTS_FILE")
+    local output_lines
+    output_lines=$(extract_benchmark_result "$bench_name" "$RESULTS_FILE")
 
     if [ -z "$output_lines" ]; then
         echo "❌ Benchmark $bench_name: No output found"
@@ -44,23 +45,26 @@ assert_benchmark() {
 
     # Get the last (most recent) result line
     # Metrics may be wrapped across two lines (allocs/op on next line); join last two lines.
-    local metrics_line=$(echo "$output_lines" | tail -2 | paste -sd ' ' -)
+    local metrics_line
+    metrics_line=$(echo "$output_lines" | tail -2 | paste -sd ' ' -)
 
     # Parse ns/op value (accept tabs/spaces) using a robust pattern.
     # Extract ns/op value (number before "ns/op") - handle decimal numbers
-    local ns_per_op=$(echo "$metrics_line" | sed -E 's/.*[[:space:]]([0-9]+(\.[0-9]+)?)[[:space:]]+ns\/op.*/\1/' | sed 's/,//g')
+    local ns_per_op
+    ns_per_op=$(echo "$metrics_line" | sed -E 's/.*[[:space:]]([0-9]+(\.[0-9]+)?)[[:space:]]+ns\/op.*/\1/' | sed 's/,//g')
     
     # Parse allocs/op value from joined line.
-    local allocs_per_op=$(echo "$metrics_line" | sed -E 's/.*[[:space:]]([0-9]+)[[:space:]]+allocs\/op.*/\1/' | sed 's/,//g')
+    local allocs_per_op
+    allocs_per_op=$(echo "$metrics_line" | sed -E 's/.*[[:space:]]([0-9]+)[[:space:]]+allocs\/op.*/\1/' | sed 's/,//g')
 
     # Validate that we got numeric values
     if ! [[ "$ns_per_op" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
-        echo "❌ Benchmark $bench_name: Could not parse ns/op value from: $output_line"
+        echo "❌ Benchmark $bench_name: Could not parse ns/op value from: $metrics_line"
         return 1
     fi
 
     if ! [[ "$allocs_per_op" =~ ^[0-9]+$ ]]; then
-        echo "❌ Benchmark $bench_name: Could not parse allocs/op value from: $output_line"
+        echo "❌ Benchmark $bench_name: Could not parse allocs/op value from: $metrics_line"
         return 1
     fi
 
