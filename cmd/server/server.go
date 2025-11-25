@@ -19,6 +19,8 @@ import (
 	pb "github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
 )
 
@@ -83,6 +85,11 @@ func main() {
 	)
 	pb.RegisterCryptoBrokerServer(server, container.Server)
 
+	// Register health check service
+	healthServer := health.NewServer()
+	grpc_health_v1.RegisterHealthServer(server, healthServer)
+	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
+
 	rpcLogger.Debug("Starting to listen for system signals", slog.Group("signals", slog.String("SIGINT", "interrupt"), slog.String("SIGTERM", "termination")))
 	// Handle termination signals for graceful shutdown
 	c := make(chan os.Signal, 1)
@@ -91,6 +98,7 @@ func main() {
 		<-c
 
 		rpcLogger.Info("Received termination signal, shutting down gRPC server")
+		healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 
 		server.GracefulStop()
 		listener.Close()
