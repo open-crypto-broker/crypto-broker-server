@@ -83,7 +83,7 @@ func main() {
 			recovery.UnaryServerInterceptor(recovery.WithRecoveryHandler(grpcPanicRecoveryHandler)),
 		),
 	)
-	pb.RegisterCryptoBrokerServer(server, container.Server)
+	pb.RegisterCryptoGrpcServer(server, container.Server)
 
 	// Register health check service
 	healthServer := health.NewServer()

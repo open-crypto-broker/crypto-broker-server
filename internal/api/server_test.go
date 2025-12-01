@@ -42,7 +42,7 @@ func TestCryptoBrokerServer_Hash_E2E(t *testing.T) {
 	// Start a mock gRPC server
 	lis = bufconn.Listen(bufSize)
 	s := grpc.NewServer()
-	protobuf.RegisterCryptoBrokerServer(s, grpcConnector)
+	protobuf.RegisterCryptoGrpcServer(s, grpcConnector)
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			slog.Error("Server exited with error", slog.String("error", err.Error()))
@@ -57,7 +57,7 @@ func TestCryptoBrokerServer_Hash_E2E(t *testing.T) {
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
 	defer conn.Close()
-	client := protobuf.NewCryptoBrokerClient(conn)
+	client := protobuf.NewCryptoGrpcClient(conn)
 	if err = profile.LoadProfiles("Profiles.yaml"); err != nil {
 		t.Fatalf("could not load profiles, err: %s", err)
 	}
@@ -89,7 +89,7 @@ func TestCryptoBrokerServer_Sign_E2E(t *testing.T) {
 	// Start a mock gRPC server
 	lis = bufconn.Listen(bufSize)
 	s := grpc.NewServer()
-	protobuf.RegisterCryptoBrokerServer(s, grpcConnector)
+	protobuf.RegisterCryptoGrpcServer(s, grpcConnector)
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			slog.Error("Server exited with error", slog.String("error", err.Error()))
@@ -104,7 +104,7 @@ func TestCryptoBrokerServer_Sign_E2E(t *testing.T) {
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
 	defer conn.Close()
-	client := protobuf.NewCryptoBrokerClient(conn)
+	client := protobuf.NewCryptoGrpcClient(conn)
 	if err = profile.LoadProfiles("Profiles.yaml"); err != nil {
 		t.Fatalf("could not load profiles, err: %s", err)
 	}
