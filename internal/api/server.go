@@ -17,7 +17,7 @@ import (
 
 // CryptoBrokerServer defines crypto broker's server
 type CryptoBrokerServer struct {
-	protobuf.CryptoBrokerServer
+	protobuf.CryptoGrpcServer
 	cryptographicEngineNative *c10y.LibraryNative
 }
 
