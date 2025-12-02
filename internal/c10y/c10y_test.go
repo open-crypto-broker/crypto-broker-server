@@ -7,16 +7,6 @@ import (
 	"testing"
 )
 
-var bb = []byte(`ɥsɐɥ oʇ sɹǝʇɔɐɹɐɥɔ ʎɹɐɹʇᴉqɹɐ ǝɯoS
-╔════╦══════╦══╗
-╠═══╗║╠═══╦╗║╚╗║
-║╔═╗╬╠═╦═╣║║╚╚║║
-║╚╗╠╚╦║║╔═╣╚═╦╝║
-║║║╝╔═╩╝║╠╝╣╔╝╔╣
-║║╚═╣╔══╣╔═╝║╩╣║
-║╚═╗╚╝╣║╝║╝═╩╔╩║
-╚══╩══╩══╩═════╝`)
-
 func TestParseX509Cert(t *testing.T) {
 	type args struct {
 		rawCert []byte
@@ -27,7 +17,7 @@ func TestParseX509Cert(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "ParseX509Cert reutrns error given empty rawCert bytes",
+			name: "ParseX509Cert returns error given empty rawCert bytes",
 			args: args{
 				rawCert: []byte(""),
 			},
