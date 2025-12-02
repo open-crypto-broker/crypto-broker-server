@@ -4,12 +4,15 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
 	"log/slog"
+	"testing"
 	"time"
 
+	"github.com/open-crypto-broker/crypto-broker-server/internal/bench"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
@@ -33,7 +36,7 @@ func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRe
 	if err != nil {
 		slog.Debug(err.Error())
 
-		return nil, fmt.Errorf("could not retireve profile, err: %w", err)
+		return nil, fmt.Errorf("could not retrieve profile, err: %w", err)
 	}
 
 	hashedBytes, err := server.hash(req.Input, reqProfile)
@@ -63,7 +66,7 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 	if err != nil {
 		slog.Debug(err.Error())
 
-		return nil, fmt.Errorf("could not retireve profile, err: %w", err)
+		return nil, fmt.Errorf("could not retrieve profile, err: %w", err)
 	}
 
 	input := signClientInput{
@@ -91,6 +94,99 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 		SignedCertificate: base64.StdEncoding.EncodeToString(clientCRTRaw),
 		Metadata:          req.Metadata,
 	}, nil
+}
+
+// BenchmarkResult represents the result of a single benchmark
+type BenchmarkResult struct {
+	Name    string `json:"name"`
+	AvgTime int64  `json:"avgTime"` // nanoseconds
+}
+
+// BenchmarkResults represents the collection of all benchmark results
+type BenchmarkResults struct {
+	Results []BenchmarkResult `json:"results"`
+}
+
+// Benchmark runs performance benchmarks on cryptographic operations
+func (server *CryptoBrokerServer) Benchmark(ctx context.Context, req *protobuf.BenchmarkRequest) (*protobuf.BenchmarkResponse, error) {
+	timestampEndpointStart := time.Now()
+
+	results, err := server.runAllBenchmarks()
+	if err != nil {
+		slog.Debug("failed to run benchmarks", slog.String("error", err.Error()))
+
+		return nil, fmt.Errorf("failed to run benchmarks: %w", err)
+	}
+
+	jsonResults, err := json.Marshal(results)
+	if err != nil {
+		slog.Debug("failed to encode benchmark results", slog.String("error", err.Error()))
+
+		return nil, fmt.Errorf("failed to encode benchmark results: %w", err)
+	}
+
+	timestampEndpointEnd := time.Now()
+	durationElapsedEndpoint := timestampEndpointEnd.Sub(timestampEndpointStart)
+
+	server.logDuration(ctx, "Benchmark", durationElapsedEndpoint)
+
+	return &protobuf.BenchmarkResponse{BenchmarkResults: string(jsonResults), Metadata: req.Metadata}, nil
+}
+
+// runAllBenchmarks executes all cryptographic benchmarks and returns the results
+func (server *CryptoBrokerServer) runAllBenchmarks() (BenchmarkResults, error) {
+	results := make([]BenchmarkResult, 0, 11)
+
+	results = append(results, runHashBenchmark("BenchmarkLibraryNative_HashSHA3_256", bench.RunHashSHA3_256Benchmark))
+	results = append(results, runHashBenchmark("BenchmarkLibraryNative_HashSHA3_384", bench.RunHashSHA3_384Benchmark))
+	results = append(results, runHashBenchmark("BenchmarkLibraryNative_HashSHA3_512", bench.RunHashSHA3_512Benchmark))
+	results = append(results, runHashBenchmark("BenchmarkLibraryNative_HashSHA_256", bench.RunHashSHA_256Benchmark))
+	results = append(results, runHashBenchmark("BenchmarkLibraryNative_HashSHA_384", bench.RunHashSHA_384Benchmark))
+	results = append(results, runHashBenchmark("BenchmarkLibraryNative_HashSHA_512", bench.RunHashSHA_512Benchmark))
+	results = append(results, runHashBenchmark("BenchmarkLibraryNative_HashSHA_512_256", bench.RunHashSHA_512_256Benchmark))
+
+	signCertificateNISTSECP521R1RSA4096Result, err := runSignBenchmark(
+		"BenchmarkLibraryNative_SignCertificate_NIST_SECP521R1_RSA4096", bench.RunSignCertificateNISTSECP521R1RSA4096Benchmark)
+	if err != nil {
+		return BenchmarkResults{Results: results}, err
+	}
+	results = append(results, signCertificateNISTSECP521R1RSA4096Result)
+
+	signCertificateNISTSECP521R1NISTSECP521R1Result, err := runSignBenchmark(
+		"BenchmarkLibraryNative_SignCertificate_NIST_SECP521R1_NIST_SECP521R1", bench.RunSignCertificateNISTSECP521R1NISTSECP521R1Benchmark)
+	if err != nil {
+		return BenchmarkResults{Results: results}, err
+	}
+	results = append(results, signCertificateNISTSECP521R1NISTSECP521R1Result)
+
+	return BenchmarkResults{Results: results}, nil
+}
+
+// runHashBenchmark executes a hash benchmark and returns the result
+func runHashBenchmark(name string, benchmarkFunc func(*testing.B)) BenchmarkResult {
+	b := &testing.B{N: 1000}
+	start := time.Now()
+	benchmarkFunc(b)
+	duration := time.Since(start)
+	avgTime := duration.Nanoseconds() / int64(b.N)
+	return BenchmarkResult{Name: name, AvgTime: avgTime}
+}
+
+// runSignBenchmark executes a certificate signing benchmark and returns the result
+func runSignBenchmark(name string, benchmarkFunc func(*testing.B) error) (BenchmarkResult, error) {
+	b := &testing.B{N: 10}
+
+	start := time.Now()
+	err := benchmarkFunc(b)
+	duration := time.Since(start)
+
+	if err != nil {
+		return BenchmarkResult{Name: name, AvgTime: 0}, err
+	}
+
+	avgTime := duration.Nanoseconds() / int64(b.N)
+
+	return BenchmarkResult{Name: name, AvgTime: avgTime}, nil
 }
 
 type signClientInput struct {
