@@ -19,15 +19,15 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CryptoBroker_Benchmark_FullMethodName = "/protobuf.CryptoBroker/Benchmark"
-	CryptoBroker_Hash_FullMethodName      = "/protobuf.CryptoBroker/Hash"
-	CryptoBroker_Sign_FullMethodName      = "/protobuf.CryptoBroker/Sign"
+	CryptoGrpc_Benchmark_FullMethodName = "/CryptoBroker.CryptoGrpc/Benchmark"
+	CryptoGrpc_Hash_FullMethodName      = "/CryptoBroker.CryptoGrpc/Hash"
+	CryptoGrpc_Sign_FullMethodName      = "/CryptoBroker.CryptoGrpc/Sign"
 )
 
 // CryptoGrpcClient is the client API for CryptoGrpc service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type CryptoBrokerClient interface {
+type CryptoGrpcClient interface {
 	Benchmark(ctx context.Context, in *BenchmarkRequest, opts ...grpc.CallOption) (*BenchmarkResponse, error)
 	Hash(ctx context.Context, in *HashRequest, opts ...grpc.CallOption) (*HashResponse, error)
 	Sign(ctx context.Context, in *SignRequest, opts ...grpc.CallOption) (*SignResponse, error)
@@ -37,18 +37,8 @@ type cryptoGrpcClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewCryptoBrokerClient(cc grpc.ClientConnInterface) CryptoBrokerClient {
-	return &cryptoBrokerClient{cc}
-}
-
-func (c *cryptoBrokerClient) Benchmark(ctx context.Context, in *BenchmarkRequest, opts ...grpc.CallOption) (*BenchmarkResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(BenchmarkResponse)
-	err := c.cc.Invoke(ctx, CryptoBroker_Benchmark_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
+func NewCryptoGrpcClient(cc grpc.ClientConnInterface) CryptoGrpcClient {
+	return &cryptoGrpcClient{cc}
 }
 
 func (c *cryptoGrpcClient) Benchmark(ctx context.Context, in *BenchmarkRequest, opts ...grpc.CallOption) (*BenchmarkResponse, error) {
@@ -84,7 +74,7 @@ func (c *cryptoGrpcClient) Sign(ctx context.Context, in *SignRequest, opts ...gr
 // CryptoGrpcServer is the server API for CryptoGrpc service.
 // All implementations must embed UnimplementedCryptoGrpcServer
 // for forward compatibility.
-type CryptoBrokerServer interface {
+type CryptoGrpcServer interface {
 	Benchmark(context.Context, *BenchmarkRequest) (*BenchmarkResponse, error)
 	Hash(context.Context, *HashRequest) (*HashResponse, error)
 	Sign(context.Context, *SignRequest) (*SignResponse, error)
@@ -98,13 +88,13 @@ type CryptoBrokerServer interface {
 // pointer dereference when methods are called.
 type UnimplementedCryptoGrpcServer struct{}
 
-func (UnimplementedCryptoBrokerServer) Benchmark(context.Context, *BenchmarkRequest) (*BenchmarkResponse, error) {
+func (UnimplementedCryptoGrpcServer) Benchmark(context.Context, *BenchmarkRequest) (*BenchmarkResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Benchmark not implemented")
 }
-func (UnimplementedCryptoBrokerServer) Hash(context.Context, *HashRequest) (*HashResponse, error) {
+func (UnimplementedCryptoGrpcServer) Hash(context.Context, *HashRequest) (*HashResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Hash not implemented")
 }
-func (UnimplementedCryptoBrokerServer) Sign(context.Context, *SignRequest) (*SignResponse, error) {
+func (UnimplementedCryptoGrpcServer) Sign(context.Context, *SignRequest) (*SignResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Sign not implemented")
 }
 func (UnimplementedCryptoGrpcServer) mustEmbedUnimplementedCryptoGrpcServer() {}
@@ -117,36 +107,36 @@ type UnsafeCryptoGrpcServer interface {
 	mustEmbedUnimplementedCryptoGrpcServer()
 }
 
-func RegisterCryptoBrokerServer(s grpc.ServiceRegistrar, srv CryptoBrokerServer) {
-	// If the following call panics, it indicates UnimplementedCryptoBrokerServer was
+func RegisterCryptoGrpcServer(s grpc.ServiceRegistrar, srv CryptoGrpcServer) {
+	// If the following call panics, it indicates UnimplementedCryptoGrpcServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&CryptoBroker_ServiceDesc, srv)
+	s.RegisterService(&CryptoGrpc_ServiceDesc, srv)
 }
 
-func _CryptoBroker_Benchmark_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _CryptoGrpc_Benchmark_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(BenchmarkRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CryptoBrokerServer).Benchmark(ctx, in)
+		return srv.(CryptoGrpcServer).Benchmark(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: CryptoBroker_Benchmark_FullMethodName,
+		FullMethod: CryptoGrpc_Benchmark_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CryptoBrokerServer).Benchmark(ctx, req.(*BenchmarkRequest))
+		return srv.(CryptoGrpcServer).Benchmark(ctx, req.(*BenchmarkRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CryptoBroker_Hash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _CryptoGrpc_Hash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(HashRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -191,7 +181,7 @@ var CryptoGrpc_ServiceDesc = grpc.ServiceDesc{
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Benchmark",
-			Handler:    _CryptoBroker_Benchmark_Handler,
+			Handler:    _CryptoGrpc_Benchmark_Handler,
 		},
 		{
 			MethodName: "Hash",
