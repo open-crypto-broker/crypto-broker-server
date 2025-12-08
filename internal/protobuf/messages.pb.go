@@ -302,8 +302,8 @@ type SignRequest struct {
 	CaPrivateKey          string                 `protobuf:"bytes,3,opt,name=caPrivateKey,proto3" json:"caPrivateKey,omitempty"`
 	CaCert                string                 `protobuf:"bytes,4,opt,name=caCert,proto3" json:"caCert,omitempty"`
 	Metadata              *Metadata              `protobuf:"bytes,5,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	ValidNotBeforeOffset  *string                `protobuf:"bytes,6,opt,name=validNotBeforeOffset,proto3,oneof" json:"validNotBeforeOffset,omitempty"`
-	ValidNotAfterOffset   *string                `protobuf:"bytes,7,opt,name=validNotAfterOffset,proto3,oneof" json:"validNotAfterOffset,omitempty"`
+	ValidNotBefore        *uint64                `protobuf:"varint,6,opt,name=validNotBefore,proto3,oneof" json:"validNotBefore,omitempty"`
+	ValidNotAfter         *uint64                `protobuf:"varint,7,opt,name=validNotAfter,proto3,oneof" json:"validNotAfter,omitempty"`
 	Subject               *string                `protobuf:"bytes,8,opt,name=subject,proto3,oneof" json:"subject,omitempty"`
 	CrlDistributionPoints []string               `protobuf:"bytes,9,rep,name=crlDistributionPoints,proto3" json:"crlDistributionPoints,omitempty"`
 	unknownFields         protoimpl.UnknownFields
@@ -375,18 +375,18 @@ func (x *SignRequest) GetMetadata() *Metadata {
 	return nil
 }
 
-func (x *SignRequest) GetValidNotBeforeOffset() string {
-	if x != nil && x.ValidNotBeforeOffset != nil {
-		return *x.ValidNotBeforeOffset
+func (x *SignRequest) GetValidNotBefore() uint64 {
+	if x != nil && x.ValidNotBefore != nil {
+		return *x.ValidNotBefore
 	}
-	return ""
+	return 0
 }
 
-func (x *SignRequest) GetValidNotAfterOffset() string {
-	if x != nil && x.ValidNotAfterOffset != nil {
-		return *x.ValidNotAfterOffset
+func (x *SignRequest) GetValidNotAfter() uint64 {
+	if x != nil && x.ValidNotAfter != nil {
+		return *x.ValidNotAfter
 	}
-	return ""
+	return 0
 }
 
 func (x *SignRequest) GetSubject() string {
@@ -476,19 +476,19 @@ const file_protobuf_messages_proto_rawDesc = "" +
 	"\fHashResponse\x12\x1c\n" +
 	"\thashValue\x18\x01 \x01(\tR\thashValue\x12$\n" +
 	"\rhashAlgorithm\x18\x02 \x01(\tR\rhashAlgorithm\x122\n" +
-	"\bmetadata\x18\x03 \x01(\v2\x16.CryptoBroker.MetadataR\bmetadata\"\xab\x03\n" +
+	"\bmetadata\x18\x03 \x01(\v2\x16.CryptoBroker.MetadataR\bmetadata\"\x87\x03\n" +
 	"\vSignRequest\x12\x18\n" +
 	"\aprofile\x18\x01 \x01(\tR\aprofile\x12\x10\n" +
 	"\x03csr\x18\x02 \x01(\tR\x03csr\x12\"\n" +
 	"\fcaPrivateKey\x18\x03 \x01(\tR\fcaPrivateKey\x12\x16\n" +
 	"\x06caCert\x18\x04 \x01(\tR\x06caCert\x122\n" +
-	"\bmetadata\x18\x05 \x01(\v2\x16.CryptoBroker.MetadataR\bmetadata\x127\n" +
-	"\x14validNotBeforeOffset\x18\x06 \x01(\tH\x00R\x14validNotBeforeOffset\x88\x01\x01\x125\n" +
-	"\x13validNotAfterOffset\x18\a \x01(\tH\x01R\x13validNotAfterOffset\x88\x01\x01\x12\x1d\n" +
+	"\bmetadata\x18\x05 \x01(\v2\x16.CryptoBroker.MetadataR\bmetadata\x12+\n" +
+	"\x0evalidNotBefore\x18\x06 \x01(\x04H\x00R\x0evalidNotBefore\x88\x01\x01\x12)\n" +
+	"\rvalidNotAfter\x18\a \x01(\x04H\x01R\rvalidNotAfter\x88\x01\x01\x12\x1d\n" +
 	"\asubject\x18\b \x01(\tH\x02R\asubject\x88\x01\x01\x124\n" +
-	"\x15crlDistributionPoints\x18\t \x03(\tR\x15crlDistributionPointsB\x17\n" +
-	"\x15_validNotBeforeOffsetB\x16\n" +
-	"\x14_validNotAfterOffsetB\n" +
+	"\x15crlDistributionPoints\x18\t \x03(\tR\x15crlDistributionPointsB\x11\n" +
+	"\x0f_validNotBeforeB\x10\n" +
+	"\x0e_validNotAfterB\n" +
 	"\n" +
 	"\b_subject\"p\n" +
 	"\fSignResponse\x12,\n" +

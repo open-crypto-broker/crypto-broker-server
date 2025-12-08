@@ -9,6 +9,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -51,45 +52,81 @@ func (service *LibraryNative) ParseRSAPrivateKeyFromPEM(key []byte) (any, error)
 	return parsedKey, nil
 }
 
+func (service *LibraryNative) validateSignData(optsProfile SignProfileOpts, optsAPI SignAPIOpts) error {
+	if err := optsAPI.CSR.CheckSignature(); err != nil {
+		return fmt.Errorf("invalid certificate request signature, err: %s", err)
+	}
+
+	if err := ValidatePublicKey(optsAPI.CSR.PublicKey, optsProfile.SubjectKeyConstraints); err != nil {
+		if errors.Is(err, ErrMissingKeyConstraints) {
+			return fmt.Errorf("profile does not contain key constraints for algorithm used in the CSR's public key, err: %w", err)
+		}
+
+		return fmt.Errorf("invalid public key, err: %w", err)
+	}
+
+	now := time.Now().UTC()
+	notBeforeConstraint := now.Add(optsProfile.Validity.NotBeforeOffset)
+	notAfterConstraint := now.Add(optsProfile.Validity.NotAfterOffset)
+
+	if optsAPI.ValidNotBefore != nil && optsAPI.ValidNotBefore.Before(notBeforeConstraint) {
+		return fmt.Errorf("error: certificate validity %s is earlier than the allowed by the profile %s", optsAPI.ValidNotBefore.String(), notBeforeConstraint.String())
+	}
+
+	if optsAPI.ValidNotAfter != nil && optsAPI.ValidNotAfter.After(notAfterConstraint) {
+		return fmt.Errorf("error: certificate end validity %s is later than the allowed by the profile %s", optsAPI.ValidNotAfter.String(), notAfterConstraint.String())
+	}
+
+	return nil
+}
+
 // Sign certificate signs provided CSR using std go lib as crypto engine.
 // As a result method returns signed certificate in DEF format or non-nil error if any.
-func (service *LibraryNative) SignCertificate(profileOpts SignProfileOpts, apiOpts SignAPIOpts) ([]byte, error) {
-	now := time.Now()
-	notBefore := now.Add(profileOpts.Validity.NotBefore)
-	notAfter := now.Add(profileOpts.Validity.NotAfter)
+func (service *LibraryNative) SignCertificate(optsProfile SignProfileOpts, optsAPI SignAPIOpts) ([]byte, error) {
+	if err := service.validateSignData(optsProfile, optsAPI); err != nil {
+		return nil, fmt.Errorf("error while validating sign certificate data: %w", err)
+	}
 
 	var finalKU x509.KeyUsage
-	for _, ku := range profileOpts.KeyUsage {
+	for _, ku := range optsProfile.KeyUsage {
 		finalKU = finalKU | ku
 	}
 
+	now := time.Now().UTC()
 	// Note that serial number is auto generated as desired by CreateCertificate when SerialNumber key is set to nil
 	clientCRTTemplate := x509.Certificate{
-		SignatureAlgorithm:    profileOpts.SignatureAlgorithm,
-		NotBefore:             notBefore,
-		NotAfter:              notAfter,
+		SignatureAlgorithm:    optsProfile.SignatureAlgorithm,
+		NotBefore:             now.Add(optsProfile.Validity.NotBeforeOffset), // default value
+		NotAfter:              now.Add(optsProfile.Validity.NotAfterOffset),  // default value
 		KeyUsage:              finalKU,
-		ExtKeyUsage:           profileOpts.ExtendedKeyUsage,
-		CRLDistributionPoints: apiOpts.CrlDistributionPoints,
+		ExtKeyUsage:           optsProfile.ExtendedKeyUsage,
+		CRLDistributionPoints: optsAPI.CrlDistributionPoints,
 		BasicConstraintsValid: true,
-		IsCA:                  profileOpts.BasicConstraints.IsCA,
-		MaxPathLen:            profileOpts.BasicConstraints.PathLenConstraint,
-		MaxPathLenZero:        profileOpts.BasicConstraints.PathLenConstraint == 0,
+		IsCA:                  optsProfile.BasicConstraints.IsCA,
+		MaxPathLen:            optsProfile.BasicConstraints.PathLenConstraint,
+		MaxPathLenZero:        optsProfile.BasicConstraints.PathLenConstraint == 0,
 	}
 
-	if apiOpts.Subject != "" {
-		rawSubject, err := service.buildRawSubjectExactOrder(apiOpts.Subject, ",")
+	if optsAPI.ValidNotBefore != nil {
+		clientCRTTemplate.NotBefore = *optsAPI.ValidNotBefore
+	}
+	if optsAPI.ValidNotAfter != nil {
+		clientCRTTemplate.NotAfter = *optsAPI.ValidNotAfter
+	}
+
+	if optsAPI.Subject != "" {
+		rawSubject, err := service.buildRawSubjectExactOrder(optsAPI.Subject, ",")
 		if err != nil {
 			return nil, fmt.Errorf("error while building subject from string: %w", err)
 		}
 
 		clientCRTTemplate.RawSubject = rawSubject
 	} else {
-		clientCRTTemplate.RawSubject = apiOpts.CSR.RawSubject
+		clientCRTTemplate.RawSubject = optsAPI.CSR.RawSubject
 	}
 
 	// create client certificate from template and CA public key - DER format
-	return x509.CreateCertificate(rand.Reader, &clientCRTTemplate, apiOpts.CACert, apiOpts.CSR.PublicKey, apiOpts.PrivateKey)
+	return x509.CreateCertificate(rand.Reader, &clientCRTTemplate, optsAPI.CACert, optsAPI.CSR.PublicKey, optsAPI.PrivateKey)
 }
 
 // HashSHA3_256 returns sha3-256 hash of provided bytes or non-nil error if any.
