@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
-	"errors"
 	"fmt"
 	"log/slog"
 	"testing"
@@ -69,20 +68,18 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 		return nil, fmt.Errorf("could not retrieve profile, err: %w", err)
 	}
 
-	input := signClientInput{
-		csr:                   req.Csr,
-		caPrivateKey:          req.CaPrivateKey,
-		caCert:                req.CaCert,
-		validNotBeforeOffset:  req.ValidNotBeforeOffset,
-		validNotAfterOffset:   req.ValidNotAfterOffset,
-		subject:               req.Subject,
-		CrlDistributionPoints: req.CrlDistributionPoints,
+	input, err := newSignClientInput(req)
+	if err != nil {
+		slog.Debug(err.Error())
+
+		return nil, fmt.Errorf("error parsing request data: %w", err)
 	}
+
 	clientCRTRaw, err := server.sign(input, reqProfile)
 	if err != nil {
 		slog.Debug(err.Error())
 
-		return nil, fmt.Errorf("error while signing data: %s", err.Error())
+		return nil, fmt.Errorf("error while signing data: %w", err)
 	}
 
 	timestampEndpointEnd := time.Now()
@@ -190,13 +187,55 @@ func runSignBenchmark(name string, benchmarkFunc func(*testing.B) error) (Benchm
 }
 
 type signClientInput struct {
-	csr                   string
-	caPrivateKey          string
-	caCert                string
-	validNotBeforeOffset  *string
-	validNotAfterOffset   *string
+	csr                   *x509.CertificateRequest
+	caPrivateKey          any
+	caCert                *x509.Certificate
+	validNotBefore        *time.Time
+	validNotAfter         *time.Time
 	subject               *string
 	CrlDistributionPoints []string
+}
+
+func newSignClientInput(req *protobuf.SignRequest) (signClientInput, error) {
+	block, _ := pem.Decode([]byte(req.Csr))
+	if block == nil {
+		return signClientInput{}, fmt.Errorf("could not decode CSR as PEM file")
+	}
+
+	csr, err := x509.ParseCertificateRequest(block.Bytes)
+	if err != nil {
+		return signClientInput{}, fmt.Errorf("could not parse certificate request, err: %s", err)
+	}
+
+	caPrivateKey, err := c10y.ParsePrivateKeyFromPEM([]byte(req.CaPrivateKey))
+	if err != nil {
+		return signClientInput{}, fmt.Errorf("could not parse private key, err: %s", err)
+	}
+
+	cert, err := c10y.ParseX509Cert([]byte(req.CaCert))
+	if err != nil {
+		return signClientInput{}, fmt.Errorf("could not parse x.509 CA cert from request, err: %w", err)
+	}
+
+	input := signClientInput{
+		csr:                   csr,
+		caPrivateKey:          caPrivateKey,
+		caCert:                cert,
+		subject:               req.Subject,
+		CrlDistributionPoints: req.CrlDistributionPoints,
+	}
+
+	if req.ValidNotBefore != nil {
+		startValidity := time.Unix(int64(*req.ValidNotBefore), 0)
+		input.validNotBefore = &startValidity
+	}
+
+	if req.ValidNotAfter != nil {
+		endValidity := time.Unix(int64(*req.ValidNotAfter), 0)
+		input.validNotAfter = &endValidity
+	}
+
+	return input, nil
 }
 
 // sign contains logic that signs CSR and returns signed certificate or non-nil error if any.
@@ -214,73 +253,6 @@ func (server *CryptoBrokerServer) sign(clientInput signClientInput, p profile.Pr
 			p.Settings.CryptoLibrary, c10y.SupportedCryptographicLibraries)
 	}
 
-	block, _ := pem.Decode([]byte(clientInput.csr))
-	if block == nil {
-		return nil, fmt.Errorf("could not decode CSR as PEM file")
-	}
-
-	csr, err := x509.ParseCertificateRequest(block.Bytes)
-	if err != nil {
-		return nil, fmt.Errorf("could not parse certificate request, err: %s", err)
-	}
-
-	if err = csr.CheckSignature(); err != nil {
-		return nil, fmt.Errorf("invalid certificate request signature, err: %s", err)
-	}
-
-	// Check whether the public key in CSR is secure enough according to profile
-	if err = c10y.ValidatePublicKey(csr.PublicKey, p.API.SignCertificate.KeyConstraints.Subject); err != nil {
-		if errors.Is(err, c10y.ErrMissingKeyConstraints) {
-			return nil, fmt.Errorf("profile does not contain key constraints for algorithm used in the CSR's public key, err: %w", err)
-		}
-
-		return nil, fmt.Errorf("invalid public key, err: %w", err)
-	}
-
-	caPrivateKey, err := c10y.ParsePrivateKeyFromPEM([]byte(clientInput.caPrivateKey))
-	if err != nil {
-		return nil, fmt.Errorf("could not parse private key, err: %s", err)
-	}
-
-	// Check whether the private key from the CA is secure enough according to profile
-	if err = c10y.ValidatePrivateKey(caPrivateKey, p.API.SignCertificate.KeyConstraints.Issuer); err != nil {
-		if errors.Is(err, c10y.ErrMissingKeyConstraints) {
-			return nil, fmt.Errorf("profile does not contain key constraints for algorithm used in the CA's private key, err: %w", err)
-		}
-
-		return nil, err
-	}
-
-	cert, err := c10y.ParseX509Cert([]byte(clientInput.caCert))
-	if err != nil {
-		return nil, fmt.Errorf("could not parse x.509 CA cert from request, err: %w", err)
-	}
-
-	// Parse the custom durations
-	var notBeforeOffset, notAfterOffset time.Duration
-	if clientInput.validNotBeforeOffset != nil {
-		notBeforeOffset, err = time.ParseDuration(*clientInput.validNotBeforeOffset)
-		if err != nil {
-			return nil, fmt.Errorf("error while parsing the User's defined notBeforeOffset %w", err)
-		}
-		if notBeforeOffset-p.API.SignCertificate.Validity.NotBeforeOffset < 0 {
-			return nil, fmt.Errorf("error: user's beforeOffset %s is earlier than the allowed by the profile %s", notBeforeOffset.String(), p.API.SignCertificate.Validity.NotBeforeOffset.String())
-		}
-	} else {
-		notBeforeOffset = p.API.SignCertificate.Validity.NotBeforeOffset
-	}
-	if clientInput.validNotAfterOffset != nil {
-		notAfterOffset, err = time.ParseDuration(*clientInput.validNotAfterOffset)
-		if err != nil {
-			return nil, fmt.Errorf("error while parsing the User's defined notAfterOffset %w", err)
-		}
-		if notAfterOffset-p.API.SignCertificate.Validity.NotAfterOffset > 0 {
-			return nil, fmt.Errorf("error: user's afterOffset %s is later than the allowed by the profile %s", notAfterOffset.String(), p.API.SignCertificate.Validity.NotAfterOffset.String())
-		}
-	} else {
-		notAfterOffset = p.API.SignCertificate.Validity.NotAfterOffset
-	}
-
 	var subject string
 	if clientInput.subject != nil {
 		subject = *clientInput.subject
@@ -288,9 +260,9 @@ func (server *CryptoBrokerServer) sign(clientInput signClientInput, p profile.Pr
 
 	optsProfile := c10y.SignProfileOpts{
 		SignatureAlgorithm: p.API.SignCertificate.SignatureAlgorithm,
-		Validity: c10y.SignProfileValidity{
-			NotBefore: notBeforeOffset,
-			NotAfter:  notAfterOffset,
+		Validity: c10y.SignProfileValidity{ // default values
+			NotBeforeOffset: p.API.SignCertificate.Validity.NotBeforeOffset,
+			NotAfterOffset:  p.API.SignCertificate.Validity.NotAfterOffset,
 		},
 		KeyUsage:         p.API.SignCertificate.KeyUsage,
 		ExtendedKeyUsage: p.API.SignCertificate.ExtendedKeyUsage,
@@ -298,13 +270,17 @@ func (server *CryptoBrokerServer) sign(clientInput signClientInput, p profile.Pr
 			IsCA:              p.API.SignCertificate.BasicConstraints.CA,
 			PathLenConstraint: p.API.SignCertificate.BasicConstraints.PathLenConstraint,
 		},
+		SubjectKeyConstraints: p.API.SignCertificate.KeyConstraints.Subject,
 	}
+
 	optsAPI := c10y.SignAPIOpts{
-		CACert:                cert,
-		PrivateKey:            caPrivateKey,
-		CSR:                   csr,
+		CACert:                clientInput.caCert,
+		PrivateKey:            clientInput.caPrivateKey,
+		CSR:                   clientInput.csr,
 		Subject:               subject,
 		CrlDistributionPoints: clientInput.CrlDistributionPoints,
+		ValidNotBefore:        clientInput.validNotBefore,
+		ValidNotAfter:         clientInput.validNotAfter,
 	}
 	clientCRTRaw, err := s.SignCertificate(optsProfile, optsAPI)
 	if err != nil {

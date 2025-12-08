@@ -196,13 +196,13 @@ TLMhGrEVDwuywR+ol4Sg2cogP86upiZzWv4a1J+0ySFUyBDOEjicmfo=
 			Organization: []string{"SAP"},
 			CommonName:   "MyCert",
 		}.String()
-		beforeOffset := "-1h"
-		afterOffset := "24h"
+		timeBefore := time.Now().Add(-1 * time.Hour)
+		timeAfter := time.Now().Add(24 * time.Hour)
 
 		req.CrlDistributionPoints = []string{"http://www.example.com/crl/test.crl"}
 		req.Subject = &subject
-		req.ValidNotBeforeOffset = &beforeOffset
-		req.ValidNotAfterOffset = &afterOffset
+		req.ValidNotBefore = toPointerUint64(timeBefore.UTC().Unix())
+		req.ValidNotAfter = toPointerUint64(timeAfter.UTC().Unix())
 		req.Metadata = &protobuf.Metadata{
 			Id:        "00001-2345689-abcdefg-1",
 			CreatedAt: time.Now().String(),
@@ -271,4 +271,9 @@ TLMhGrEVDwuywR+ol4Sg2cogP86upiZzWv4a1J+0ySFUyBDOEjicmfo=
 			t.Fatalf("Expected error for insecure public key, got nil or unexpected error: %s", err)
 		}
 	})
+}
+
+func toPointerUint64(value int64) *uint64 {
+	v := uint64(value)
+	return &v
 }

@@ -54,20 +54,23 @@ type SignAPIOpts struct {
 	CSR                   *x509.CertificateRequest
 	Subject               string
 	CrlDistributionPoints []string
+	ValidNotBefore        *time.Time
+	ValidNotAfter         *time.Time
 }
 
 // SignProfileOpts represents all information required in certificate signing process provided from profile
 type SignProfileOpts struct {
-	SignatureAlgorithm x509.SignatureAlgorithm
-	Validity           SignProfileValidity
-	KeyUsage           []x509.KeyUsage
-	ExtendedKeyUsage   []x509.ExtKeyUsage
-	BasicConstraints   SignProfileBasicConstraints
+	SignatureAlgorithm    x509.SignatureAlgorithm
+	Validity              SignProfileValidity
+	KeyUsage              []x509.KeyUsage
+	ExtendedKeyUsage      []x509.ExtKeyUsage
+	BasicConstraints      SignProfileBasicConstraints
+	SubjectKeyConstraints map[Algorithm]BitSizeConstraints
 }
 
 type SignProfileValidity struct {
-	NotBefore time.Duration
-	NotAfter  time.Duration
+	NotBeforeOffset time.Duration
+	NotAfterOffset  time.Duration
 }
 
 type SignProfileBasicConstraints struct {

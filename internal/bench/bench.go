@@ -138,8 +138,8 @@ func RunSignCertificateNISTSECP521R1RSA4096Benchmark(b *testing.B) error {
 		},
 		SignatureAlgorithm: x509.ECDSAWithSHA512,
 		Validity: c10y.SignProfileValidity{
-			NotBefore: notBefore,
-			NotAfter:  notAfter,
+			NotBeforeOffset: notBefore,
+			NotAfterOffset:  notAfter,
 		},
 		KeyUsage:         []x509.KeyUsage{x509.KeyUsageDigitalSignature, x509.KeyUsageKeyEncipherment},
 		ExtendedKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
@@ -260,8 +260,8 @@ func RunSignCertificateNISTSECP521R1NISTSECP521R1Benchmark(b *testing.B) error {
 		},
 		SignatureAlgorithm: x509.ECDSAWithSHA512,
 		Validity: c10y.SignProfileValidity{
-			NotBefore: notBefore,
-			NotAfter:  notAfter,
+			NotBeforeOffset: notBefore,
+			NotAfterOffset:  notAfter,
 		},
 		KeyUsage:         []x509.KeyUsage{x509.KeyUsageDigitalSignature, x509.KeyUsageKeyEncipherment},
 		ExtendedKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
@@ -366,8 +366,8 @@ func RunSignCertificateBenchmark(b *testing.B) error {
 		},
 		SignatureAlgorithm: x509.ECDSAWithSHA512,
 		Validity: c10y.SignProfileValidity{
-			NotBefore: notBefore,
-			NotAfter:  notAfter,
+			NotBeforeOffset: notBefore,
+			NotAfterOffset:  notAfter,
 		},
 		KeyUsage:         []x509.KeyUsage{x509.KeyUsageDigitalSignature, x509.KeyUsageKeyEncipherment},
 		ExtendedKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
