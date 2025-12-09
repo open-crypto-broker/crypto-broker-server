@@ -186,6 +186,7 @@ func runSignBenchmark(name string, benchmarkFunc func(*testing.B) error) (Benchm
 	return BenchmarkResult{Name: name, AvgTime: avgTime}, nil
 }
 
+// signClientInput represents the input for the sign method from the client
 type signClientInput struct {
 	csr                   *x509.CertificateRequest
 	caPrivateKey          any
@@ -196,6 +197,7 @@ type signClientInput struct {
 	CrlDistributionPoints []string
 }
 
+// newSignClientInput parses the request and returns the signClientInput
 func newSignClientInput(req *protobuf.SignRequest) (signClientInput, error) {
 	block, _ := pem.Decode([]byte(req.Csr))
 	if block == nil {
@@ -260,7 +262,7 @@ func (server *CryptoBrokerServer) sign(clientInput signClientInput, p profile.Pr
 
 	optsProfile := c10y.SignProfileOpts{
 		SignatureAlgorithm: p.API.SignCertificate.SignatureAlgorithm,
-		Validity: c10y.SignProfileValidity{ // default values
+		Validity: c10y.SignProfileValidity{
 			NotBeforeOffset: p.API.SignCertificate.Validity.NotBeforeOffset,
 			NotAfterOffset:  p.API.SignCertificate.Validity.NotAfterOffset,
 		},

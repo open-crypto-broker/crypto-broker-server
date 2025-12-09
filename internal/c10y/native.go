@@ -52,34 +52,6 @@ func (service *LibraryNative) ParseRSAPrivateKeyFromPEM(key []byte) (any, error)
 	return parsedKey, nil
 }
 
-func (service *LibraryNative) validateSignData(optsProfile SignProfileOpts, optsAPI SignAPIOpts) error {
-	if err := optsAPI.CSR.CheckSignature(); err != nil {
-		return fmt.Errorf("invalid certificate request signature, err: %s", err)
-	}
-
-	if err := ValidatePublicKey(optsAPI.CSR.PublicKey, optsProfile.SubjectKeyConstraints); err != nil {
-		if errors.Is(err, ErrMissingKeyConstraints) {
-			return fmt.Errorf("profile does not contain key constraints for algorithm used in the CSR's public key, err: %w", err)
-		}
-
-		return fmt.Errorf("invalid public key, err: %w", err)
-	}
-
-	now := time.Now().UTC()
-	notBeforeConstraint := now.Add(optsProfile.Validity.NotBeforeOffset)
-	notAfterConstraint := now.Add(optsProfile.Validity.NotAfterOffset)
-
-	if optsAPI.ValidNotBefore != nil && optsAPI.ValidNotBefore.Before(notBeforeConstraint) {
-		return fmt.Errorf("error: certificate validity %s is earlier than the allowed by the profile %s", optsAPI.ValidNotBefore.String(), notBeforeConstraint.String())
-	}
-
-	if optsAPI.ValidNotAfter != nil && optsAPI.ValidNotAfter.After(notAfterConstraint) {
-		return fmt.Errorf("error: certificate end validity %s is later than the allowed by the profile %s", optsAPI.ValidNotAfter.String(), notAfterConstraint.String())
-	}
-
-	return nil
-}
-
 // Sign certificate signs provided CSR using std go lib as crypto engine.
 // As a result method returns signed certificate in DEF format or non-nil error if any.
 func (service *LibraryNative) SignCertificate(optsProfile SignProfileOpts, optsAPI SignAPIOpts) ([]byte, error) {
@@ -108,10 +80,10 @@ func (service *LibraryNative) SignCertificate(optsProfile SignProfileOpts, optsA
 	}
 
 	if optsAPI.ValidNotBefore != nil {
-		clientCRTTemplate.NotBefore = *optsAPI.ValidNotBefore
+		clientCRTTemplate.NotBefore = optsAPI.ValidNotBefore.UTC()
 	}
 	if optsAPI.ValidNotAfter != nil {
-		clientCRTTemplate.NotAfter = *optsAPI.ValidNotAfter
+		clientCRTTemplate.NotAfter = optsAPI.ValidNotAfter.UTC()
 	}
 
 	if optsAPI.Subject != "" {
@@ -231,4 +203,33 @@ func (service *LibraryNative) composeAttributeTypeAndValue(part string) ([]pkix.
 	}
 
 	return []pkix.AttributeTypeAndValue{{Type: oid, Value: v}}, nil
+}
+
+// validateSignData validates the sign data
+func (service *LibraryNative) validateSignData(optsProfile SignProfileOpts, optsAPI SignAPIOpts) error {
+	if err := optsAPI.CSR.CheckSignature(); err != nil {
+		return fmt.Errorf("invalid certificate request signature, err: %s", err)
+	}
+
+	if err := ValidatePublicKey(optsAPI.CSR.PublicKey, optsProfile.SubjectKeyConstraints); err != nil {
+		if errors.Is(err, ErrMissingKeyConstraints) {
+			return fmt.Errorf("profile does not contain key constraints for algorithm used in the CSR's public key, err: %w", err)
+		}
+
+		return fmt.Errorf("invalid public key, err: %w", err)
+	}
+
+	now := time.Now().UTC()
+	notBeforeConstraint := now.Add(optsProfile.Validity.NotBeforeOffset)
+	notAfterConstraint := now.Add(optsProfile.Validity.NotAfterOffset)
+
+	if optsAPI.ValidNotBefore != nil && optsAPI.ValidNotBefore.Before(notBeforeConstraint) {
+		return fmt.Errorf("error: certificate validity %s is earlier than the allowed by the profile %s", optsAPI.ValidNotBefore.String(), notBeforeConstraint.String())
+	}
+
+	if optsAPI.ValidNotAfter != nil && optsAPI.ValidNotAfter.After(notAfterConstraint) {
+		return fmt.Errorf("error: certificate end validity %s is later than the allowed by the profile %s", optsAPI.ValidNotAfter.String(), notAfterConstraint.String())
+	}
+
+	return nil
 }
