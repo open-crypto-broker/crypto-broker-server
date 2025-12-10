@@ -352,7 +352,7 @@ G3XM0iYE0H/fX6JnVHervw+RTAtYLkYZT/Hecyyvam9CBvVwL1Z2Ly8AfPhvEOw8
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			service := &LibraryNative{}
-			_, err := service.ParseRSAPrivateKeyFromPEM(tt.args.key)
+			_, err := service.parseRSAPrivateKeyFromPEM(tt.args.key)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("LibraryNative.ParseRSAPrivateKeyFromPEM() error = %v, wantErr %v", err, tt.wantErr)
 				return

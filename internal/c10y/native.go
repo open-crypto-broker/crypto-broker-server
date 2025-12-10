@@ -17,40 +17,6 @@ import (
 // LibraryNative is entity that knows how to perform cryptographic operations using std golang lib
 type LibraryNative struct{}
 
-var oidMap = map[string]asn1.ObjectIdentifier{
-	"C":  {2, 5, 4, 6},
-	"ST": {2, 5, 4, 8},
-	"O":  {2, 5, 4, 10},
-	"OU": {2, 5, 4, 11},
-	"L":  {2, 5, 4, 7},
-	"CN": {2, 5, 4, 3},
-}
-
-// NewLibraryNative returns pointer to Native.
-func NewLibraryNative() *LibraryNative {
-	return &LibraryNative{}
-}
-
-// ParseRSAPrivateKeyFromPEM parses a PEM encoded PKCS1 or PKCS8 private key
-func (service *LibraryNative) ParseRSAPrivateKeyFromPEM(key []byte) (any, error) {
-	var err error
-
-	// Parse PEM block
-	var block *pem.Block
-	if block, _ = pem.Decode(key); block == nil {
-		return nil, fmt.Errorf("key must be PEM encoded")
-	}
-
-	var parsedKey any
-	if parsedKey, err = x509.ParsePKCS1PrivateKey(block.Bytes); err != nil {
-		if parsedKey, err = x509.ParsePKCS8PrivateKey(block.Bytes); err != nil {
-			return nil, err
-		}
-	}
-
-	return parsedKey, nil
-}
-
 type SignCertificateInput struct {
 	KeyUsage              x509.KeyUsage
 	ExtendedKeyUsage      []x509.ExtKeyUsage
@@ -66,6 +32,20 @@ type SignCertificateInput struct {
 	PrivateKey            any
 }
 
+var oidMap = map[string]asn1.ObjectIdentifier{
+	"C":  {2, 5, 4, 6},
+	"ST": {2, 5, 4, 8},
+	"O":  {2, 5, 4, 10},
+	"OU": {2, 5, 4, 11},
+	"L":  {2, 5, 4, 7},
+	"CN": {2, 5, 4, 3},
+}
+
+// NewLibraryNative returns pointer to Native.
+func NewLibraryNative() *LibraryNative {
+	return &LibraryNative{}
+}
+
 // Sign certificate signs provided CSR using std go lib as crypto engine.
 // As a result method returns signed certificate in DEF format or non-nil error if any.
 func (service *LibraryNative) SignCertificate(input SignCertificateInput) ([]byte, error) {
@@ -73,11 +53,22 @@ func (service *LibraryNative) SignCertificate(input SignCertificateInput) ([]byt
 		return nil, fmt.Errorf("invalid certificate request signature, err: %w", err)
 	}
 
+	if input.NotBefore.IsZero() {
+		return nil, fmt.Errorf("notBefore is zero")
+	}
+	if input.NotAfter.IsZero() {
+		return nil, fmt.Errorf("notAfter is zero")
+	}
+
+	if input.NotBefore.UTC().After(input.NotAfter.UTC()) {
+		return nil, fmt.Errorf("notBefore (%s) is after notAfter (%s)", input.NotBefore.UTC().String(), input.NotAfter.UTC().String())
+	}
+
 	// Note that serial number is auto generated as desired by CreateCertificate when SerialNumber key is set to nil
 	clientCRTTemplate := x509.Certificate{
 		SignatureAlgorithm:    input.SignatureAlgorithm,
-		NotBefore:             input.NotBefore, // default value
-		NotAfter:              input.NotAfter,  // default value
+		NotBefore:             input.NotBefore.UTC(), // default value
+		NotAfter:              input.NotAfter.UTC(),  // default value
 		KeyUsage:              input.KeyUsage,
 		ExtKeyUsage:           input.ExtendedKeyUsage,
 		CRLDistributionPoints: input.CrlDistributionPoints,
@@ -101,55 +92,6 @@ func (service *LibraryNative) SignCertificate(input SignCertificateInput) ([]byt
 	// create client certificate from template and CA public key - DER format
 	return x509.CreateCertificate(rand.Reader, &clientCRTTemplate, input.CACert, input.CSR.PublicKey, input.PrivateKey)
 }
-
-// Sign certificate signs provided CSR using std go lib as crypto engine.
-// As a result method returns signed certificate in DEF format or non-nil error if any.
-// func (service *LibraryNative) SignCertificate(optsProfile SignProfileOpts, optsAPI SignAPIOpts) ([]byte, error) {
-// 	if err := service.validateSignData(optsProfile, optsAPI); err != nil {
-// 		return nil, fmt.Errorf("validation error(s): %w", err)
-// 	}
-
-// 	var finalKU x509.KeyUsage
-// 	for _, ku := range optsProfile.KeyUsage {
-// 		finalKU = finalKU | ku
-// 	}
-
-// 	now := time.Now().UTC()
-// 	// Note that serial number is auto generated as desired by CreateCertificate when SerialNumber key is set to nil
-// 	clientCRTTemplate := x509.Certificate{
-// 		SignatureAlgorithm:    optsProfile.SignatureAlgorithm,
-// 		NotBefore:             now.Add(optsProfile.Validity.NotBeforeOffset), // default value
-// 		NotAfter:              now.Add(optsProfile.Validity.NotAfterOffset),  // default value
-// 		KeyUsage:              finalKU,
-// 		ExtKeyUsage:           optsProfile.ExtendedKeyUsage,
-// 		CRLDistributionPoints: optsAPI.CrlDistributionPoints,
-// 		BasicConstraintsValid: true,
-// 		IsCA:                  optsProfile.BasicConstraints.IsCA,
-// 		MaxPathLen:            optsProfile.BasicConstraints.PathLenConstraint,
-// 		MaxPathLenZero:        optsProfile.BasicConstraints.PathLenConstraint == 0,
-// 	}
-
-// 	if optsAPI.ValidNotBefore != nil {
-// 		clientCRTTemplate.NotBefore = optsAPI.ValidNotBefore.UTC()
-// 	}
-// 	if optsAPI.ValidNotAfter != nil {
-// 		clientCRTTemplate.NotAfter = optsAPI.ValidNotAfter.UTC()
-// 	}
-
-// 	if optsAPI.Subject != "" {
-// 		rawSubject, err := service.buildRawSubjectExactOrder(optsAPI.Subject, ",")
-// 		if err != nil {
-// 			return nil, fmt.Errorf("error while building subject from string: %w", err)
-// 		}
-
-// 		clientCRTTemplate.RawSubject = rawSubject
-// 	} else {
-// 		clientCRTTemplate.RawSubject = optsAPI.CSR.RawSubject
-// 	}
-
-// 	// create client certificate from template and CA public key - DER format
-// 	return x509.CreateCertificate(rand.Reader, &clientCRTTemplate, optsAPI.CACert, optsAPI.CSR.PublicKey, optsAPI.PrivateKey)
-// }
 
 // HashSHA3_256 returns sha3-256 hash of provided bytes or non-nil error if any.
 func (service *LibraryNative) HashSHA3_256(dataToHash []byte) (Hash, error) {
@@ -253,4 +195,24 @@ func (service *LibraryNative) composeAttributeTypeAndValue(part string) ([]pkix.
 	}
 
 	return []pkix.AttributeTypeAndValue{{Type: oid, Value: v}}, nil
+}
+
+// parseRSAPrivateKeyFromPEM parses a PEM encoded PKCS1 or PKCS8 private key
+func (service *LibraryNative) parseRSAPrivateKeyFromPEM(key []byte) (any, error) {
+	var err error
+
+	// Parse PEM block
+	var block *pem.Block
+	if block, _ = pem.Decode(key); block == nil {
+		return nil, fmt.Errorf("key must be PEM encoded")
+	}
+
+	var parsedKey any
+	if parsedKey, err = x509.ParsePKCS1PrivateKey(block.Bytes); err != nil {
+		if parsedKey, err = x509.ParsePKCS8PrivateKey(block.Bytes); err != nil {
+			return nil, err
+		}
+	}
+
+	return parsedKey, nil
 }
