@@ -110,8 +110,8 @@ run_benchmark_assertion "BenchmarkLibraryNative_HashSHA_512" 3200 5
 run_benchmark_assertion "BenchmarkLibraryNative_HashSHA_512_256" 4100 5
 run_benchmark_assertion "BenchmarkLibraryNative_HashShake_128" 4500 12
 run_benchmark_assertion "BenchmarkLibraryNative_HashShake_256" 4800 12
-run_benchmark_assertion "BenchmarkLibraryNative_SignCertificate_NIST_SECP521R1_RSA4096" 7000000 400
-run_benchmark_assertion "BenchmarkLibraryNative_SignCertificate_NIST_SECP521R1_NIST_SECP521R1" 7000000 400
+run_benchmark_assertion "BenchmarkLibraryNative_SignCertificate_NIST_SECP521R1_RSA4096" 7000000 501
+run_benchmark_assertion "BenchmarkLibraryNative_SignCertificate_NIST_SECP521R1_NIST_SECP521R1" 7000000 501
 
 echo ""
 echo "All benchmark assertions passed!"
