@@ -131,20 +131,6 @@ func RunSignCertificateNISTSECP521R1RSA4096Benchmark(b *testing.B) error {
 		return fmt.Errorf("could not parse duration: %w", err)
 	}
 
-	optsProfile := c10y.SignProfileOpts{
-		BasicConstraints: c10y.SignProfileBasicConstraints{
-			IsCA:              false,
-			PathLenConstraint: -1,
-		},
-		SignatureAlgorithm: x509.ECDSAWithSHA512,
-		Validity: c10y.SignProfileValidity{
-			NotBeforeOffset: notBefore,
-			NotAfterOffset:  notAfter,
-		},
-		KeyUsage:         []x509.KeyUsage{x509.KeyUsageDigitalSignature, x509.KeyUsageKeyEncipherment},
-		ExtendedKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-	}
-
 	caCert := []byte(`-----BEGIN CERTIFICATE-----
 MIIC7DCCAk2gAwIBAgIUcy7fW7YwJWYg5YC1VIK+27ly8yYwCgYIKoZIzj0EAwQw
 fjELMAkGA1UEBhMCREUxEDAOBgNVBAgMB0JhdmFyaWExGjAYBgNVBAoMEVRlc3Qt
@@ -224,16 +210,30 @@ JLFlCR8pW4jVERN6wUotELx/7PvCp4BinWRFwA128Zm3rpZUC5ij3SBfg7Rya6om
 		return fmt.Errorf("invalid certificate request signature: %w", err)
 	}
 
-	optsAPI := c10y.SignAPIOpts{
-		CSR:        csrParsed,
-		CACert:     caCertParsed,
-		PrivateKey: caPrivateKeyParsed,
-		Subject:    "C=DE, O=SAP SE, OU=SAP Cloud Platform Certificate Service Test Clients, OU=Dev, OU=cf-us10-staging-certificate-service, L=test, CN=test",
+	now := time.Now().UTC()
+	kus := []x509.KeyUsage{x509.KeyUsageDigitalSignature, x509.KeyUsageKeyEncipherment}
+	var finalKU x509.KeyUsage
+	for _, ku := range kus {
+		finalKU = finalKU | ku
+	}
+
+	input := c10y.SignCertificateInput{
+		CSR:                csrParsed,
+		CACert:             caCertParsed,
+		PrivateKey:         caPrivateKeyParsed,
+		Subject:            "C=DE, O=SAP SE, OU=SAP Cloud Platform Certificate Service Test Clients, OU=Dev, OU=cf-us10-staging-certificate-service, L=test, CN=test",
+		NotBefore:          now.Add(notBefore),
+		NotAfter:           now.Add(notAfter),
+		KeyUsage:           finalKU,
+		ExtendedKeyUsage:   []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		IsCA:               false,
+		PathLenConstraint:  -1,
+		SignatureAlgorithm: x509.ECDSAWithSHA512,
 	}
 
 	service := c10y.NewLibraryNative()
 	for b.Loop() {
-		_, err := service.SignCertificate(optsProfile, optsAPI)
+		_, err := service.SignCertificate(input)
 		if err != nil {
 			return fmt.Errorf("could not sign certificate: %w", err)
 		}
@@ -251,20 +251,6 @@ func RunSignCertificateNISTSECP521R1NISTSECP521R1Benchmark(b *testing.B) error {
 	notBefore, err := time.ParseDuration("-1h")
 	if err != nil {
 		return fmt.Errorf("could not parse duration: %w", err)
-	}
-
-	optsProfile := c10y.SignProfileOpts{
-		BasicConstraints: c10y.SignProfileBasicConstraints{
-			IsCA:              false,
-			PathLenConstraint: -1,
-		},
-		SignatureAlgorithm: x509.ECDSAWithSHA512,
-		Validity: c10y.SignProfileValidity{
-			NotBeforeOffset: notBefore,
-			NotAfterOffset:  notAfter,
-		},
-		KeyUsage:         []x509.KeyUsage{x509.KeyUsageDigitalSignature, x509.KeyUsageKeyEncipherment},
-		ExtendedKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 	}
 
 	caCert := []byte(`-----BEGIN CERTIFICATE-----
@@ -330,16 +316,28 @@ xz4as/yt+3tVfrJa9Yaf3TjDqlTlncA8kJ3hhsRX5U/dwEJv2/ZMO7MWh12XUrQL
 		return fmt.Errorf("invalid certificate request signature: %w", err)
 	}
 
-	optsAPI := c10y.SignAPIOpts{
-		CSR:        csrParsed,
-		CACert:     caCertParsed,
-		PrivateKey: caPrivateKeyParsed,
-		Subject:    "C=DE, O=SAP SE, OU=SAP Cloud Platform Certificate Service Test Clients, OU=Dev, OU=cf-us10-staging-certificate-service, L=test, CN=test",
-	}
-
 	service := c10y.NewLibraryNative()
+	now := time.Now().UTC()
+	kus := []x509.KeyUsage{x509.KeyUsageDigitalSignature, x509.KeyUsageKeyEncipherment}
+	var finalKU x509.KeyUsage
+	for _, ku := range kus {
+		finalKU = finalKU | ku
+	}
+	input := c10y.SignCertificateInput{
+		CSR:                csrParsed,
+		CACert:             caCertParsed,
+		PrivateKey:         caPrivateKeyParsed,
+		Subject:            "C=DE, O=SAP SE, OU=SAP Cloud Platform Certificate Service Test Clients, OU=Dev, OU=cf-us10-staging-certificate-service, L=test, CN=test",
+		NotBefore:          now.Add(notBefore),
+		NotAfter:           now.Add(notAfter),
+		KeyUsage:           finalKU,
+		ExtendedKeyUsage:   []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		IsCA:               false,
+		PathLenConstraint:  -1,
+		SignatureAlgorithm: x509.ECDSAWithSHA512,
+	}
 	for b.Loop() {
-		_, err := service.SignCertificate(optsProfile, optsAPI)
+		_, err := service.SignCertificate(input)
 		if err != nil {
 			return fmt.Errorf("could not sign certificate: %w", err)
 		}
@@ -359,19 +357,6 @@ func RunSignCertificateBenchmark(b *testing.B) error {
 	}
 
 	service := c10y.NewLibraryNative()
-	optsProfile := c10y.SignProfileOpts{
-		BasicConstraints: c10y.SignProfileBasicConstraints{
-			IsCA:              false,
-			PathLenConstraint: -1,
-		},
-		SignatureAlgorithm: x509.ECDSAWithSHA512,
-		Validity: c10y.SignProfileValidity{
-			NotBeforeOffset: notBefore,
-			NotAfterOffset:  notAfter,
-		},
-		KeyUsage:         []x509.KeyUsage{x509.KeyUsageDigitalSignature, x509.KeyUsageKeyEncipherment},
-		ExtendedKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-	}
 
 	caCert, err := os.ReadFile(os.Getenv(env.BENCHMARK_SIGN_CERTIFICATE_CA_CERT))
 	if err != nil {
@@ -410,16 +395,27 @@ func RunSignCertificateBenchmark(b *testing.B) error {
 		b.Fatalf("invalid certificate request signature, err: %s", err.Error())
 	}
 
-	optsAPI := c10y.SignAPIOpts{
-		CSR:        csrParsed,
-		CACert:     caCertParsed,
-		PrivateKey: caPrivateKeyParsed,
-		Subject:    "C=DE, O=SAP SE, OU=SAP Cloud Platform Certificate Service Test Clients, OU=Dev, OU=cf-us10-staging-certificate-service, L=test, CN=test",
-		// CrlDistributionPoints: []string{"http://example.com/crl"},
+	now := time.Now().UTC()
+	kus := []x509.KeyUsage{x509.KeyUsageDigitalSignature, x509.KeyUsageKeyEncipherment}
+	var finalKU x509.KeyUsage
+	for _, ku := range kus {
+		finalKU = finalKU | ku
 	}
-
+	input := c10y.SignCertificateInput{
+		CSR:                csrParsed,
+		CACert:             caCertParsed,
+		PrivateKey:         caPrivateKeyParsed,
+		Subject:            "C=DE, O=SAP SE, OU=SAP Cloud Platform Certificate Service Test Clients, OU=Dev, OU=cf-us10-staging-certificate-service, L=test, CN=test",
+		NotBefore:          now.Add(notBefore),
+		NotAfter:           now.Add(notAfter),
+		KeyUsage:           finalKU,
+		ExtendedKeyUsage:   []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		IsCA:               false,
+		PathLenConstraint:  -1,
+		SignatureAlgorithm: x509.ECDSAWithSHA512,
+	}
 	for b.Loop() {
-		_, err := service.SignCertificate(optsProfile, optsAPI)
+		_, err := service.SignCertificate(input)
 		if err != nil {
 			return fmt.Errorf("could not sign certificate: %w", err)
 		}

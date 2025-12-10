@@ -4,6 +4,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 )
 
-
+// Sign defines the procedure for signing a certificate
 type Sign struct {
 	cryptographicEngineNative *c10y.LibraryNative
 }
@@ -32,6 +33,7 @@ func NewSign(cryptographicEngineNative *c10y.LibraryNative) *Sign {
 	return &Sign{cryptographicEngineNative: cryptographicEngineNative}
 }
 
+// Execute executes the sign procedure
 func (procedure *Sign) Execute(req *protobuf.SignRequest) (*protobuf.SignResponse, error) {
 	reqProfile, err := profile.Retrieve(req.Profile)
 	if err != nil {
@@ -55,9 +57,9 @@ func (procedure *Sign) Execute(req *protobuf.SignRequest) (*protobuf.SignRespons
 }
 
 // sign contains logic that signs CSR and returns signed certificate or non-nil error if any.
-func (procedure *Sign) sign(clientInput signRequest, p profile.Profile) (certDER []byte, err error) {
+func (procedure *Sign) sign(req signRequest, p profile.Profile) (certDER []byte, err error) {
 	type signer interface {
-		SignCertificate(c10y.SignProfileOpts, c10y.SignAPIOpts) ([]byte, error)
+		SignCertificate(c10y.SignCertificateInput) ([]byte, error)
 	}
 
 	var s signer
@@ -70,40 +72,58 @@ func (procedure *Sign) sign(clientInput signRequest, p profile.Profile) (certDER
 	}
 
 	var subject string
-	if clientInput.subject != nil {
-		subject = *clientInput.subject
+	if req.subject != nil {
+		subject = *req.subject
 	}
 
-	optsProfile := c10y.SignProfileOpts{
-		SignatureAlgorithm: p.API.SignCertificate.SignatureAlgorithm,
-		Validity: c10y.SignProfileValidity{
-			NotBeforeOffset: p.API.SignCertificate.Validity.NotBeforeOffset,
-			NotAfterOffset:  p.API.SignCertificate.Validity.NotAfterOffset,
-		},
-		KeyUsage:         p.API.SignCertificate.KeyUsage,
-		ExtendedKeyUsage: p.API.SignCertificate.ExtendedKeyUsage,
-		BasicConstraints: c10y.SignProfileBasicConstraints{
-			IsCA:              p.API.SignCertificate.BasicConstraints.CA,
-			PathLenConstraint: p.API.SignCertificate.BasicConstraints.PathLenConstraint,
-		},
-		SubjectKeyConstraints: p.API.SignCertificate.KeyConstraints.Subject,
+	if err := c10y.ValidatePublicKey(req.csr.PublicKey, p.API.SignCertificate.KeyConstraints.Subject); err != nil {
+		if errors.Is(err, c10y.ErrMissingKeyConstraints) {
+			return nil, fmt.Errorf("profile does not contain key constraints for algorithm used in the CSR's public key, err: %w", err)
+		}
+
+		return nil, fmt.Errorf("invalid public key, err: %w", err)
 	}
 
-	optsAPI := c10y.SignAPIOpts{
-		CACert:                clientInput.caCert,
-		PrivateKey:            clientInput.caPrivateKey,
-		CSR:                   clientInput.csr,
+	now := time.Now().UTC()
+	notBeforeConstraint := now.Add(p.API.SignCertificate.Validity.NotBeforeOffset)
+	notAfterConstraint := now.Add(p.API.SignCertificate.Validity.NotAfterOffset)
+
+	if req.validNotBefore != nil && req.validNotBefore.Before(notBeforeConstraint) {
+		return nil, fmt.Errorf("certificate validity (valid not before) %s is earlier than the allowed by the profile %s", req.validNotBefore.String(), notBeforeConstraint.String())
+	}
+
+	if req.validNotAfter != nil && req.validNotAfter.After(notAfterConstraint) {
+		return nil, fmt.Errorf("certificate end validity (valid not after) %s is later than the allowed by the profile %s", req.validNotAfter.String(), notAfterConstraint.String())
+	}
+
+	var finalKU x509.KeyUsage
+	for _, ku := range p.API.SignCertificate.KeyUsage {
+		finalKU = finalKU | ku
+	}
+
+	input := c10y.SignCertificateInput{
+		KeyUsage:              finalKU,
+		ExtendedKeyUsage:      p.API.SignCertificate.ExtendedKeyUsage,
+		NotBefore:             now.Add(p.API.SignCertificate.Validity.NotBeforeOffset),
+		NotAfter:              now.Add(p.API.SignCertificate.Validity.NotAfterOffset),
+		CSR:                   req.csr,
+		CACert:                req.caCert,
+		PrivateKey:            req.caPrivateKey,
 		Subject:               subject,
-		CrlDistributionPoints: clientInput.CrlDistributionPoints,
-		ValidNotBefore:        clientInput.validNotBefore,
-		ValidNotAfter:         clientInput.validNotAfter,
-	}
-	clientCRTRaw, err := s.SignCertificate(optsProfile, optsAPI)
-	if err != nil {
-		return nil, fmt.Errorf("could not create certificate, err: %s", err)
+		CrlDistributionPoints: req.CrlDistributionPoints,
+		IsCA:                  p.API.SignCertificate.BasicConstraints.CA,
+		PathLenConstraint:     p.API.SignCertificate.BasicConstraints.PathLenConstraint,
+		SignatureAlgorithm:    p.API.SignCertificate.SignatureAlgorithm,
 	}
 
-	return clientCRTRaw, nil
+	if req.validNotBefore != nil {
+		input.NotBefore = req.validNotBefore.UTC()
+	}
+	if req.validNotAfter != nil {
+		input.NotAfter = req.validNotAfter.UTC()
+	}
+
+	return s.SignCertificate(input)
 }
 
 // parseRawSignRequest parses the request and returns the signClientInput
@@ -137,12 +157,12 @@ func (procedure *Sign) parseRawSignRequest(req *protobuf.SignRequest) (signReque
 	}
 
 	if req.ValidNotBefore != nil {
-		startValidity := time.Unix(int64(*req.ValidNotBefore), 0)
+		startValidity := time.Unix(int64(*req.ValidNotBefore), 0).UTC()
 		input.validNotBefore = &startValidity
 	}
 
 	if req.ValidNotAfter != nil {
-		endValidity := time.Unix(int64(*req.ValidNotAfter), 0)
+		endValidity := time.Unix(int64(*req.ValidNotAfter), 0).UTC()
 		input.validNotAfter = &endValidity
 	}
 
