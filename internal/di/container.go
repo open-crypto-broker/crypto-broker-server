@@ -3,6 +3,7 @@ package di
 import (
 	"github.com/open-crypto-broker/crypto-broker-server/internal/api"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
 )
 
@@ -19,5 +20,9 @@ func NewContainer(profiles string) *Container {
 		panic(err)
 	}
 
-	return &Container{Server: api.NewCryptoBrokerServer(c10yNative)}
+	procedureHash := procedure.NewHash(c10yNative)
+	procedureSign := procedure.NewSign(c10yNative)
+	procedureBenchmark := procedure.NewBenchmark()
+
+	return &Container{Server: api.NewCryptoBrokerServer(c10yNative, procedureHash, procedureSign, procedureBenchmark)}
 }

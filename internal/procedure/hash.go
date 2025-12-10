@@ -4,10 +4,11 @@ import (
 	"fmt"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 )
 
+// Hash defines the procedure for hashing data
 type Hash struct {
 	cryptographicEngineNative *c10y.LibraryNative
 }
@@ -16,6 +17,7 @@ func NewHash(cryptographicEngineNative *c10y.LibraryNative) *Hash {
 	return &Hash{cryptographicEngineNative: cryptographicEngineNative}
 }
 
+// Execute executes the hash procedure
 func (procedure *Hash) Execute(req *protobuf.HashRequest) (*protobuf.HashResponse, error) {
 	reqProfile, err := profile.Retrieve(req.Profile)
 	if err != nil {

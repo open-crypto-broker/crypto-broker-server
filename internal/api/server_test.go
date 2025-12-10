@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 
@@ -25,105 +26,7 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 )
 
-const bufSize = 1024 * 1024
-
-var lis *bufconn.Listener
-
-func bufDialer(context.Context, string) (net.Conn, error) {
-	return lis.Dial()
-}
-
-// TestCryptoBrokerServer_Hash_E2E tests the Hash method of the gRPC API.
-func TestCryptoBrokerServer_Hash_E2E(t *testing.T) {
-	// Mock dependencies
-	libraryNative := c10y.NewLibraryNative()
-	grpcConnector := NewCryptoBrokerServer(libraryNative)
-
-	// Start a mock gRPC server
-	lis = bufconn.Listen(bufSize)
-	s := grpc.NewServer()
-	protobuf.RegisterCryptoGrpcServer(s, grpcConnector)
-	go func() {
-		if err := s.Serve(lis); err != nil {
-			slog.Error("Server exited with error", slog.String("error", err.Error()))
-		}
-	}()
-	defer s.Stop()
-
-	// Create a gRPC client
-	ctx := context.Background()
-	conn, err := grpc.NewClient(fmt.Sprintf("passthrough://%s", lis.Addr().String()), grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
-	defer conn.Close()
-	client := protobuf.NewCryptoGrpcClient(conn)
-	if err = profile.LoadProfiles("Profiles.yaml"); err != nil {
-		t.Fatalf("could not load profiles, err: %s", err)
-	}
-
-	t.Run("Hash - Valid Request", func(t *testing.T) {
-		req := &protobuf.HashRequest{
-			Profile: "Default",
-			Input:   []byte("test data"),
-		}
-
-		resp, err := client.Hash(ctx, req)
-		if err != nil {
-			t.Fatalf("Hash failed: %v", err)
-		}
-
-		expectedHash := "YmI5ZTJhMDIyMzdlNmY4YWRjYWVmOWZjMTRiODk4YjdjODBjZWRjMTE0MTEwNDcyY2RmOTI1MjMzNjIxYjcwNTk2M2M3NmU3YjExM2JlZDNjMjc4ZmYxMTY3MWE2ZDFjZGNiYTU0NWUwMDlmZjRjMGMwMjUzOTg5OTI0MTk5M2I="
-		if base64.StdEncoding.EncodeToString([]byte(resp.HashValue)) != expectedHash {
-			t.Errorf("Expected hash %s, got %s", expectedHash, base64.StdEncoding.EncodeToString([]byte(resp.HashValue)))
-		}
-	})
-}
-
-// TestCryptoBrokerServer_Sign_E2E tests the Sign method of the gRPC API.
-func TestCryptoBrokerServer_Sign_E2E(t *testing.T) {
-	// Mock dependencies
-	libraryNative := c10y.NewLibraryNative()
-	grpcConnector := NewCryptoBrokerServer(libraryNative)
-
-	// Start a mock gRPC server
-	lis = bufconn.Listen(bufSize)
-	s := grpc.NewServer()
-	protobuf.RegisterCryptoGrpcServer(s, grpcConnector)
-	go func() {
-		if err := s.Serve(lis); err != nil {
-			slog.Error("Server exited with error", slog.String("error", err.Error()))
-		}
-	}()
-	defer s.Stop()
-
-	// Create a gRPC client
-	ctx := context.Background()
-	conn, err := grpc.NewClient(fmt.Sprintf("passthrough://%s", lis.Addr().String()), grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
-	defer conn.Close()
-	client := protobuf.NewCryptoGrpcClient(conn)
-	if err = profile.LoadProfiles("Profiles.yaml"); err != nil {
-		t.Fatalf("could not load profiles, err: %s", err)
-	}
-
-	t.Run("Sign - Valid Request", func(t *testing.T) {
-		req := &protobuf.SignRequest{
-			Profile: "Default",
-			Csr: `-----BEGIN CERTIFICATE REQUEST-----
-MIIBezCCAQACAQAwgYAxCzAJBgNVBAYTAkRFMRAwDgYDVQQIDAdCYXZhcmlhMRow
-GAYDVQQKDBFUZXN0LU9yZ2FuaXphdGlvbjEdMBsGA1UECwwUVGVzdC1Pcmdhbml6
-YXRpb24tQ0ExJDAiBgNVBAMMG1Rlc3QtT3JnYW5pemF0aW9uLUVuZEVudGl0eTB2
-MBAGByqGSM49AgEGBSuBBAAiA2IABIC1qmCZoLFy1CS7WuqCDspLsxjc++lTGY/s
-HH2/fjGQOQP1knz1ZPfyYoEDnxePSXDiNVm/oCH6tUzQJCv8TjE436cV3mIJaxVv
-3tu/EN022L4RByN5DoCFCQ24Ur0Z/6AAMAoGCCqGSM49BAMEA2kAMGYCMQDOWcqY
-Uc5gaIJpQbckT4VCP4I23ZsJciONJt1F6qQCXKqu5P4dOz1Eq4iprNDWqnoCMQDT
-xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
------END CERTIFICATE REQUEST-----
-`,
-			CaCert: `Certificate:
+var caCert = `Certificate:
     Data:
         Version: 3 (0x2)
         Serial Number:
@@ -181,23 +84,131 @@ PQQDBANoADBlAjBZSOidA5V09Tp/Q/jD68/+XIKcwxgurh+S7OuFjIGdDGweuwcR
 8olhMZEmw8XWKDQCMQC0F+o61/ExsTrY3S7XaJ+u2PCpgBB++Dm3dFywOWke3JMM
 /N2gJmX7XYBWsPdAIJI=
 -----END CERTIFICATE-----
-`,
-			CaPrivateKey: `-----BEGIN PRIVATE KEY-----
+`
+
+var caPrivKey = `-----BEGIN PRIVATE KEY-----
 MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDAV/ttOZfVpsZfERB0K
 ukqCAMHD0M3kJVIiqyqTCuRf52V4gO88h62YDQYeiOzNkvihZANiAARhX4UvkUKT
 eYRe0U/r/B70ALGU8L/wR2qDx4e5SbWyJfZZpT2Qk/QUFN2Mrt6yodOrPqW2kYWk
 TLMhGrEVDwuywR+ol4Sg2cogP86upiZzWv4a1J+0ySFUyBDOEjicmfo=
 -----END PRIVATE KEY-----
-`}
+`
 
+const bufSize = 1024 * 1024
+
+var lis *bufconn.Listener
+
+func bufDialer(context.Context, string) (net.Conn, error) {
+	return lis.Dial()
+}
+
+// TestCryptoBrokerServer_Hash_E2E tests the Hash method of the gRPC API.
+func TestCryptoBrokerServer_Hash_E2E(t *testing.T) {
+	// Mock dependencies
+	libraryNative := c10y.NewLibraryNative()
+	procedureHash := procedure.NewHash(libraryNative)
+	procedureSign := procedure.NewSign(libraryNative)
+	procedureBenchmark := procedure.NewBenchmark()
+	grpcConnector := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, procedureBenchmark)
+
+	// Start a mock gRPC server
+	lis = bufconn.Listen(bufSize)
+	s := grpc.NewServer()
+	protobuf.RegisterCryptoGrpcServer(s, grpcConnector)
+	go func() {
+		if err := s.Serve(lis); err != nil {
+			slog.Error("Server exited with error", slog.String("error", err.Error()))
+		}
+	}()
+	defer s.Stop()
+
+	// Create a gRPC client
+	ctx := context.Background()
+	conn, err := grpc.NewClient(fmt.Sprintf("passthrough://%s", lis.Addr().String()), grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		t.Fatalf("Failed to dial bufnet: %v", err)
+	}
+	defer conn.Close()
+	client := protobuf.NewCryptoGrpcClient(conn)
+	if err = profile.LoadProfiles("Profiles.yaml"); err != nil {
+		t.Fatalf("could not load profiles, err: %s", err)
+	}
+
+	t.Run("Hash - Valid Request", func(t *testing.T) {
+		req := &protobuf.HashRequest{
+			Profile: "Default",
+			Input:   []byte("test data"),
+		}
+
+		resp, err := client.Hash(ctx, req)
+		if err != nil {
+			t.Fatalf("Hash failed: %v", err)
+		}
+
+		expectedHash := "YmI5ZTJhMDIyMzdlNmY4YWRjYWVmOWZjMTRiODk4YjdjODBjZWRjMTE0MTEwNDcyY2RmOTI1MjMzNjIxYjcwNTk2M2M3NmU3YjExM2JlZDNjMjc4ZmYxMTY3MWE2ZDFjZGNiYTU0NWUwMDlmZjRjMGMwMjUzOTg5OTI0MTk5M2I="
+		if base64.StdEncoding.EncodeToString([]byte(resp.HashValue)) != expectedHash {
+			t.Errorf("Expected hash %s, got %s", expectedHash, base64.StdEncoding.EncodeToString([]byte(resp.HashValue)))
+		}
+	})
+}
+
+// TestCryptoBrokerServer_Sign_E2E tests the Sign method of the gRPC API.
+func TestCryptoBrokerServer_Sign_E2E(t *testing.T) {
+	// Mock dependencies
+	libraryNative := c10y.NewLibraryNative()
+	procedureHash := procedure.NewHash(libraryNative)
+	procedureSign := procedure.NewSign(libraryNative)
+	procedureBenchmark := procedure.NewBenchmark()
+	grpcConnector := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, procedureBenchmark)
+
+	// Start a mock gRPC server
+	lis = bufconn.Listen(bufSize)
+	s := grpc.NewServer()
+	protobuf.RegisterCryptoGrpcServer(s, grpcConnector)
+	go func() {
+		if err := s.Serve(lis); err != nil {
+			slog.Error("Server exited with error", slog.String("error", err.Error()))
+		}
+	}()
+	defer s.Stop()
+
+	// Create a gRPC client
+	ctx := context.Background()
+	conn, err := grpc.NewClient(fmt.Sprintf("passthrough://%s", lis.Addr().String()), grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		t.Fatalf("Failed to dial bufnet: %v", err)
+	}
+	defer conn.Close()
+	client := protobuf.NewCryptoGrpcClient(conn)
+	if err = profile.LoadProfiles("Profiles.yaml"); err != nil {
+		t.Fatalf("could not load profiles, err: %s", err)
+	}
+
+	t.Run("Sign - Valid Request", func(t *testing.T) {
+		req := &protobuf.SignRequest{
+			Profile: "Default",
+			Csr: `-----BEGIN CERTIFICATE REQUEST-----
+MIIBezCCAQACAQAwgYAxCzAJBgNVBAYTAkRFMRAwDgYDVQQIDAdCYXZhcmlhMRow
+GAYDVQQKDBFUZXN0LU9yZ2FuaXphdGlvbjEdMBsGA1UECwwUVGVzdC1Pcmdhbml6
+YXRpb24tQ0ExJDAiBgNVBAMMG1Rlc3QtT3JnYW5pemF0aW9uLUVuZEVudGl0eTB2
+MBAGByqGSM49AgEGBSuBBAAiA2IABIC1qmCZoLFy1CS7WuqCDspLsxjc++lTGY/s
+HH2/fjGQOQP1knz1ZPfyYoEDnxePSXDiNVm/oCH6tUzQJCv8TjE436cV3mIJaxVv
+3tu/EN022L4RByN5DoCFCQ24Ur0Z/6AAMAoGCCqGSM49BAMEA2kAMGYCMQDOWcqY
+Uc5gaIJpQbckT4VCP4I23ZsJciONJt1F6qQCXKqu5P4dOz1Eq4iprNDWqnoCMQDT
+xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
+-----END CERTIFICATE REQUEST-----
+`,
+			CaCert:       caCert,
+			CaPrivateKey: caPrivKey,
+		}
 		subject := pkix.Name{
 			Country:      []string{"DE"},
 			Province:     []string{"BA"},
 			Organization: []string{"SAP"},
 			CommonName:   "MyCert",
 		}.String()
-		timeBefore := time.Now().Add(-1 * time.Hour)
-		timeAfter := time.Now().Add(24 * time.Hour)
+		timeBefore := time.Now().UTC().Add(-59 * time.Minute)
+		timeAfter := time.Now().UTC().Add(24 * 60 * time.Minute)
 
 		req.CrlDistributionPoints = []string{"http://www.example.com/crl/test.crl"}
 		req.Subject = &subject
@@ -262,8 +273,10 @@ TLMhGrEVDwuywR+ol4Sg2cogP86upiZzWv4a1J+0ySFUyBDOEjicmfo=
 		csrPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrBytes})
 
 		req := &protobuf.SignRequest{
-			Profile: "Default",
-			Csr:     string(csrPEM),
+			Profile:      "Default",
+			Csr:          string(csrPEM),
+			CaCert:       caCert,
+			CaPrivateKey: caPrivKey,
 		}
 
 		_, err := client.Sign(ctx, req)

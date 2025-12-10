@@ -10,7 +10,8 @@ import (
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 )
 
-type Benchmark struct {}
+// Benchmark defines the procedure for benchmarking the cryptographic library
+type Benchmark struct{}
 
 // benchmarkResult represents the result of a single benchmark
 type benchmarkResult struct {
@@ -27,6 +28,7 @@ func NewBenchmark() *Benchmark {
 	return &Benchmark{}
 }
 
+// Execute executes the benchmark procedure
 func (procedure *Benchmark) Execute(req *protobuf.BenchmarkRequest) (*protobuf.BenchmarkResponse, error) {
 	results, err := procedure.runAllBenchmarks()
 	if err != nil {
