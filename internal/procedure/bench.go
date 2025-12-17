@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/bench"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
@@ -74,27 +73,25 @@ func (procedure *Benchmark) runAllBenchmarks() (benchmarkResults, error) {
 
 // runHashBenchmark executes a hash benchmark and returns the result
 func (procedure *Benchmark) runHashBenchmark(name string, benchmarkFunc func(*testing.B)) benchmarkResult {
-	b := &testing.B{N: 1000}
-	start := time.Now()
-	benchmarkFunc(b)
-	duration := time.Since(start)
-	avgTime := duration.Nanoseconds() / int64(b.N)
+	result := testing.Benchmark(benchmarkFunc)
+	avgTime := result.NsPerOp()
 	return benchmarkResult{Name: name, AvgTime: avgTime}
 }
 
 // runSignBenchmark executes a certificate signing benchmark and returns the result
 func (procedure *Benchmark) runSignBenchmark(name string, benchmarkFunc func(*testing.B) error) (benchmarkResult, error) {
-	b := &testing.B{N: 10}
+	var benchErr error
+	result := testing.Benchmark(func(b *testing.B) {
+		if err := benchmarkFunc(b); err != nil {
+			benchErr = err
+			b.Fatal(err)
+		}
+	})
 
-	start := time.Now()
-	err := benchmarkFunc(b)
-	duration := time.Since(start)
-
-	if err != nil {
-		return benchmarkResult{Name: name, AvgTime: 0}, err
+	if benchErr != nil {
+		return benchmarkResult{Name: name, AvgTime: 0}, benchErr
 	}
 
-	avgTime := duration.Nanoseconds() / int64(b.N)
-
+	avgTime := result.NsPerOp()
 	return benchmarkResult{Name: name, AvgTime: avgTime}, nil
 }
