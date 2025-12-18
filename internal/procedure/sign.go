@@ -84,6 +84,15 @@ func (procedure *Sign) sign(req signRequest, p profile.Profile) (certDER []byte,
 		return nil, fmt.Errorf("invalid public key, err: %w", err)
 	}
 
+	// Check whether the private key from the CA is secure enough according to profile
+	if err = c10y.ValidatePrivateKey(req.caPrivateKey, p.API.SignCertificate.KeyConstraints.Issuer); err != nil {
+		if errors.Is(err, c10y.ErrMissingKeyConstraints) {
+			return nil, fmt.Errorf("profile does not contain key constraints for algorithm used in the CA's private key, err: %w", err)
+		}
+
+		return nil, err
+	}
+
 	now := time.Now().UTC()
 	notBeforeConstraint := now.Add(p.API.SignCertificate.Validity.NotBeforeOffset)
 	notAfterConstraint := now.Add(p.API.SignCertificate.Validity.NotAfterOffset)
