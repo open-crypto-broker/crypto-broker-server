@@ -17,6 +17,7 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/di"
 	pb "github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health"
@@ -45,8 +46,12 @@ func interceptorLogger(l *slog.Logger) logging.Logger {
 // main defines executable program logic
 func main() {
 	rpcLogger := clog.SetupGlobalLogger()
+
+	// Create context for initialization
+	ctx := context.Background()
+
 	rpcLogger.Debug("Bootstrapping server dependencies")
-	container := di.NewContainer(defaultProfiles)
+	container := di.NewContainer(ctx, defaultProfiles, "crypto-broker-server", "")
 	rpcLogger.Debug("Server dependencies bootstrapped")
 
 	rpcLogger.Debug("Checking if directory for socket file exists", slog.String("path", baseDir))
@@ -78,6 +83,7 @@ func main() {
 	}
 
 	server := grpc.NewServer(
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
 			logging.UnaryServerInterceptor(interceptorLogger(rpcLogger)),
 			recovery.UnaryServerInterceptor(recovery.WithRecoveryHandler(grpcPanicRecoveryHandler)),
@@ -101,6 +107,14 @@ func main() {
 		healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 
 		server.GracefulStop()
+
+		// Shutdown tracer provider if initialized
+		if container.TracerProvider != nil {
+			if err := container.TracerProvider.Shutdown(ctx); err != nil {
+				rpcLogger.Error("Failed to shutdown tracer provider", slog.String("error", err.Error()))
+			}
+		}
+
 		listener.Close()
 		os.Remove(defaultSocketPath)
 	}()

@@ -24,7 +24,7 @@ Documentation on how to deploy the server on these methods can be found on the [
 The Crypto Broker Server supports several environment variables for configuration:
 
 | Variable | Required | Default | Description | Valid Values |
-|----------|----------|---------|-------------|--------------|
+| -------- | -------- | ------- | ----------- | ------------ |
 | `CRYPTO_BROKER_PROFILES_DIR` | Yes | - | Full OS path to directory containing profile files in YAML format | Any valid directory path |
 | `CRYPTO_BROKER_LOG_LEVEL` | No | `info` | Log level for the server | `debug`, `info`, `warn`, `error` |
 | `CRYPTO_BROKER_LOG_FORMAT` | No | `json` | Log output format | `json`, `text` |
@@ -33,7 +33,73 @@ The Crypto Broker Server supports several environment variables for configuratio
 | `CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_PRIVATE_KEY` | No | - | Full OS path to CA private key file used in benchmark tests for signing certificates | Any valid file path |
 | `CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_CSR` | No | - | Full OS path to CSR file used in benchmark tests for signing certificates | Any valid file path |
 
-**Note:** If invalid values are provided for any of the optional environment variables, the server will panic during startup.
+### OpenTelemetry Tracing
+
+The Crypto Broker Server includes OpenTelemetry (OTEL) tracing support for distributed observability. Traces are automatically generated for all gRPC requests and include detailed spans for cryptographic operations.
+
+#### OTEL Environment Variables
+
+| Variable | Required | Default | Description | Valid Values |
+| -------- | -------- | ------- | ----------- | ------------ |
+| `OTEL_SERVICE_NAME` | No | `crypto-broker-server` | Service name for OTEL traces | Any string |
+| `OTEL_SERVICE_VERSION` | No | `unknown service version` | Service version for OTEL traces | Any string |
+| `OTEL_TRACES_EXPORTER` | No | `console` | OTEL trace exporter(s) to use | `otlp`, `console`, `both`, or comma-separated list like `console,otlp` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | No | - | OTLP gRPC endpoint for trace export | Valid URL (only used when OTLP exporter is enabled) |
+| `OTEL_TRACES_SAMPLER` | No | `always_on` | Sampling strategy for traces | `always_on`, `always_off`, `traceidratio`, `parentbased_always_on`, `parentbased_always_off`, `parentbased_traceidratio` |
+| `OTEL_TRACES_SAMPLER_ARG` | No | - | Sampling ratio (0.0-1.0) when using ratio-based samplers | Float between 0.0 and 1.0 |
+
+#### Exporter Options
+
+The `OTEL_TRACES_EXPORTER` variable supports several values:
+
+* **`otlp`** (default): Export traces to an OTLP-compatible collector via gRPC
+* **`console`**: Export traces to stdout/stderr in human-readable format (useful for development)
+* **`both`**: Export traces to both OTLP collector and console simultaneously
+* **Comma-separated**: `console,otlp` (same as `both`)
+
+#### OTEL Setup Examples
+
+**Export to OTLP collector only:**
+
+```bash
+export OTEL_TRACES_EXPORTER="otlp"
+export OTEL_EXPORTER_OTLP_ENDPOINT="http://otel-collector:4317"
+export OTEL_TRACES_SAMPLER="traceidratio"
+export OTEL_TRACES_SAMPLER_ARG="0.1"  # Sample 10% of traces
+```
+
+**Console export for local development:**
+
+```bash
+export OTEL_TRACES_EXPORTER="console"
+export OTEL_TRACES_SAMPLER="always_on"  # See all traces in console
+```
+
+**Export to both console and OTLP:**
+
+```bash
+export OTEL_TRACES_EXPORTER="both"
+export OTEL_EXPORTER_OTLP_ENDPOINT="http://otel-collector:4317"
+# Traces will appear in both console and be sent to collector
+```
+
+#### Trace Information
+
+The server generates the following trace spans:
+
+* **gRPC Server Spans**: Automatic spans for each gRPC request (created by OTEL gRPC instrumentation)
+* **RPC Method Spans**: Custom spans for each RPC method (`Hash`, `Sign`, `Benchmark`) with operation-specific attributes
+* **Attributes Included**(full list in [attr.go](./internal/otel/attr.go)]):
+
+    * `rpc.method`: The gRPC method name
+    * `crypto.profile`: The cryptographic profile used
+    * `crypto.input_size`: Size of input data (for Hash operations)
+    * `crypto.csr_length`: Length of CSR (for Sign operations)
+    * `crypto.hash_algorithm`: Hash algorithm used
+    * `crypto.hash_output_size`: Size of hash output
+    * `crypto.signed_cert_length`: Length of signed certificate
+
+Traces include error information and span status codes for failed operations.
 
 ## Development
 
@@ -112,7 +178,7 @@ More info on benchmarks can be found in [testing](https://pkg.go.dev/testing@go1
 
 For some of benchmarks, you need to have the [deployment repository](https://github.com/open-crypto-broker/crypto-broker-deployment) in the same parent directory as this repository.
 
-For running the server locally (e.g. for testing with the libraries' CLI), change directory to project root & run server with following command. This will first [compile the Go Code](#compiling-the-go-binaries) if any of the Go files have been changed and then run the server with the default profiles dir:
+For running the server locally (e.g. for testing with the libraries' CLI), change directory to project root & run server with following command. This will first [compile the Go Code](#compiling-the-binary-file) if any of the Go files have been changed and then run the server with the default profiles dir:
 
 ```shell
 task run
