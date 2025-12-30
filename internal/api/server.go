@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"log"
 	"log/slog"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
@@ -31,12 +32,46 @@ func NewCryptoBrokerServer(c10yNative *c10y.LibraryNative, procedureHash *proced
 
 // Hash contains data hashing logic
 func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRequest) (*protobuf.HashResponse, error) {
+	log.Printf("SERVER DEBUG: Hash called with metadata: %+v", req.Metadata)
 	tracer := otel.GetGlobalTracer(otel.ServiceName)
-	_, span := tracer.Start(ctx, "CryptoBrokerServer.Hash", trace.WithAttributes(
-		otel.AttributeRpcMethod.String("Hash"),
-		otel.AttributeCryptoProfile.String(req.Profile),
-		otel.AttributeCryptoInputSize.Int(len(req.Input)),
-	))
+
+	// Check if trace context is provided in protobuf metadata
+	var span trace.Span
+	if req.Metadata != nil && req.Metadata.TraceContext != nil {
+		log.Printf("SERVER DEBUG: Found trace context: %+v", req.Metadata.TraceContext)
+		// Parse the received trace context
+		traceID, err := trace.TraceIDFromHex(req.Metadata.TraceContext.TraceId)
+		if err == nil {
+			spanID, err := trace.SpanIDFromHex(req.Metadata.TraceContext.SpanId)
+			if err == nil {
+				// Create span context from received data
+				spanContext := trace.NewSpanContext(trace.SpanContextConfig{
+					TraceID:    traceID,
+					SpanID:     spanID,
+					TraceFlags: trace.FlagsSampled, // Assume sampled
+					Remote:     true,
+				})
+
+				// Continue the existing trace
+				ctx = trace.ContextWithSpanContext(ctx, spanContext)
+				_, span = tracer.Start(ctx, "CryptoBrokerServer.Hash",
+					trace.WithAttributes(
+						otel.AttributeRpcMethod.String("Hash"),
+						otel.AttributeCryptoProfile.String(req.Profile),
+						otel.AttributeCryptoInputSize.Int(len(req.Input)),
+					))
+			}
+		}
+	}
+
+	// Fallback: create new span if trace context is missing
+	if span == nil {
+		_, span = tracer.Start(ctx, "CryptoBrokerServer.Hash", trace.WithAttributes(
+			otel.AttributeRpcMethod.String("Hash"),
+			otel.AttributeCryptoProfile.String(req.Profile),
+			otel.AttributeCryptoInputSize.Int(len(req.Input)),
+		))
+	}
 	defer span.End()
 
 	response, err := server.procedureHash.Execute(req)
@@ -60,14 +95,48 @@ func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRe
 // Sign contains certificate signing logic
 func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRequest) (*protobuf.SignResponse, error) {
 	tracer := otel.GetGlobalTracer(otel.ServiceName)
-	_, span := tracer.Start(ctx, "CryptoBrokerServer.Sign",
-		trace.WithAttributes(
-			otel.AttributeRpcMethod.String("Sign"),
-			otel.AttributeCryptoProfile.String(req.Profile),
-			otel.AttributeCryptoCsrSize.Int(len(req.Csr)),
-			otel.AttributeCryptoCaCertSize.Int(len(req.CaCert)),
-			otel.AttributeCryptoCaKeySize.Int(len(req.CaPrivateKey)),
-		))
+
+	// Check if trace context is provided in protobuf metadata
+	var span trace.Span
+	if req.Metadata != nil && req.Metadata.TraceContext != nil {
+		// Parse the received trace context
+		traceID, err := trace.TraceIDFromHex(req.Metadata.TraceContext.TraceId)
+		if err == nil {
+			spanID, err := trace.SpanIDFromHex(req.Metadata.TraceContext.SpanId)
+			if err == nil {
+				// Create span context from received data
+				spanContext := trace.NewSpanContext(trace.SpanContextConfig{
+					TraceID:    traceID,
+					SpanID:     spanID,
+					TraceFlags: trace.FlagsSampled, // Assume sampled
+					Remote:     true,
+				})
+
+				// Continue the existing trace
+				ctx = trace.ContextWithSpanContext(ctx, spanContext)
+				_, span = tracer.Start(ctx, "CryptoBrokerServer.Sign",
+					trace.WithAttributes(
+						otel.AttributeRpcMethod.String("Sign"),
+						otel.AttributeCryptoProfile.String(req.Profile),
+						otel.AttributeCryptoCsrSize.Int(len(req.Csr)),
+						otel.AttributeCryptoCaCertSize.Int(len(req.CaCert)),
+						otel.AttributeCryptoCaKeySize.Int(len(req.CaPrivateKey)),
+					))
+			}
+		}
+	}
+
+	// Fallback: create new span if trace context is missing
+	if span == nil {
+		_, span = tracer.Start(ctx, "CryptoBrokerServer.Sign",
+			trace.WithAttributes(
+				otel.AttributeRpcMethod.String("Sign"),
+				otel.AttributeCryptoProfile.String(req.Profile),
+				otel.AttributeCryptoCsrSize.Int(len(req.Csr)),
+				otel.AttributeCryptoCaCertSize.Int(len(req.CaCert)),
+				otel.AttributeCryptoCaKeySize.Int(len(req.CaPrivateKey)),
+			))
+	}
 	defer span.End()
 
 	response, err := server.procedureSign.Execute(req)
@@ -88,8 +157,36 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 // Benchmark runs performance benchmarks on cryptographic operations
 func (server *CryptoBrokerServer) Benchmark(ctx context.Context, req *protobuf.BenchmarkRequest) (*protobuf.BenchmarkResponse, error) {
 	tracer := otel.GetGlobalTracer(otel.ServiceName)
-	_, span := tracer.Start(ctx, "CryptoBrokerServer.Benchmark",
-		trace.WithAttributes(otel.AttributeRpcMethod.String("Benchmark")))
+
+	// Check if trace context is provided in protobuf metadata
+	var span trace.Span
+	if req.Metadata != nil && req.Metadata.TraceContext != nil {
+		// Parse the received trace context
+		traceID, err := trace.TraceIDFromHex(req.Metadata.TraceContext.TraceId)
+		if err == nil {
+			spanID, err := trace.SpanIDFromHex(req.Metadata.TraceContext.SpanId)
+			if err == nil {
+				// Create span context from received data
+				spanContext := trace.NewSpanContext(trace.SpanContextConfig{
+					TraceID:    traceID,
+					SpanID:     spanID,
+					TraceFlags: trace.FlagsSampled, // Assume sampled
+					Remote:     true,
+				})
+
+				// Continue the existing trace
+				ctx = trace.ContextWithSpanContext(ctx, spanContext)
+				_, span = tracer.Start(ctx, "CryptoBrokerServer.Benchmark",
+					trace.WithAttributes(otel.AttributeRpcMethod.String("Benchmark")))
+			}
+		}
+	}
+
+	// Fallback: create new span if trace context is missing
+	if span == nil {
+		_, span = tracer.Start(ctx, "CryptoBrokerServer.Benchmark",
+			trace.WithAttributes(otel.AttributeRpcMethod.String("Benchmark")))
+	}
 	defer span.End()
 
 	response, err := server.procedureBenchmark.Execute(req)
