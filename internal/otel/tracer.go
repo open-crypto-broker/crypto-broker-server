@@ -81,7 +81,7 @@ func NewTracerProvider(ctx context.Context, serviceName, serviceVersion string) 
 
 		otlpExporter, err := otlptracegrpc.New(ctx,
 			otlptracegrpc.WithEndpoint(otlpEndpoint),
-			otlptracegrpc.WithInsecure(), // Use TLS in production
+			otlptracegrpc.WithInsecure(),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create OTLP exporter: %w", err)
