@@ -32,14 +32,11 @@ func NewCryptoBrokerServer(c10yNative *c10y.LibraryNative, procedureHash *proced
 func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRequest) (*protobuf.HashResponse, error) {
 	tracer := otel.GetGlobalTracer(otel.ServiceName)
 
-	// If trace context is provided in metadata, inject it into the context
-	// This allows otelgrpc's automatic instrumentation to use it as the parent span
 	if req.Metadata != nil && req.Metadata.TraceContext != nil {
 		traceID, err := trace.TraceIDFromHex(req.Metadata.TraceContext.TraceId)
 		if err == nil {
 			spanID, err := trace.SpanIDFromHex(req.Metadata.TraceContext.SpanId)
 			if err == nil {
-				// Create a remote span context from the client's trace context
 				remoteSpanContext := trace.NewSpanContext(trace.SpanContextConfig{
 					TraceID:    traceID,
 					SpanID:     spanID,
@@ -47,13 +44,11 @@ func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRe
 					Remote:     true,
 				})
 
-				// Set this as the parent context
 				ctx = trace.ContextWithRemoteSpanContext(ctx, remoteSpanContext)
 			}
 		}
 	}
 
-	// Create a child span from the context (which now has the client's span as parent)
 	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.Hash",
 		trace.WithAttributes(
 			otel.AttributeRpcMethod.String("Hash"),
@@ -83,14 +78,11 @@ func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRe
 func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRequest) (*protobuf.SignResponse, error) {
 	tracer := otel.GetGlobalTracer(otel.ServiceName)
 
-	// If trace context is provided in metadata, inject it into the context
-	// This allows otelgrpc's automatic instrumentation to use it as the parent span
 	if req.Metadata != nil && req.Metadata.TraceContext != nil {
 		traceID, err := trace.TraceIDFromHex(req.Metadata.TraceContext.TraceId)
 		if err == nil {
 			spanID, err := trace.SpanIDFromHex(req.Metadata.TraceContext.SpanId)
 			if err == nil {
-				// Create a remote span context from the client's trace context
 				remoteSpanContext := trace.NewSpanContext(trace.SpanContextConfig{
 					TraceID:    traceID,
 					SpanID:     spanID,
@@ -98,13 +90,11 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 					Remote:     true,
 				})
 
-				// Set this as the parent context
 				ctx = trace.ContextWithRemoteSpanContext(ctx, remoteSpanContext)
 			}
 		}
 	}
 
-	// Create a child span from the context (which now has the client's span as parent)
 	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.Sign",
 		trace.WithAttributes(
 			otel.AttributeRpcMethod.String("Sign"),
@@ -133,14 +123,11 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 func (server *CryptoBrokerServer) Benchmark(ctx context.Context, req *protobuf.BenchmarkRequest) (*protobuf.BenchmarkResponse, error) {
 	tracer := otel.GetGlobalTracer(otel.ServiceName)
 
-	// If trace context is provided in metadata, inject it into the context
-	// This allows otelgrpc's automatic instrumentation to use it as the parent span
 	if req.Metadata != nil && req.Metadata.TraceContext != nil {
 		traceID, err := trace.TraceIDFromHex(req.Metadata.TraceContext.TraceId)
 		if err == nil {
 			spanID, err := trace.SpanIDFromHex(req.Metadata.TraceContext.SpanId)
 			if err == nil {
-				// Create a remote span context from the client's trace context
 				remoteSpanContext := trace.NewSpanContext(trace.SpanContextConfig{
 					TraceID:    traceID,
 					SpanID:     spanID,
@@ -148,13 +135,11 @@ func (server *CryptoBrokerServer) Benchmark(ctx context.Context, req *protobuf.B
 					Remote:     true,
 				})
 
-				// Set this as the parent context
 				ctx = trace.ContextWithRemoteSpanContext(ctx, remoteSpanContext)
 			}
 		}
 	}
 
-	// Create a child span from the context (which now has the client's span as parent)
 	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.Benchmark",
 		trace.WithAttributes(otel.AttributeRpcMethod.String("Benchmark")))
 	defer span.End()
