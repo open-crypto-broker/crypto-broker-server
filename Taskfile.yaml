@@ -149,6 +149,7 @@ tasks:
 
   build-docker:
     desc: "Builds Crypto Broker server in a Docker image"
+    deps: [proto]
     vars:
       TAG: '{{.TAG | default "dev"}}'
     dotenv: ['.env']
