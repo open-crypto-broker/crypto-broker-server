@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CryptoGrpc_Benchmark_FullMethodName = "/CryptoBroker.CryptoGrpc/Benchmark"
-	CryptoGrpc_Hash_FullMethodName      = "/CryptoBroker.CryptoGrpc/Hash"
-	CryptoGrpc_Sign_FullMethodName      = "/CryptoBroker.CryptoGrpc/Sign"
+	CryptoGrpc_Benchmark_FullMethodName    = "/CryptoBroker.CryptoGrpc/Benchmark"
+	CryptoGrpc_Hash_FullMethodName         = "/CryptoBroker.CryptoGrpc/Hash"
+	CryptoGrpc_Sign_FullMethodName         = "/CryptoBroker.CryptoGrpc/Sign"
+	CryptoGrpc_FakeEndpoint_FullMethodName = "/CryptoBroker.CryptoGrpc/FakeEndpoint"
 )
 
 // CryptoGrpcClient is the client API for CryptoGrpc service.
@@ -31,6 +32,7 @@ type CryptoGrpcClient interface {
 	Benchmark(ctx context.Context, in *BenchmarkRequest, opts ...grpc.CallOption) (*BenchmarkResponse, error)
 	Hash(ctx context.Context, in *HashRequest, opts ...grpc.CallOption) (*HashResponse, error)
 	Sign(ctx context.Context, in *SignRequest, opts ...grpc.CallOption) (*SignResponse, error)
+	FakeEndpoint(ctx context.Context, in *FakeEndpointRequest, opts ...grpc.CallOption) (*FakeEndpointResponse, error)
 }
 
 type cryptoGrpcClient struct {
@@ -71,6 +73,16 @@ func (c *cryptoGrpcClient) Sign(ctx context.Context, in *SignRequest, opts ...gr
 	return out, nil
 }
 
+func (c *cryptoGrpcClient) FakeEndpoint(ctx context.Context, in *FakeEndpointRequest, opts ...grpc.CallOption) (*FakeEndpointResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FakeEndpointResponse)
+	err := c.cc.Invoke(ctx, CryptoGrpc_FakeEndpoint_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CryptoGrpcServer is the server API for CryptoGrpc service.
 // All implementations must embed UnimplementedCryptoGrpcServer
 // for forward compatibility.
@@ -78,6 +90,7 @@ type CryptoGrpcServer interface {
 	Benchmark(context.Context, *BenchmarkRequest) (*BenchmarkResponse, error)
 	Hash(context.Context, *HashRequest) (*HashResponse, error)
 	Sign(context.Context, *SignRequest) (*SignResponse, error)
+	FakeEndpoint(context.Context, *FakeEndpointRequest) (*FakeEndpointResponse, error)
 	mustEmbedUnimplementedCryptoGrpcServer()
 }
 
@@ -96,6 +109,9 @@ func (UnimplementedCryptoGrpcServer) Hash(context.Context, *HashRequest) (*HashR
 }
 func (UnimplementedCryptoGrpcServer) Sign(context.Context, *SignRequest) (*SignResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Sign not implemented")
+}
+func (UnimplementedCryptoGrpcServer) FakeEndpoint(context.Context, *FakeEndpointRequest) (*FakeEndpointResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method FakeEndpoint not implemented")
 }
 func (UnimplementedCryptoGrpcServer) mustEmbedUnimplementedCryptoGrpcServer() {}
 func (UnimplementedCryptoGrpcServer) testEmbeddedByValue()                    {}
@@ -172,6 +188,24 @@ func _CryptoGrpc_Sign_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CryptoGrpc_FakeEndpoint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FakeEndpointRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CryptoGrpcServer).FakeEndpoint(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CryptoGrpc_FakeEndpoint_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CryptoGrpcServer).FakeEndpoint(ctx, req.(*FakeEndpointRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CryptoGrpc_ServiceDesc is the grpc.ServiceDesc for CryptoGrpc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +224,10 @@ var CryptoGrpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Sign",
 			Handler:    _CryptoGrpc_Sign_Handler,
+		},
+		{
+			MethodName: "FakeEndpoint",
+			Handler:    _CryptoGrpc_FakeEndpoint_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

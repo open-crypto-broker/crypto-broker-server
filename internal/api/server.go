@@ -15,16 +15,18 @@ import (
 // CryptoBrokerServer defines crypto broker's server
 type CryptoBrokerServer struct {
 	protobuf.CryptoGrpcServer
-	procedureHash      *procedure.Hash
-	procedureSign      *procedure.Sign
-	procedureBenchmark *procedure.Benchmark
+	procedureHash         *procedure.Hash
+	procedureSign         *procedure.Sign
+	procedureBenchmark    *procedure.Benchmark
+	procedureFakeEndpoint *procedure.FakeEndpoint
 }
 
-func NewCryptoBrokerServer(c10yNative *c10y.LibraryNative, procedureHash *procedure.Hash, procedureSign *procedure.Sign, procedureBenchmark *procedure.Benchmark) *CryptoBrokerServer {
+func NewCryptoBrokerServer(c10yNative *c10y.LibraryNative, procedureHash *procedure.Hash, procedureSign *procedure.Sign, procedureBenchmark *procedure.Benchmark, procedureFakeEndpoint *procedure.FakeEndpoint) *CryptoBrokerServer {
 	return &CryptoBrokerServer{
-		procedureHash:      procedureHash,
-		procedureSign:      procedureSign,
-		procedureBenchmark: procedureBenchmark,
+		procedureHash:         procedureHash,
+		procedureSign:         procedureSign,
+		procedureBenchmark:    procedureBenchmark,
+		procedureFakeEndpoint: procedureFakeEndpoint,
 	}
 }
 
@@ -154,6 +156,44 @@ func (server *CryptoBrokerServer) Benchmark(ctx context.Context, req *protobuf.B
 
 	span.SetAttributes(otel.AttributeCryptoBenchmarkResultsSize.Int(len(response.BenchmarkResults)))
 	span.SetStatus(codes.Ok, "Benchmark operation completed successfully")
+
+	return response, nil
+}
+
+// FakeEndpoint runs the fake endpoint procedure
+func (server *CryptoBrokerServer) FakeEndpoint(ctx context.Context, req *protobuf.FakeEndpointRequest) (*protobuf.FakeEndpointResponse, error) {
+	tracer := otel.GetGlobalTracer(otel.ServiceName)
+
+	if req.Metadata != nil && req.Metadata.TraceContext != nil {
+		traceID, err := trace.TraceIDFromHex(req.Metadata.TraceContext.TraceId)
+		if err == nil {
+			spanID, err := trace.SpanIDFromHex(req.Metadata.TraceContext.SpanId)
+			if err == nil {
+				remoteSpanContext := trace.NewSpanContext(trace.SpanContextConfig{
+					TraceID:    traceID,
+					SpanID:     spanID,
+					TraceFlags: trace.FlagsSampled,
+					Remote:     true,
+				})
+
+				ctx = trace.ContextWithRemoteSpanContext(ctx, remoteSpanContext)
+			}
+		}
+	}
+
+	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.FakeEndpoint",
+		trace.WithAttributes(otel.AttributeRpcMethod.String("FakeEndpoint")))
+	defer span.End()
+
+	response, err := server.procedureFakeEndpoint.Execute(req)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return nil, err
+	}
+
+	span.SetStatus(codes.Ok, "Fake endpoint operation completed successfully")
 
 	return response, nil
 }

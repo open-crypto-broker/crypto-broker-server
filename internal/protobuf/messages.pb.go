@@ -533,6 +533,104 @@ func (x *SignResponse) GetMetadata() *Metadata {
 	return nil
 }
 
+// Message for a Fake Endpoint Request
+type FakeEndpointRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Metadata      *Metadata              `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FakeEndpointRequest) Reset() {
+	*x = FakeEndpointRequest{}
+	mi := &file_protobuf_messages_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FakeEndpointRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FakeEndpointRequest) ProtoMessage() {}
+
+func (x *FakeEndpointRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_protobuf_messages_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FakeEndpointRequest.ProtoReflect.Descriptor instead.
+func (*FakeEndpointRequest) Descriptor() ([]byte, []int) {
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *FakeEndpointRequest) GetMetadata() *Metadata {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+// Response to a Fake Endpoint Request
+type FakeEndpointResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	Metadata      *Metadata              `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FakeEndpointResponse) Reset() {
+	*x = FakeEndpointResponse{}
+	mi := &file_protobuf_messages_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FakeEndpointResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FakeEndpointResponse) ProtoMessage() {}
+
+func (x *FakeEndpointResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_protobuf_messages_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FakeEndpointResponse.ProtoReflect.Descriptor instead.
+func (*FakeEndpointResponse) Descriptor() ([]byte, []int) {
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *FakeEndpointResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *FakeEndpointResponse) GetMetadata() *Metadata {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
 var File_protobuf_messages_proto protoreflect.FileDescriptor
 
 const file_protobuf_messages_proto_rawDesc = "" +
@@ -580,12 +678,18 @@ const file_protobuf_messages_proto_rawDesc = "" +
 	"\b_subject\"p\n" +
 	"\fSignResponse\x12,\n" +
 	"\x11signedCertificate\x18\x01 \x01(\tR\x11signedCertificate\x122\n" +
-	"\bmetadata\x18\x02 \x01(\v2\x16.CryptoBroker.MetadataR\bmetadata2\xd8\x01\n" +
+	"\bmetadata\x18\x02 \x01(\v2\x16.CryptoBroker.MetadataR\bmetadata\"I\n" +
+	"\x13FakeEndpointRequest\x122\n" +
+	"\bmetadata\x18\x01 \x01(\v2\x16.CryptoBroker.MetadataR\bmetadata\"d\n" +
+	"\x14FakeEndpointResponse\x12\x18\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\x122\n" +
+	"\bmetadata\x18\x02 \x01(\v2\x16.CryptoBroker.MetadataR\bmetadata2\xaf\x02\n" +
 	"\n" +
 	"CryptoGrpc\x12L\n" +
 	"\tBenchmark\x12\x1e.CryptoBroker.BenchmarkRequest\x1a\x1f.CryptoBroker.BenchmarkResponse\x12=\n" +
 	"\x04Hash\x12\x19.CryptoBroker.HashRequest\x1a\x1a.CryptoBroker.HashResponse\x12=\n" +
-	"\x04Sign\x12\x19.CryptoBroker.SignRequest\x1a\x1a.CryptoBroker.SignResponseB\x13Z\x11internal/protobufb\x06proto3"
+	"\x04Sign\x12\x19.CryptoBroker.SignRequest\x1a\x1a.CryptoBroker.SignResponse\x12U\n" +
+	"\fFakeEndpoint\x12!.CryptoBroker.FakeEndpointRequest\x1a\".CryptoBroker.FakeEndpointResponseB\x13Z\x11internal/protobufb\x06proto3"
 
 var (
 	file_protobuf_messages_proto_rawDescOnce sync.Once
@@ -599,16 +703,18 @@ func file_protobuf_messages_proto_rawDescGZIP() []byte {
 	return file_protobuf_messages_proto_rawDescData
 }
 
-var file_protobuf_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_protobuf_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_protobuf_messages_proto_goTypes = []any{
-	(*TraceContext)(nil),      // 0: CryptoBroker.TraceContext
-	(*Metadata)(nil),          // 1: CryptoBroker.Metadata
-	(*BenchmarkRequest)(nil),  // 2: CryptoBroker.BenchmarkRequest
-	(*BenchmarkResponse)(nil), // 3: CryptoBroker.BenchmarkResponse
-	(*HashRequest)(nil),       // 4: CryptoBroker.HashRequest
-	(*HashResponse)(nil),      // 5: CryptoBroker.HashResponse
-	(*SignRequest)(nil),       // 6: CryptoBroker.SignRequest
-	(*SignResponse)(nil),      // 7: CryptoBroker.SignResponse
+	(*TraceContext)(nil),         // 0: CryptoBroker.TraceContext
+	(*Metadata)(nil),             // 1: CryptoBroker.Metadata
+	(*BenchmarkRequest)(nil),     // 2: CryptoBroker.BenchmarkRequest
+	(*BenchmarkResponse)(nil),    // 3: CryptoBroker.BenchmarkResponse
+	(*HashRequest)(nil),          // 4: CryptoBroker.HashRequest
+	(*HashResponse)(nil),         // 5: CryptoBroker.HashResponse
+	(*SignRequest)(nil),          // 6: CryptoBroker.SignRequest
+	(*SignResponse)(nil),         // 7: CryptoBroker.SignResponse
+	(*FakeEndpointRequest)(nil),  // 8: CryptoBroker.FakeEndpointRequest
+	(*FakeEndpointResponse)(nil), // 9: CryptoBroker.FakeEndpointResponse
 }
 var file_protobuf_messages_proto_depIdxs = []int32{
 	0,  // 0: CryptoBroker.Metadata.traceContext:type_name -> CryptoBroker.TraceContext
@@ -618,17 +724,21 @@ var file_protobuf_messages_proto_depIdxs = []int32{
 	1,  // 4: CryptoBroker.HashResponse.metadata:type_name -> CryptoBroker.Metadata
 	1,  // 5: CryptoBroker.SignRequest.metadata:type_name -> CryptoBroker.Metadata
 	1,  // 6: CryptoBroker.SignResponse.metadata:type_name -> CryptoBroker.Metadata
-	2,  // 7: CryptoBroker.CryptoGrpc.Benchmark:input_type -> CryptoBroker.BenchmarkRequest
-	4,  // 8: CryptoBroker.CryptoGrpc.Hash:input_type -> CryptoBroker.HashRequest
-	6,  // 9: CryptoBroker.CryptoGrpc.Sign:input_type -> CryptoBroker.SignRequest
-	3,  // 10: CryptoBroker.CryptoGrpc.Benchmark:output_type -> CryptoBroker.BenchmarkResponse
-	5,  // 11: CryptoBroker.CryptoGrpc.Hash:output_type -> CryptoBroker.HashResponse
-	7,  // 12: CryptoBroker.CryptoGrpc.Sign:output_type -> CryptoBroker.SignResponse
-	10, // [10:13] is the sub-list for method output_type
-	7,  // [7:10] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	1,  // 7: CryptoBroker.FakeEndpointRequest.metadata:type_name -> CryptoBroker.Metadata
+	1,  // 8: CryptoBroker.FakeEndpointResponse.metadata:type_name -> CryptoBroker.Metadata
+	2,  // 9: CryptoBroker.CryptoGrpc.Benchmark:input_type -> CryptoBroker.BenchmarkRequest
+	4,  // 10: CryptoBroker.CryptoGrpc.Hash:input_type -> CryptoBroker.HashRequest
+	6,  // 11: CryptoBroker.CryptoGrpc.Sign:input_type -> CryptoBroker.SignRequest
+	8,  // 12: CryptoBroker.CryptoGrpc.FakeEndpoint:input_type -> CryptoBroker.FakeEndpointRequest
+	3,  // 13: CryptoBroker.CryptoGrpc.Benchmark:output_type -> CryptoBroker.BenchmarkResponse
+	5,  // 14: CryptoBroker.CryptoGrpc.Hash:output_type -> CryptoBroker.HashResponse
+	7,  // 15: CryptoBroker.CryptoGrpc.Sign:output_type -> CryptoBroker.SignResponse
+	9,  // 16: CryptoBroker.CryptoGrpc.FakeEndpoint:output_type -> CryptoBroker.FakeEndpointResponse
+	13, // [13:17] is the sub-list for method output_type
+	9,  // [9:13] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_protobuf_messages_proto_init() }
@@ -643,7 +753,7 @@ func file_protobuf_messages_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_protobuf_messages_proto_rawDesc), len(file_protobuf_messages_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
