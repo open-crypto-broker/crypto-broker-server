@@ -27,7 +27,7 @@ func (procedure *FakeEndpoint) Execute(req *protobuf.FakeEndpointRequest) (*prot
 
 	procedure.callCount++
 
-	if procedure.callCount%5 == 0 {
+	if procedure.callCount%5 != 0 {
 		return nil, status.Error(codes.Unavailable, "fake endpoint is temporarily down")
 	}
 
