@@ -43,9 +43,10 @@ func NewContainerWithTracing(ctx context.Context, profiles string, serviceName, 
 	procedureHash := procedure.NewHash(c10yNative)
 	procedureSign := procedure.NewSign(c10yNative)
 	procedureBenchmark := procedure.NewBenchmark()
+	procedureFakeEndpoint := procedure.NewFakeEndpoint()
 
 	return &Container{
-		Server:         api.NewCryptoBrokerServer(c10yNative, procedureHash, procedureSign, procedureBenchmark),
+		Server:         api.NewCryptoBrokerServer(c10yNative, procedureHash, procedureSign, procedureBenchmark, procedureFakeEndpoint),
 		TracerProvider: tracerProvider,
 	}
 }
