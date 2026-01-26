@@ -35,7 +35,11 @@ const (
 	OTEL_TRACES_EXPORTER = "OTEL_TRACES_EXPORTER"
 
 	// OTEL_EXPORTER_OTLP_ENDPOINT is OpenTelemetry environment variable that specifies the OTLP endpoint.
-	// For gRPC OTLP, use format "host:port". For HTTP OTLP, use "http://host:port".
+	// For gRPC OTLP, use format "host:port".
+	// For HTTP OTLP, use full URL format "https://host:port/path" (HTTPS recommended for production).
+	// Use "http://host:port/path" only for local development without TLS.
+	// For Dynatrace HTTP OTLP, example: "https://<your-tenant-id>.live.dynatrace.com/api/v2/otlp"
+	// The library will automatically append "/v1/traces" to the path.
 	OTEL_EXPORTER_OTLP_ENDPOINT = "OTEL_EXPORTER_OTLP_ENDPOINT"
 
 	// OTEL_TRACES_SAMPLER is OpenTelemetry environment variable that specifies the sampling strategy.
@@ -51,4 +55,9 @@ const (
 
 	// OTEL_SERVICE_VERSION is OpenTelemetry environment variable that specifies the service version for traces.
 	OTEL_SERVICE_VERSION = "OTEL_SERVICE_VERSION"
+
+	// OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION is OpenTelemetry environment variable for OTLP HTTP exporter authorization.
+	// For Dynatrace, use format: "Api-Token YOUR_API_TOKEN"
+	// Example: OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION="Api-Token dt0c01.xxx..."
+	OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION = "OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION"
 )
