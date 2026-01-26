@@ -2,6 +2,10 @@ version: '3'
 
 vars:
   PROTOBUF_VERSION: "32.1"
+  OTEL_TRACES_EXPORTER: "console" # 'otlp', 'console', 'both', or comma-separated list like 'console,otlp'
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317" # Valid URL (only used when OTLP exporter is enabled)
+  OTEL_TRACES_SAMPLER: "always_off" # always_on, always_off, traceidratio, parentbased_always_on, parentbased_always_off, parentbased_traceidratio.
+  OTEL_TRACES_SAMPLER_ARG: "0.1" # Sampling ratio (0.0-1.0) when using ratio-based samplers like traceidratio or parentbased_traceidratio.
 
 tasks:
   ################# Development Tools ####################
@@ -132,7 +136,7 @@ tasks:
     deps: [build]
     cmds:
       - defer: {task: cleanup-socket}
-      - CRYPTO_BROKER_PROFILES_DIR=$(pwd)/example-profiles OTEL_TRACES_EXPORTER=console ./bin/cryptobroker-server
+      - CRYPTO_BROKER_PROFILES_DIR=$(pwd)/example-profiles OTEL_TRACES_EXPORTER={{.OTEL_TRACES_EXPORTER}} OTEL_EXPORTER_OTLP_ENDPOINT={{.OTEL_EXPORTER_OTLP_ENDPOINT}} OTEL_TRACES_SAMPLER={{.OTEL_TRACES_SAMPLER}} OTEL_TRACES_SAMPLER_ARG={{.OTEL_TRACES_SAMPLER_ARG}} ./bin/cryptobroker-server
 
   ################# Build Crypto Broker Server ####################
   build:
