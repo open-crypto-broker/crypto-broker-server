@@ -2,10 +2,13 @@ version: '3'
 
 vars:
   PROTOBUF_VERSION: "32.1"
-  OTEL_TRACES_EXPORTER: "console" # 'otlp', 'console', 'both', or comma-separated list like 'console,otlp'
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317" # Valid URL (only used when OTLP exporter is enabled)
+  OTEL_TRACES_EXPORTER: "console" # 'otlp', 'console', otlphttp, 'both', or comma-separated list like 'console,otlp', "otlphttp,console"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317" # Valid URL (only used when OTLP exporter is enabled). Use "https://<your-tenant-id>.live.dynatrace.com/api/v2/otlp" for Dynatrace HTTP OTLP
   OTEL_TRACES_SAMPLER: "always_off" # always_on, always_off, traceidratio, parentbased_always_on, parentbased_always_off, parentbased_traceidratio.
   OTEL_TRACES_SAMPLER_ARG: "0.1" # Sampling ratio (0.0-1.0) when using ratio-based samplers like traceidratio or parentbased_traceidratio.
+  OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION: "Api-Token dt0c01.xxx..." # Authorization header for OTLP exporter
+  OTEL_SERVICE_NAME: "crypto-broker-server"  # Service name for OpenTelemetry traces
+
 
 tasks:
   ################# Development Tools ####################
@@ -136,7 +139,7 @@ tasks:
     deps: [build]
     cmds:
       - defer: {task: cleanup-socket}
-      - CRYPTO_BROKER_PROFILES_DIR=$(pwd)/example-profiles OTEL_TRACES_EXPORTER={{.OTEL_TRACES_EXPORTER}} OTEL_EXPORTER_OTLP_ENDPOINT={{.OTEL_EXPORTER_OTLP_ENDPOINT}} OTEL_TRACES_SAMPLER={{.OTEL_TRACES_SAMPLER}} OTEL_TRACES_SAMPLER_ARG={{.OTEL_TRACES_SAMPLER_ARG}} ./bin/cryptobroker-server
+      - OTEL_TRACES_EXPORTER={{.OTEL_TRACES_EXPORTER}} OTEL_EXPORTER_OTLP_ENDPOINT={{.OTEL_EXPORTER_OTLP_ENDPOINT}} OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION="{{.OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION}}" OTEL_SERVICE_NAME={{.OTEL_SERVICE_NAME}} OTEL_TRACES_SAMPLER={{.OTEL_TRACES_SAMPLER}} OTEL_TRACES_SAMPLER_ARG={{.OTEL_TRACES_SAMPLER_ARG}} CRYPTO_BROKER_PROFILES_DIR=$(pwd)/example-profiles ./bin/cryptobroker-server
 
   ################# Build Crypto Broker Server ####################
   build:

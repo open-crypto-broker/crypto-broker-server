@@ -12,6 +12,7 @@ import (
 	"github.com/open-crypto-broker/crypto-broker-server/internal/env"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -30,8 +31,9 @@ const (
 
 // keys representing OTEL exporters
 const (
-	keyExporterOTLP    = "otlp"
-	keyExporterConsole = "console"
+	keyExporterOTLP     = "otlp"
+	keyExporterConsole  = "console"
+	keyExporterOTLPHTTP = "otlphttp"
 )
 
 // TracerProvider holds the OpenTelemetry tracer provider
@@ -73,7 +75,72 @@ func NewTracerProvider(ctx context.Context, serviceName, serviceVersion string) 
 	}
 
 	var batchers []sdktrace.TracerProviderOption
-	if slices.Contains(exporterNames, keyExporterOTLP) {
+	// Check for HTTP OTLP exporter (required for Dynatrace)
+	if slices.Contains(exporterNames, keyExporterOTLPHTTP) {
+		otlpEndpoint := os.Getenv(env.OTEL_EXPORTER_OTLP_ENDPOINT)
+		if otlpEndpoint == "" {
+			return nil, fmt.Errorf("%s is not set", env.OTEL_EXPORTER_OTLP_ENDPOINT)
+		}
+
+		// Parse the endpoint URL to extract host:port and path
+		// For Dynatrace: "https://trc17344.live.dynatrace.com/api/v2/otlp"
+		// Endpoint should only be "trc17344.live.dynatrace.com"
+		// Path should be "/api/v2/otlp"
+		var endpointHost string
+		var urlPath string
+		useSecure := true
+
+		if strings.HasPrefix(otlpEndpoint, "http://") {
+			otlpEndpoint = strings.TrimPrefix(otlpEndpoint, "http://")
+			useSecure = false
+		} else if strings.HasPrefix(otlpEndpoint, "https://") {
+			otlpEndpoint = strings.TrimPrefix(otlpEndpoint, "https://")
+			useSecure = true
+		}
+
+		// Split endpoint and path
+		parts := strings.SplitN(otlpEndpoint, "/", 2)
+		endpointHost = parts[0]
+		if len(parts) > 1 {
+			urlPath = "/" + parts[1]
+		}
+
+		// Remove /v1/traces suffix if present in the path, as otlptracehttp will add it automatically
+		urlPath = strings.TrimSuffix(urlPath, "/v1/traces")
+
+		// Build headers for HTTP OTLP exporter
+		headers := make(map[string]string)
+
+		// Check for Dynatrace API token
+		if apiToken := os.Getenv(env.OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION); apiToken != "" {
+			headers["Authorization"] = apiToken
+			slog.Info("Dynatrace API token configured for OTLP HTTP exporter")
+		}
+
+		opts := []otlptracehttp.Option{
+			otlptracehttp.WithEndpoint(endpointHost),
+			otlptracehttp.WithHeaders(headers),
+		}
+
+		// Use insecure (HTTP) only if explicitly specified with http:// scheme
+		// For HTTPS (recommended for production like Dynatrace), don't add WithInsecure()
+		if !useSecure {
+			// For HTTP endpoints (typically for local development only)
+			opts = append(opts, otlptracehttp.WithInsecure())
+		}
+
+		// Add custom URL path if present
+		if urlPath != "" {
+			opts = append(opts, otlptracehttp.WithURLPath(urlPath+"/v1/traces"))
+		}
+
+		otlpExporter, err := otlptracehttp.New(ctx, opts...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create HTTP OTLP exporter: %w", err)
+		}
+		batchers = append(batchers, sdktrace.WithBatcher(otlpExporter))
+		slog.Info("HTTP OTLP exporter configured", slog.String("endpoint", endpointHost), slog.String("path", urlPath))
+	} else if slices.Contains(exporterNames, keyExporterOTLP) {
 		otlpEndpoint := os.Getenv(env.OTEL_EXPORTER_OTLP_ENDPOINT)
 		if otlpEndpoint == "" {
 			return nil, fmt.Errorf("%s is not set", env.OTEL_EXPORTER_OTLP_ENDPOINT)
@@ -84,10 +151,10 @@ func NewTracerProvider(ctx context.Context, serviceName, serviceVersion string) 
 			otlptracegrpc.WithInsecure(),
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create OTLP exporter: %w", err)
+			return nil, fmt.Errorf("failed to create gRPC OTLP exporter: %w", err)
 		}
 		batchers = append(batchers, sdktrace.WithBatcher(otlpExporter))
-		slog.Info("OTLP exporter configured", slog.String("endpoint", otlpEndpoint))
+		slog.Info("gRPC OTLP exporter configured", slog.String("endpoint", otlpEndpoint))
 	}
 
 	if slices.Contains(exporterNames, keyExporterConsole) {
