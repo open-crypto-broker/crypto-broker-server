@@ -52,17 +52,17 @@ The Crypto Broker Server includes OpenTelemetry (OTEL) tracing support for distr
 
 The `OTEL_TRACES_EXPORTER` variable supports several values:
 
-* **`otlp`** (default): Export traces to an OTLP-compatible collector via gRPC
+* **`otlpgrpc`** (default): Export traces to an OTLP-compatible collector via gRPC
+* **`otlphttp`** (default): Export traces to an OTLP-compatible collector via HTTP(s)
 * **`console`**: Export traces to stdout/stderr in human-readable format (useful for development)
-* **`both`**: Export traces to both OTLP collector and console simultaneously
-* **Comma-separated**: `console,otlp` (same as `both`)
+* **Comma-separated**: `console,otlpgrpc`
 
 #### OTEL Setup Examples
 
 **Export to OTLP collector only:**
 
 ```bash
-export OTEL_TRACES_EXPORTER="otlp"
+export OTEL_TRACES_EXPORTER="otlpgrpc"
 export OTEL_EXPORTER_OTLP_ENDPOINT="http://otel-collector:4317"
 export OTEL_TRACES_SAMPLER="traceidratio"
 export OTEL_TRACES_SAMPLER_ARG="0.1"  # Sample 10% of traces
@@ -78,7 +78,7 @@ export OTEL_TRACES_SAMPLER="always_on"  # See all traces in console
 **Export to both console and OTLP:**
 
 ```bash
-export OTEL_TRACES_EXPORTER="both"
+export OTEL_TRACES_EXPORTER="otlpgrpc,console"
 export OTEL_EXPORTER_OTLP_ENDPOINT="http://otel-collector:4317"
 # Traces will appear in both console and be sent to collector
 ```
