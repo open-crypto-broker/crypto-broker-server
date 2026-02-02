@@ -72,7 +72,7 @@ func (service *LibraryNative) SignCertificate(input SignCertificateInput) ([]byt
 		KeyUsage:              input.KeyUsage,
 		ExtKeyUsage:           input.ExtendedKeyUsage,
 		CRLDistributionPoints: input.CrlDistributionPoints,
-		BasicConstraintsValid: true,
+		BasicConstraintsValid: input.IsCA,
 		IsCA:                  input.IsCA,
 		MaxPathLen:            input.PathLenConstraint,
 		MaxPathLenZero:        input.PathLenConstraint == 0,
