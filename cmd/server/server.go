@@ -44,11 +44,9 @@ func interceptorLogger(l *slog.Logger) logging.Logger {
 
 // main defines executable program logic
 func main() {
-	rpcLogger := clog.SetupGlobalLogger()
-
 	// Create context for initialization
 	ctx := context.Background()
-
+	rpcLogger := clog.SetupGlobalLogger(ctx)
 	rpcLogger.Debug("Bootstrapping server dependencies")
 	container := di.NewContainer(ctx, defaultProfiles, "crypto-broker-server", "")
 	rpcLogger.Debug("Server dependencies bootstrapped")
