@@ -63,8 +63,8 @@ const (
 
 	// OTEL_LOGS_EXPORTER is OpenTelemetry environment variable that specifies the log exporter(s) to use.
 	// Supports comma-separated values for multiple exporters.
-	// Valid values: "console", "otlp", or combinations like "otlp,console".
+	// Valid values: "console", "otlp", "otlphttp", "otlpgrpc", or combinations like "otlp,console".
 	// If not set or empty, console logging will be used as default.
-	// Examples: "console", "otlp", "otlp,console"
+	// Examples: "console", "otlp", "otlphttp", "otlpgrpc", "otlphttp,console"
 	OTEL_LOGS_EXPORTER = "OTEL_LOGS_EXPORTER"
 )
