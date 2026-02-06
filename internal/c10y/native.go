@@ -32,14 +32,18 @@ type SignCertificateInput struct {
 	PrivateKey            any
 }
 
-var oidMap = map[string]asn1.ObjectIdentifier{
-	"C":  {2, 5, 4, 6},
-	"ST": {2, 5, 4, 8},
-	"O":  {2, 5, 4, 10},
-	"OU": {2, 5, 4, 11},
-	"L":  {2, 5, 4, 7},
-	"CN": {2, 5, 4, 3},
-}
+var (
+	oidMap = map[string]asn1.ObjectIdentifier{
+		"C":  {2, 5, 4, 6},
+		"ST": {2, 5, 4, 8},
+		"O":  {2, 5, 4, 10},
+		"OU": {2, 5, 4, 11},
+		"L":  {2, 5, 4, 7},
+		"CN": {2, 5, 4, 3},
+	}
+
+	oidBasicConstraints = asn1.ObjectIdentifier{2, 5, 29, 19}
+)
 
 // NewLibraryNative returns pointer to Native.
 func NewLibraryNative() *LibraryNative {
@@ -76,6 +80,14 @@ func (service *LibraryNative) SignCertificate(input SignCertificateInput) ([]byt
 		IsCA:                  input.IsCA,
 		MaxPathLen:            input.PathLenConstraint,
 		MaxPathLenZero:        input.PathLenConstraint == 0,
+	}
+
+	if !input.IsCA {
+		extension, err := service.buildBasicConstraintsExtension(false)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build basic constraints extension: %w", err)
+		}
+		clientCRTTemplate.ExtraExtensions = append(clientCRTTemplate.ExtraExtensions, extension)
 	}
 
 	if input.Subject != "" {
@@ -174,6 +186,26 @@ func (service *LibraryNative) buildRawSubjectExactOrder(input, sep string) ([]by
 	}
 
 	return asn1.Marshal(rdns)
+}
+
+// buildBasicConstraintsExtension creates a non-critical Basic Constraints extension.
+func (service *LibraryNative) buildBasicConstraintsExtension(isCA bool) (pkix.Extension, error) {
+	basicConstraints := struct {
+		CA bool `asn1:"optional"`
+	}{
+		CA: isCA,
+	}
+
+	encodedBytes, err := asn1.Marshal(basicConstraints)
+	if err != nil {
+		return pkix.Extension{}, fmt.Errorf("failed to marshal basic constraints: %w", err)
+	}
+
+	return pkix.Extension{
+		Id:       oidBasicConstraints,
+		Critical: false,
+		Value:    encodedBytes,
+	}, nil
 }
 
 // composeAttributeTypeAndValue composes a AttributeTypeAndValue from a part of the subject
