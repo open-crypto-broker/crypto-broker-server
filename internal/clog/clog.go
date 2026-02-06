@@ -154,7 +154,7 @@ func (h *multiHandler) Enabled(ctx context.Context, level slog.Level) bool {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -200,7 +200,7 @@ func setupOTLPLogger(ctx context.Context) *slog.Logger {
 	isHTTP := strings.HasPrefix(otlpEndpoint, "http://") || strings.HasPrefix(otlpEndpoint, "https://")
 	if isHTTP {
 		return setupOTLPLoggerHTTP(ctx, otlpEndpoint)
-	} 
+	}
 
 	return setupOTLPLoggerGRPC(ctx, otlpEndpoint)
 }
