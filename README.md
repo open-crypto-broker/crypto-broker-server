@@ -32,21 +32,18 @@ The Crypto Broker Server supports several environment variables for configuratio
 | `CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_CA_CERT` | No | - | Full OS path to CA certificate file used in benchmark tests for signing certificates | Any valid file path |
 | `CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_PRIVATE_KEY` | No | - | Full OS path to CA private key file used in benchmark tests for signing certificates | Any valid file path |
 | `CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_CSR` | No | - | Full OS path to CSR file used in benchmark tests for signing certificates | Any valid file path |
+| `OTEL_SERVICE_NAME` | No | `crypto-broker-server` | Service name for OpenTelemetry traces | Any string |
+| `OTEL_SERVICE_VERSION` | No | `unknown service version` | Service version for OpenTelemetry traces | Any string |
+| `OTEL_TRACES_EXPORTER` | No | `console` | OpenTelemetry trace exporter(s) to use | `otlp`, `console`, or comma-separated list like `console,otlp` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | No | - | OTLP endpoint for traces (gRPC format "host:port" or HTTP URL format "https://host:port/path") | Valid endpoint URL (only used when OTLP exporter is enabled) |
+| `OTEL_TRACES_SAMPLER` | No | `always_on` | Sampling strategy for traces | `always_on`, `always_off`, `traceidratio`, `parentbased_always_on`, `parentbased_always_off`, `parentbased_traceidratio` |
+| `OTEL_TRACES_SAMPLER_ARG` | No | - | Sampling ratio (0.0-1.0) when using ratio-based samplers | Float between 0.0 and 1.0 |
+| `OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION` | No | - | Authorization header for OTLP HTTP exporter (e.g., for Dynatrace: "Api-Token YOUR_API_TOKEN") | Valid authorization header string |
+| `OTEL_LOGS_EXPORTER` | No | `console` | OpenTelemetry log exporter(s) to use | `console`, `otlphttp`, `otlpgrpc`, or comma-separated combinations like `otlphttp,console` |
 
 ### OpenTelemetry Tracing
 
 The Crypto Broker Server includes OpenTelemetry (OTEL) tracing support for distributed observability. Traces are automatically generated for all gRPC requests and include detailed spans for cryptographic operations.
-
-#### OTEL Environment Variables
-
-| Variable | Required | Default | Description | Valid Values |
-| -------- | -------- | ------- | ----------- | ------------ |
-| `OTEL_SERVICE_NAME` | No | `crypto-broker-server` | Service name for OTEL traces | Any string |
-| `OTEL_SERVICE_VERSION` | No | `unknown service version` | Service version for OTEL traces | Any string |
-| `OTEL_TRACES_EXPORTER` | No | `console` | OTEL trace exporter(s) to use | `otlp`, `console`, `both`, or comma-separated list like `console,otlp` |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | No | - | OTLP gRPC endpoint for trace export | Valid URL (only used when OTLP exporter is enabled) |
-| `OTEL_TRACES_SAMPLER` | No | `always_on` | Sampling strategy for traces | `always_on`, `always_off`, `traceidratio`, `parentbased_always_on`, `parentbased_always_off`, `parentbased_traceidratio` |
-| `OTEL_TRACES_SAMPLER_ARG` | No | - | Sampling ratio (0.0-1.0) when using ratio-based samplers | Float between 0.0 and 1.0 |
 
 #### Exporter Options
 
@@ -93,13 +90,56 @@ The server generates the following trace spans:
 
     * `rpc.method`: The gRPC method name
     * `crypto.profile`: The cryptographic profile used
-    * `crypto.input_size`: Size of input data (for Hash operations)
-    * `crypto.csr_length`: Length of CSR (for Sign operations)
-    * `crypto.hash_algorithm`: Hash algorithm used
-    * `crypto.hash_output_size`: Size of hash output
-    * `crypto.signed_cert_length`: Length of signed certificate
 
 Traces include error information and span status codes for failed operations.
+
+### OpenTelemetry Logging
+
+The Crypto Broker Server includes OpenTelemetry (OTEL) logging support for centralized log aggregation and correlation with traces. Logs are automatically structured and can be exported to both console and OTLP-compatible backends simultaneously.
+
+#### Log Exporter Options
+
+The `OTEL_LOGS_EXPORTER` variable supports several values:
+
+* **`console`** (default): Export logs to stdout/stderr in structured format (JSON recommended for production)
+* **`otlp`**: Export logs to an OTLP-compatible endpoint. Protocol is auto-detected:
+  - **HTTP**: When endpoint starts with `http://` or `https://` (direct Dynatrace API)
+  - **gRPC**: When endpoint is `host:port` format (Dynatrace collector)
+* **`otlphttp`**: Force HTTP protocol for OTLP logs (direct Dynatrace API)
+* **`otlpgrpc`**: Force gRPC protocol for OTLP logs (Dynatrace collector)
+* **Comma-separated**: `otlp,console`, `otlphttp,console`, `otlpgrpc,console` - Export to both OTLP and console simultaneously
+
+#### OTEL Logging Setup Examples
+
+**Console logging only (default):**
+
+```bash
+export OTEL_LOGS_EXPORTER="console"
+export CRYPTO_BROKER_LOG_LEVEL="info"
+export CRYPTO_BROKER_LOG_FORMAT="json"
+# Logs will appear in stdout as structured JSON
+```
+
+
+**Export to both console and OTLP:**
+
+```bash
+export OTEL_LOGS_EXPORTER="otlp,console"
+export OTEL_EXPORTER_OTLP_ENDPOINT="https://<TENANT>.live.dynatrace.com/api/v2/otlp"
+export OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION="Api-Token dt0c01.xxx..."
+export CRYPTO_BROKER_LOG_LEVEL="debug"
+export CRYPTO_BROKER_LOG_FORMAT="json"
+```
+
+#### Log Information
+
+The server generates structured logs with the following characteristics:
+
+* **Structured Format**: All logs include consistent fields like `timestamp`, `level`, `msg`, `service`
+* **Configurable Levels**: Debug, Info, Warn, Error levels supported
+* **Multiple Formats**: JSON (recommended for production) and text formats available
+* **Multi-destination**: Can simultaneously log to console and external systems
+
 
 ## Development
 

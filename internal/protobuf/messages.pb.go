@@ -95,7 +95,7 @@ type Metadata struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	CreatedAt     string                 `protobuf:"bytes,2,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
-	TraceContext  *TraceContext          `protobuf:"bytes,3,opt,name=traceContext,proto3" json:"traceContext,omitempty"`
+	TraceContext  *TraceContext          `protobuf:"bytes,3,opt,name=traceContext,proto3,oneof" json:"traceContext,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -644,11 +644,12 @@ const file_protobuf_messages_proto_rawDesc = "" +
 	"traceFlags\x12\x1e\n" +
 	"\n" +
 	"traceState\x18\x04 \x01(\tR\n" +
-	"traceState\"x\n" +
+	"traceState\"\x8e\x01\n" +
 	"\bMetadata\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
-	"\tcreatedAt\x18\x02 \x01(\tR\tcreatedAt\x12>\n" +
-	"\ftraceContext\x18\x03 \x01(\v2\x1a.CryptoBroker.TraceContextR\ftraceContext\"F\n" +
+	"\tcreatedAt\x18\x02 \x01(\tR\tcreatedAt\x12C\n" +
+	"\ftraceContext\x18\x03 \x01(\v2\x1a.CryptoBroker.TraceContextH\x00R\ftraceContext\x88\x01\x01B\x0f\n" +
+	"\r_traceContext\"F\n" +
 	"\x10BenchmarkRequest\x122\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x16.CryptoBroker.MetadataR\bmetadata\"s\n" +
 	"\x11BenchmarkResponse\x12*\n" +
@@ -746,6 +747,7 @@ func file_protobuf_messages_proto_init() {
 	if File_protobuf_messages_proto != nil {
 		return
 	}
+	file_protobuf_messages_proto_msgTypes[1].OneofWrappers = []any{}
 	file_protobuf_messages_proto_msgTypes[6].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
