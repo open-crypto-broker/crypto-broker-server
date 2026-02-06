@@ -66,14 +66,14 @@ func NewTracerProvider(ctx context.Context, serviceName, serviceVersion string) 
 		if otlpEndpoint == "" {
 			return nil, fmt.Errorf("%s is not set", env.OTEL_EXPORTER_OTLP_ENDPOINT)
 		}
-		
+
 		batcherHTTP, err := getBatchersHTTP(ctx, otlpEndpoint)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create HTTP OTLP exporter: %w", err)
 		}
 
 		batchers = append(batchers, batcherHTTP...)
-	} 
+	}
 
 	if slices.Contains(exporterNames, keyExporterOTLPGRPC) {
 		if otlpEndpoint == "" {
@@ -194,7 +194,7 @@ func getBatchersHTTP(ctx context.Context, otlpEndpoint string) ([]sdktrace.Trace
 	}
 	slog.Info("HTTP OTLP exporter configured", slog.String("endpoint", endpointHost), slog.String("path", urlPath))
 
-	return []sdktrace.TracerProviderOption{sdktrace.WithBatcher(otlpExporter)}, nil	
+	return []sdktrace.TracerProviderOption{sdktrace.WithBatcher(otlpExporter)}, nil
 }
 
 // getBatchersGRPC creates a gRPC exporter
