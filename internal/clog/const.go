@@ -22,10 +22,10 @@ const (
 
 // predefined keywords representing log exporters
 const (
-	keywordExporterConsole = "console"
+	keywordExporterConsole  = "console"
 	keywordExporterOTLPHTTP = "otlphttp"
 	keywordExporterOTLPGRPC = "otlpgrpc"
-	keywordExporterOTLP = "otlp"
+	keywordExporterOTLP     = "otlp"
 )
 
 // predefined service name
