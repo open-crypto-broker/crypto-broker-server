@@ -102,8 +102,8 @@ The `OTEL_LOGS_EXPORTER` variable supports several values:
 
 * **`console`** (default): Export logs to stdout/stderr in structured format (JSON recommended for production)
 * **`otlp`**: Export logs to an OTLP-compatible endpoint. Protocol is auto-detected:
-  * **HTTP**: When endpoint starts with `http://` or `https://` (direct Dynatrace API)
-  * **gRPC**: When endpoint is `host:port` format (Dynatrace collector)
+    * **HTTP**: When endpoint starts with `http://` or `https://` (direct Dynatrace API)
+    * **gRPC**: When endpoint is `host:port` format (Dynatrace collector)
 * **`otlphttp`**: Force HTTP protocol for OTLP logs (direct Dynatrace API)
 * **`otlpgrpc`**: Force gRPC protocol for OTLP logs (Dynatrace collector)
 * **Comma-separated**: `otlp,console`, `otlphttp,console`, `otlpgrpc,console` - Export to both OTLP and console simultaneously
