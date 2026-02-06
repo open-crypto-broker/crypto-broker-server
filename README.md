@@ -35,7 +35,7 @@ The Crypto Broker Server supports several environment variables for configuratio
 | `OTEL_SERVICE_NAME` | No | `crypto-broker-server` | Service name for OpenTelemetry traces | Any string |
 | `OTEL_SERVICE_VERSION` | No | `unknown service version` | Service version for OpenTelemetry traces | Any string |
 | `OTEL_TRACES_EXPORTER` | No | `console` | OpenTelemetry trace exporter(s) to use | `otlp`, `console`, or comma-separated list like `console,otlp` |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | No | - | OTLP endpoint for traces (gRPC format "host:port" or HTTP URL format "https://host:port/path") | Valid endpoint URL (only used when OTLP exporter is enabled) |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | No | - | OTLP endpoint for traces (gRPC format "host:port" or HTTP URL format `"https://host:port/path"`) | Valid endpoint URL (only used when OTLP exporter is enabled) |
 | `OTEL_TRACES_SAMPLER` | No | `always_on` | Sampling strategy for traces | `always_on`, `always_off`, `traceidratio`, `parentbased_always_on`, `parentbased_always_off`, `parentbased_traceidratio` |
 | `OTEL_TRACES_SAMPLER_ARG` | No | - | Sampling ratio (0.0-1.0) when using ratio-based samplers | Float between 0.0 and 1.0 |
 | `OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION` | No | - | Authorization header for OTLP HTTP exporter (e.g., for Dynatrace: "Api-Token YOUR_API_TOKEN") | Valid authorization header string |
@@ -87,7 +87,6 @@ The server generates the following trace spans:
 * **gRPC Server Spans**: Automatic spans for each gRPC request (created by OTEL gRPC instrumentation)
 * **RPC Method Spans**: Custom spans for each RPC method (`Hash`, `Sign`, `Benchmark`) with operation-specific attributes
 * **Attributes Included**(full list in [attr.go](./internal/otel/attr.go)]):
-
     * `rpc.method`: The gRPC method name
     * `crypto.profile`: The cryptographic profile used
 
@@ -103,8 +102,8 @@ The `OTEL_LOGS_EXPORTER` variable supports several values:
 
 * **`console`** (default): Export logs to stdout/stderr in structured format (JSON recommended for production)
 * **`otlp`**: Export logs to an OTLP-compatible endpoint. Protocol is auto-detected:
-  - **HTTP**: When endpoint starts with `http://` or `https://` (direct Dynatrace API)
-  - **gRPC**: When endpoint is `host:port` format (Dynatrace collector)
+  * **HTTP**: When endpoint starts with `http://` or `https://` (direct Dynatrace API)
+  * **gRPC**: When endpoint is `host:port` format (Dynatrace collector)
 * **`otlphttp`**: Force HTTP protocol for OTLP logs (direct Dynatrace API)
 * **`otlpgrpc`**: Force gRPC protocol for OTLP logs (Dynatrace collector)
 * **Comma-separated**: `otlp,console`, `otlphttp,console`, `otlpgrpc,console` - Export to both OTLP and console simultaneously
@@ -119,7 +118,6 @@ export CRYPTO_BROKER_LOG_LEVEL="info"
 export CRYPTO_BROKER_LOG_FORMAT="json"
 # Logs will appear in stdout as structured JSON
 ```
-
 
 **Export to both console and OTLP:**
 
@@ -139,7 +137,6 @@ The server generates structured logs with the following characteristics:
 * **Configurable Levels**: Debug, Info, Warn, Error levels supported
 * **Multiple Formats**: JSON (recommended for production) and text formats available
 * **Multi-destination**: Can simultaneously log to console and external systems
-
 
 ## Development
 
