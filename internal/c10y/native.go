@@ -2,6 +2,7 @@ package c10y
 
 import (
 	"crypto/rand"
+	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha3"
 	"crypto/sha512"
@@ -42,7 +43,8 @@ var (
 		"CN": {2, 5, 4, 3},
 	}
 
-	oidBasicConstraints = asn1.ObjectIdentifier{2, 5, 29, 19}
+	oidBasicConstraints        = asn1.ObjectIdentifier{2, 5, 29, 19}
+	oidSubjectKeyIdentifier    = asn1.ObjectIdentifier{2, 5, 29, 14}
 )
 
 // NewLibraryNative returns pointer to Native.
@@ -89,6 +91,26 @@ func (service *LibraryNative) SignCertificate(input SignCertificateInput) ([]byt
 		}
 		clientCRTTemplate.ExtraExtensions = append(clientCRTTemplate.ExtraExtensions, extension)
 	}
+
+	// Add Subject Key Identifier (SKI) extension
+	// RFC 5280: The keyIdentifier is composed of the 160-bit SHA-1 hash of the
+	// value of the BIT STRING subjectPublicKey (excluding the tag, length, and
+	// number of unused bits).
+	ski, err := service.computeSubjectKeyIdentifier(input.CSR.PublicKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute subject key identifier: %w", err)
+	}
+
+	skiDER, err := asn1.Marshal(ski)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal subject key identifier: %w", err)
+	}
+
+	clientCRTTemplate.ExtraExtensions = append(clientCRTTemplate.ExtraExtensions, pkix.Extension{
+		Id:       oidSubjectKeyIdentifier,
+		Critical: false,
+		Value:    skiDER,
+	})
 
 	if input.Subject != "" {
 		rawSubject, err := service.buildRawSubjectExactOrder(input.Subject, ",")
@@ -186,6 +208,31 @@ func (service *LibraryNative) buildRawSubjectExactOrder(input, sep string) ([]by
 	}
 
 	return asn1.Marshal(rdns)
+}
+
+// computeSubjectKeyIdentifier computes the Subject Key Identifier (SKI) for a given public key.
+// According to RFC 5280 and OpenSSL's default behavior, the SKI is the SHA-1 hash of the
+// subjectPublicKey BIT STRING value (excluding the tag, length, and unused-bits octet).
+func (service *LibraryNative) computeSubjectKeyIdentifier(publicKey any) ([]byte, error) {
+	// Marshal the public key to PKIX format (SubjectPublicKeyInfo)
+	spkiDER, err := x509.MarshalPKIXPublicKey(publicKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal public key: %w", err)
+	}
+
+	// Parse the SPKI structure to get the subjectPublicKey BIT STRING
+	var spki struct {
+		Algorithm        pkix.AlgorithmIdentifier
+		SubjectPublicKey asn1.BitString
+	}
+	rest, err := asn1.Unmarshal(spkiDER, &spki)
+	if err != nil || len(rest) != 0 {
+		return nil, fmt.Errorf("failed to unmarshal SPKI: %w", err)
+	}
+
+	// Compute SHA-1 of the public key bytes
+	hash := sha1.Sum(spki.SubjectPublicKey.Bytes)
+	return hash[:], nil
 }
 
 // buildBasicConstraintsExtension creates a non-critical Basic Constraints extension.
