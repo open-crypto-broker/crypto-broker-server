@@ -56,6 +56,13 @@ func BenchmarkLibraryNative_SignCertificate_NIST_SECP521R1_NIST_SECP521R1(b *tes
 	}
 }
 
+func BenchmarkLibraryNative_SignCertificate_NIST_SECP256R1_NIST_SECP384R1(b *testing.B) {
+	err := RunSignCertificateNISTSECP256R1NISTSECP384R1Benchmark(b)
+	if err != nil {
+		b.Fatalf("benchmark failed: %s", err.Error())
+	}
+}
+
 func BenchmarkLibraryNative_SignCertificate(b *testing.B) {
 	err := RunSignCertificateBenchmark(b)
 	if err != nil {
