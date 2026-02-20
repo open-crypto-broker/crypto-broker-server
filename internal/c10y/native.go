@@ -43,8 +43,8 @@ var (
 		"CN": {2, 5, 4, 3},
 	}
 
-	oidBasicConstraints        = asn1.ObjectIdentifier{2, 5, 29, 19}
-	oidSubjectKeyIdentifier    = asn1.ObjectIdentifier{2, 5, 29, 14}
+	oidBasicConstraints     = asn1.ObjectIdentifier{2, 5, 29, 19}
+	oidSubjectKeyIdentifier = asn1.ObjectIdentifier{2, 5, 29, 14}
 )
 
 // NewLibraryNative returns pointer to Native.

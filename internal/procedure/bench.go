@@ -68,6 +68,13 @@ func (procedure *Benchmark) runAllBenchmarks() (benchmarkResults, error) {
 	}
 	results = append(results, signCertificateNISTSECP521R1NISTSECP521R1Result)
 
+	signCertificateNISTSECP256R1NISTSECP384R1Result, err := procedure.runSignBenchmark(
+		"BenchmarkLibraryNative_SignCertificate_NIST_SECP256R1_NIST_SECP384R1", bench.RunSignCertificateNISTSECP256R1NISTSECP384R1Benchmark)
+	if err != nil {
+		return benchmarkResults{Results: results}, err
+	}
+	results = append(results, signCertificateNISTSECP256R1NISTSECP384R1Result)
+
 	return benchmarkResults{Results: results}, nil
 }
 

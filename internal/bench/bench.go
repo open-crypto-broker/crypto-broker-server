@@ -423,3 +423,102 @@ func RunSignCertificateBenchmark(b *testing.B) error {
 
 	return nil
 }
+
+// RunSignCertificateNISTSECP256R1NISTSECP384R1Benchmark runs certificate signing benchmark with NIST SECP256R1 + NIST SECP384R1
+func RunSignCertificateNISTSECP256R1NISTSECP384R1Benchmark(b *testing.B) error {
+	notAfter, err := time.ParseDuration("8760h")
+	if err != nil {
+		return fmt.Errorf("could not parse duration: %w", err)
+	}
+	notBefore, err := time.ParseDuration("-1h")
+	if err != nil {
+		return fmt.Errorf("could not parse duration: %w", err)
+	}
+
+	caCert := []byte(`-----BEGIN CERTIFICATE-----
+MIICoTCCAiegAwIBAgIUWu/H/WSqYIKoo23VGupKI7txz+4wCgYIKoZIzj0EAwMw
+fjELMAkGA1UEBhMCREUxEDAOBgNVBAgMB0JhdmFyaWExGjAYBgNVBAoMEVRlc3Qt
+T3JnYW5pemF0aW9uMR0wGwYDVQQLDBRUZXN0LU9yZ2FuaXphdGlvbi1DQTEiMCAG
+A1UEAwwZVGVzdC1Pcmdhbml6YXRpb24tUm9vdC1DQTAeFw0yMzAxMDEwMTAxMDFa
+Fw0zMzAxMDEwMTAxMDFaMH4xCzAJBgNVBAYTAkRFMRAwDgYDVQQIDAdCYXZhcmlh
+MRowGAYDVQQKDBFUZXN0LU9yZ2FuaXphdGlvbjEdMBsGA1UECwwUVGVzdC1Pcmdh
+bml6YXRpb24tQ0ExIjAgBgNVBAMMGVRlc3QtT3JnYW5pemF0aW9uLVJvb3QtQ0Ew
+djAQBgcqhkjOPQIBBgUrgQQAIgNiAATS59LZWhfYdy/WpKGVk/xNfyzHh8GYTx1r
+tXtrzLrNz8vpvYxfayUUDyhVV+J/aoY4tSUAVj+x3yAM2RXZLtJJihW6UiTyXEXF
++azQXNRDVkit8IQi53+KZDR0ECdsRBKjZjBkMBIGA1UdEwEB/wQIMAYBAf8CAQEw
+DgYDVR0PAQH/BAQDAgGGMB0GA1UdDgQWBBRv8eTneQUlEYFwISn4NaIzjm3wYTAf
+BgNVHSMEGDAWgBRv8eTneQUlEYFwISn4NaIzjm3wYTAKBggqhkjOPQQDAwNoADBl
+AjBdUV/yHjHq90/swrXl5DvfK2vQssqAAgfD6VvhpzKWlOwULmCIdjzd0DJ9BtF6
+VqUCMQClUxcW/Pvl4+nj1WwGa9YdQY1qXAhRSUJBcRw6y7Ejr2NQ2zTN2KMM4FV2
+f/KE4vY=
+-----END CERTIFICATE-----`)
+	caCertParsed, err := c10y.ParseX509Cert(caCert)
+	if err != nil {
+		return fmt.Errorf("could not parse CA cert: %w", err)
+	}
+
+	caPrivateKey := []byte(`-----BEGIN EC PRIVATE KEY-----
+MIGkAgEBBDD+E65pqiUQUcKZCjrLOlpg+EMDUU+RIQmDIIilUzTim94OrhKKB/z4
+OM25YzcvwQ6gBwYFK4EEACKhZANiAATS59LZWhfYdy/WpKGVk/xNfyzHh8GYTx1r
+tXtrzLrNz8vpvYxfayUUDyhVV+J/aoY4tSUAVj+x3yAM2RXZLtJJihW6UiTyXEXF
++azQXNRDVkit8IQi53+KZDR0ECdsRBI=
+-----END EC PRIVATE KEY-----`)
+	caPrivateKeyParsed, err := c10y.ParsePrivateKeyFromPEM(caPrivateKey)
+	if err != nil {
+		return fmt.Errorf("could not parse CA private key: %w", err)
+	}
+
+	csrBytes := []byte(`-----BEGIN CERTIFICATE REQUEST-----
+MIIBXzCCAQUCAQAwgaIxCzAJBgNVBAYTAkRFMREwDwYDVQQKDAhUZXN0IE9yZzEl
+MCMGA1UECwwcVGVzdCBPcmcgQ2VydGlmaWNhdGUgU2VydmljZTEMMAoGA1UECwwD
+RGV2MSEwHwYDVQQLDBhzdGFnaW5nLWNlcnRpZmljYXRlcy0xMDExDTALBgNVBAcM
+BHRlc3QxGTAXBgNVBAMMEHRlc3QtY29tbW9uLW5hbWUwWTATBgcqhkjOPQIBBggq
+hkjOPQMBBwNCAATznFqF7j2Gbsvmv96hkY6WLYC4V0A/AHmxxaHYNyJlu5mJLHC0
+b9jEuGIuifnfJjMUqPXbXVNkGp8lSIgyfJIJoAAwCgYIKoZIzj0EAwIDSAAwRQIh
+ALeIB2/wKr3HtLRsmlYYoUAJPkw2vAXj9kiBUwhGw2hFAiBP9PTPCcOIZN50n9C0
+NrPbJOOC/7QNdsuxmDFGEapyZg==
+-----END CERTIFICATE REQUEST-----`)
+
+	block, _ := pem.Decode(csrBytes)
+	if block == nil {
+		return fmt.Errorf("could not decode CSR as PEM file")
+	}
+
+	csrParsed, err := x509.ParseCertificateRequest(block.Bytes)
+	if err != nil {
+		return fmt.Errorf("could not parse CSR: %w", err)
+	}
+
+	if err = csrParsed.CheckSignature(); err != nil {
+		return fmt.Errorf("invalid certificate request signature: %w", err)
+	}
+
+	service := c10y.NewLibraryNative()
+	now := time.Now().UTC()
+	kus := []x509.KeyUsage{x509.KeyUsageDigitalSignature, x509.KeyUsageKeyEncipherment}
+	var finalKU x509.KeyUsage
+	for _, ku := range kus {
+		finalKU = finalKU | ku
+	}
+	input := c10y.SignCertificateInput{
+		CSR:                csrParsed,
+		CACert:             caCertParsed,
+		PrivateKey:         caPrivateKeyParsed,
+		Subject:            "C=DE, O=SAP SE, OU=SAP Cloud Platform Certificate Service Test Clients, OU=Dev, OU=cf-us10-staging-certificate-service, L=test, CN=test",
+		NotBefore:          now.Add(notBefore),
+		NotAfter:           now.Add(notAfter),
+		KeyUsage:           finalKU,
+		ExtendedKeyUsage:   []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		IsCA:               false,
+		PathLenConstraint:  -1,
+		SignatureAlgorithm: x509.ECDSAWithSHA512,
+	}
+	for b.Loop() {
+		_, err := service.SignCertificate(input)
+		if err != nil {
+			return fmt.Errorf("could not sign certificate: %w", err)
+		}
+	}
+
+	return nil
+}
