@@ -42,21 +42,21 @@ func BenchmarkLibraryNative_HashShake_256(b *testing.B) {
 	RunHashShake_256Benchmark(b)
 }
 
-func BenchmarkLibraryNative_SignCertificate_NIST_SECP521R1_RSA4096(b *testing.B) {
+func BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_RSA4096(b *testing.B) {
 	err := RunSignCertificateNISTSECP521R1RSA4096Benchmark(b)
 	if err != nil {
 		b.Fatalf("benchmark failed: %s", err.Error())
 	}
 }
 
-func BenchmarkLibraryNative_SignCertificate_NIST_SECP521R1_NIST_SECP521R1(b *testing.B) {
+func BenchmarkLibraryNative_SignCertificate_CSR_SECP521R1_CA_SECP521R1(b *testing.B) {
 	err := RunSignCertificateNISTSECP521R1NISTSECP521R1Benchmark(b)
 	if err != nil {
 		b.Fatalf("benchmark failed: %s", err.Error())
 	}
 }
 
-func BenchmarkLibraryNative_SignCertificate_NIST_SECP256R1_NIST_SECP384R1(b *testing.B) {
+func BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_SECP384R1(b *testing.B) {
 	err := RunSignCertificateNISTSECP256R1NISTSECP384R1Benchmark(b)
 	if err != nil {
 		b.Fatalf("benchmark failed: %s", err.Error())
