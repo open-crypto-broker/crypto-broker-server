@@ -55,7 +55,7 @@ func (procedure *Benchmark) runAllBenchmarks() (benchmarkResults, error) {
 	results = append(results, procedure.runHashBenchmark("BenchmarkLibraryNative_HashSHA_512_256", bench.RunHashSHA_512_256Benchmark))
 
 	signCertificateNISTSECP521R1RSA4096Result, err := procedure.runSignBenchmark(
-		"BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_SECP384R1", bench.RunSignCertificateNISTSECP521R1RSA4096Benchmark)
+		"BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_RSA4096", bench.RunSignCertificateNISTSECP521R1RSA4096Benchmark)
 	if err != nil {
 		return benchmarkResults{Results: results}, err
 	}
