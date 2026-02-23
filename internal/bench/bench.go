@@ -120,8 +120,8 @@ func RunHashShake_256Benchmark(b *testing.B) {
 	}
 }
 
-// RunSignCertificateNISTSECP521R1RSA4096Benchmark runs certificate signing benchmark with NIST SECP521R1 + RSA 4096
-func RunSignCertificateNISTSECP521R1RSA4096Benchmark(b *testing.B) error {
+// RunSignCertificate_CSR_SECP521R1_CA_RSA4096Benchmark runs certificate signing benchmark with NIST SECP521R1 + RSA 4096
+func RunSignCertificate_CSR_SECP521R1_CA_RSA4096Benchmark(b *testing.B) error {
 	notAfter, err := time.ParseDuration("8760h")
 	if err != nil {
 		return fmt.Errorf("could not parse duration: %w", err)
@@ -242,8 +242,8 @@ JLFlCR8pW4jVERN6wUotELx/7PvCp4BinWRFwA128Zm3rpZUC5ij3SBfg7Rya6om
 	return nil
 }
 
-// RunSignCertificateNISTSECP521R1NISTSECP521R1Benchmark runs certificate signing benchmark with NIST SECP521R1 + NIST SECP521R1
-func RunSignCertificateNISTSECP521R1NISTSECP521R1Benchmark(b *testing.B) error {
+// RunSignCertificate_CSR_SECP521R1_CA_SECP521R1Benchmark runs certificate signing benchmark with NIST SECP521R1 + NIST SECP521R1
+func RunSignCertificate_CSR_SECP521R1_CA_SECP521R1Benchmark(b *testing.B) error {
 	notAfter, err := time.ParseDuration("8760h")
 	if err != nil {
 		return fmt.Errorf("could not parse duration: %w", err)
@@ -424,8 +424,8 @@ func RunSignCertificateBenchmark(b *testing.B) error {
 	return nil
 }
 
-// RunSignCertificateNISTSECP256R1NISTSECP384R1Benchmark runs certificate signing benchmark with NIST SECP256R1 + NIST SECP384R1
-func RunSignCertificateNISTSECP256R1NISTSECP384R1Benchmark(b *testing.B) error {
+// RunSignCertificate_CSR_SECP256R1_CA_SECP384R1Benchmark runs certificate signing benchmark with NIST SECP256R1 + NIST SECP384R1
+func RunSignCertificate_CSR_SECP256R1_CA_SECP384R1Benchmark(b *testing.B) error {
 	notAfter, err := time.ParseDuration("8760h")
 	if err != nil {
 		return fmt.Errorf("could not parse duration: %w", err)
