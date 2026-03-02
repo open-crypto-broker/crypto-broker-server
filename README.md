@@ -159,28 +159,31 @@ The `OTEL_METRICS_EXPORTER` variable supports several values:
 The server collects metrics at following levels:
 
 **Request-Level Metrics:**
-- `crypto_requests_total{rpc_method, profile, status}` - Total number of requests by operation type and status
-- `crypto_request_duration_seconds{rpc_method, profile}` - Request duration histograms
+
+* `crypto_requests_total{rpc_method, profile, status}` - Total number of requests by operation type and status
+* `crypto_request_duration_seconds{rpc_method, profile}` - Request duration histograms
 
 **Operation-Specific Metrics:**
-- `crypto_hash_operations_total{algorithm}` - Total hash operations by algorithm (SHA-256, SHA-384, SHA-512, SHA3, Shake)
-- `crypto_sign_operations_total{profile}` - Total certificate signing operations
-- `crypto_operations_errors_total{rpc_method, error_type}` - Error counters by operation and error type
-- `crypto_operation_bytes_processed_total{rpc_method}` - Total bytes processed by operations
+
+* `crypto_hash_operations_total{algorithm}` - Total hash operations by algorithm (SHA-256, SHA-384, SHA-512, SHA3, Shake)
+* `crypto_sign_operations_total{profile}` - Total certificate signing operations
+* `crypto_operations_errors_total{rpc_method, error_type}` - Error counters by operation and error type
+* `crypto_operation_bytes_processed_total{rpc_method}` - Total bytes processed by operations
 
 **System Metrics:**
-- `crypto_memory_usage_bytes` - Current memory allocation in bytes
+
+* `crypto_memory_usage_bytes` - Current memory allocation in bytes
 
 **Go Runtime Metrics:**
 The server automatically collects comprehensive Go runtime metrics for monitoring application performance and resource usage:
 
-- `go_goroutine_count` - Count of live goroutines
-- `go_memory_used_bytes` - Memory used by the Go runtime
-- `go_memory_allocated_bytes_total` - Memory allocated to the heap by the application
-- `go_memory_allocations_total` - Count of allocations to the heap by the application
-- `go_memory_gc_goal_bytes` - Heap size target for the end of the GC cycle
-- `go_processor_limit` - The number of OS threads that can execute user-level Go code simultaneously
-- `go_config_gogc_percent` - Heap size target percentage configured by the user
+* `go_goroutine_count` - Count of live goroutines
+* `go_memory_used_bytes` - Memory used by the Go runtime
+* `go_memory_allocated_bytes_total` - Memory allocated to the heap by the application
+* `go_memory_allocations_total` - Count of allocations to the heap by the application
+* `go_memory_gc_goal_bytes` - Heap size target for the end of the GC cycle
+* `go_processor_limit` - The number of OS threads that can execute user-level Go code simultaneously
+* `go_config_gogc_percent` - Heap size target percentage configured by the user
 
 #### OTEL Metrics Setup Examples
 
