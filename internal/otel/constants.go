@@ -1,5 +1,14 @@
 package otel
 
+const (
+	StatusSuccess         = "success"
+	StatusError           = "error"
+	RPCMethodHash         = "Hash"
+	RPCMethodSign         = "Sign"
+	RPCMethodBenchmark    = "Benchmark"
+	RPCMethodFakeEndpoint = "FakeEndpoint"
+)
+
 // default values for OTEL configurations
 const (
 	defaultServiceName    = "crypto-broker-server"

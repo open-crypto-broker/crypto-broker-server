@@ -110,7 +110,8 @@ func TestCryptoBrokerServer_Hash_E2E(t *testing.T) {
 	procedureSign := procedure.NewSign(libraryNative)
 	procedureBenchmark := procedure.NewBenchmark()
 	procedureFakeEndpoint := procedure.NewFakeEndpoint()
-	grpcConnector := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, procedureBenchmark, procedureFakeEndpoint)
+	metricsEnabled := false
+	grpcConnector := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, procedureBenchmark, procedureFakeEndpoint, metricsEnabled)
 
 	// Start a mock gRPC server
 	lis = bufconn.Listen(bufSize)
@@ -161,7 +162,8 @@ func TestCryptoBrokerServer_Sign_E2E(t *testing.T) {
 	procedureSign := procedure.NewSign(libraryNative)
 	procedureBenchmark := procedure.NewBenchmark()
 	procedureFakeEndpoint := procedure.NewFakeEndpoint()
-	grpcConnector := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, procedureBenchmark, procedureFakeEndpoint)
+	metricsEnabled := false
+	grpcConnector := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, procedureBenchmark, procedureFakeEndpoint, metricsEnabled)
 
 	// Start a mock gRPC server
 	lis = bufconn.Listen(bufSize)

@@ -67,4 +67,16 @@ const (
 	// If not set or empty, console logging will be used as default.
 	// Examples: "console", "otlp", "otlphttp", "otlpgrpc", "otlphttp,console"
 	OTEL_LOGS_EXPORTER = "OTEL_LOGS_EXPORTER"
+
+	// OTEL_METRICS_EXPORTER is OpenTelemetry environment variable that specifies the metrics exporter(s) to use.
+	// Supports comma-separated values for multiple exporters.
+	// Valid values: "console", "otlpgrpc", "otlphttp", or combinations like "console,otlpgrpc".
+	// If not set, defaults to "console".
+	// Examples: "console", "otlpgrpc", "otlphttp", "console,otlpgrpc"
+	OTEL_METRICS_EXPORTER = "OTEL_METRICS_EXPORTER"
+
+	// OTEL_METRICS_INTERVAL is OpenTelemetry environment variable that specifies the metrics collection interval.
+	// Valid values: duration strings like "30s", "1m", "5m".
+	// If not set, defaults to "30s".
+	OTEL_METRICS_INTERVAL = "OTEL_METRICS_INTERVAL"
 )
