@@ -40,6 +40,8 @@ The Crypto Broker Server supports several environment variables for configuratio
 | `OTEL_TRACES_SAMPLER_ARG` | No | - | Sampling ratio (0.0-1.0) when using ratio-based samplers | Float between 0.0 and 1.0 |
 | `OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION` | No | - | Authorization header for OTLP HTTP exporter (e.g., for Dynatrace: "Api-Token YOUR_API_TOKEN") | Valid authorization header string |
 | `OTEL_LOGS_EXPORTER` | No | `console` | OpenTelemetry log exporter(s) to use | `console`, `otlphttp`, `otlpgrpc`, or comma-separated combinations like `otlphttp,console` |
+| `OTEL_METRICS_EXPORTER` | No | `console` | OpenTelemetry metrics exporter(s) to use | `none`, `console`, `otlphttp`, `otlpgrpc`, or comma-separated combinations like `otlphttp,console` |
+| `OTEL_METRICS_INTERVAL` | No | `30s` | Metrics collection interval | Duration strings like `30s`, `1m`, `5m` |
 
 ### OpenTelemetry Tracing
 
@@ -137,6 +139,79 @@ The server generates structured logs with the following characteristics:
 * **Configurable Levels**: Debug, Info, Warn, Error levels supported
 * **Multiple Formats**: JSON (recommended for production) and text formats available
 * **Multi-destination**: Can simultaneously log to console and external systems
+
+### OpenTelemetry Metrics
+
+The Crypto Broker Server includes OpenTelemetry (OTEL) metrics support for monitoring performance, throughput, and system health. Metrics are automatically collected for all operations and can be exported to both console and OTLP-compatible backends simultaneously.
+
+#### Metrics Exporter Options
+
+The `OTEL_METRICS_EXPORTER` variable supports several values:
+
+* **`none`**: Disable metrics collection entirely (no performance overhead)
+* **`console`** (default): Export metrics to stdout/stderr in human-readable format (useful for development)
+* **`otlphttp`**: Export metrics to an OTLP-compatible collector via HTTP(s)
+* **`otlpgrpc`**: Export metrics to an OTLP-compatible collector via gRPC
+* **Comma-separated**: `console,otlphttp`, `otlpgrpc,console` - Export to multiple destinations simultaneously
+
+#### Metrics Collection
+
+The server collects metrics at following levels:
+
+**Request-Level Metrics:**
+- `crypto_requests_total{rpc_method, profile, status}` - Total number of requests by operation type and status
+- `crypto_request_duration_seconds{rpc_method, profile}` - Request duration histograms
+
+**Operation-Specific Metrics:**
+- `crypto_hash_operations_total{algorithm}` - Total hash operations by algorithm (SHA-256, SHA-384, SHA-512, SHA3, Shake)
+- `crypto_sign_operations_total{profile}` - Total certificate signing operations
+- `crypto_operations_errors_total{rpc_method, error_type}` - Error counters by operation and error type
+- `crypto_operation_bytes_processed_total{rpc_method}` - Total bytes processed by operations
+
+**System Metrics:**
+- `crypto_memory_usage_bytes` - Current memory allocation in bytes
+
+**Go Runtime Metrics:**
+The server automatically collects comprehensive Go runtime metrics for monitoring application performance and resource usage:
+
+- `go_goroutine_count` - Count of live goroutines
+- `go_memory_used_bytes` - Memory used by the Go runtime
+- `go_memory_allocated_bytes_total` - Memory allocated to the heap by the application
+- `go_memory_allocations_total` - Count of allocations to the heap by the application
+- `go_memory_gc_goal_bytes` - Heap size target for the end of the GC cycle
+- `go_processor_limit` - The number of OS threads that can execute user-level Go code simultaneously
+- `go_config_gogc_percent` - Heap size target percentage configured by the user
+
+#### OTEL Metrics Setup Examples
+
+**Disable metrics entirely:**
+
+```bash
+export OTEL_METRICS_EXPORTER="none"
+```
+
+**Console metrics only (default):**
+
+```bash
+export OTEL_METRICS_EXPORTER="console"
+export OTEL_METRICS_INTERVAL="30s"
+```
+
+**Export to OTLP collector:**
+
+```bash
+export OTEL_METRICS_EXPORTER="otlphttp"
+export OTEL_METRICS_INTERVAL="30s"
+export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4318"
+```
+
+**Export to both console and OTLP:**
+
+```bash
+export OTEL_METRICS_EXPORTER="otlphttp,console"
+export OTEL_METRICS_INTERVAL="15s"
+export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4318"
+```
 
 ## Development
 

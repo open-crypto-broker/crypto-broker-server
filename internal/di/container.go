@@ -14,6 +14,7 @@ import (
 type Container struct {
 	Server         *api.CryptoBrokerServer
 	TracerProvider *otel.TracerProvider
+	MeterProvider  *otel.MeterProvider
 }
 
 // NewContainer returns new dependency injection container which exposes the GRPC endpoints.
@@ -40,13 +41,23 @@ func NewContainerWithTracing(ctx context.Context, profiles string, serviceName, 
 		}
 	}
 
+	// Initialize metrics provider
+	meterProvider, err := otel.NewMeterProvider(ctx, serviceName, serviceVersion)
+	if err != nil {
+		panic(err)
+	}
+
 	procedureHash := procedure.NewHash(c10yNative)
 	procedureSign := procedure.NewSign(c10yNative)
 	procedureBenchmark := procedure.NewBenchmark()
 	procedureFakeEndpoint := procedure.NewFakeEndpoint()
 
+	// Check if metrics are enabled (not nil)
+	metricsEnabled := meterProvider != nil
+
 	return &Container{
-		Server:         api.NewCryptoBrokerServer(c10yNative, procedureHash, procedureSign, procedureBenchmark, procedureFakeEndpoint),
+		Server:         api.NewCryptoBrokerServer(c10yNative, procedureHash, procedureSign, procedureBenchmark, procedureFakeEndpoint, metricsEnabled),
 		TracerProvider: tracerProvider,
+		MeterProvider:  meterProvider,
 	}
 }
