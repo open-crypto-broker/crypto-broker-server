@@ -225,6 +225,7 @@ This section covers how to contribute to the project and develop it further.
 Note that you need to have a version of [Golang](https://go.dev/doc/install) > 1.24 installed on your local machine in order to run it locally from terminal. For building the Docker image, you need to have Docker/Docker Desktop or any other alternative (e.g. Podman) installed.
 
 For running the commands using the `Taskfile` tool, you need to have Taskfile installed. Please check the documentation on [how to install Taskfile](https://taskfile.dev/installation/). If you don't have Taskfile support, you can directly use the commands specified in the Taskfile on your local terminal, provided you meet the requirements.
+Please note, that `Taskfile` may use `.env` file as source of environment variables. For convenience, please copy `.env.example` file into `.env` and adjust env variables.
 
 To contribute to this project please configure the custom githooks for this project:
 

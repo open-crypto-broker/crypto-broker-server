@@ -1,17 +1,7 @@
 version: '3'
 
-vars:
-  PROTOBUF_VERSION: "32.1"
-  OTEL_TRACES_EXPORTER: "console" # 'console', otlphttp, otlpgrpc, or comma-separated list like 'console,otlpgrpc', "otlphttp,console"
-  OTEL_TRACES_SAMPLER: "always_off" # always_on, always_off, traceidratio, parentbased_always_on, parentbased_always_off, parentbased_traceidratio.
-  OTEL_TRACES_SAMPLER_ARG: "0.1" # Sampling ratio (0.0-1.0) when using ratio-based samplers like traceidratio or parentbased_traceidratio.
-  OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION: "Api-Token YOUR-API-TOKEN-HERE" # Authorization header for OTLP exporter
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:4318" # Valid URL (only used when OTLP exporter is enabled). Use "https://<your-tenant-id>.live.dynatrace.com/api/v2/otlp" for Dynatrace HTTP OTLP
-  OTEL_LOGS_EXPORTER: "console" # 'console', 'otlphttp', 'otlpgrpc', or comma-separated combinations.
-  OTEL_METRICS_EXPORTER: "none" #  'none', 'console', 'otlphttp', 'otlpgrpc', or comma-separated combinations.
-  OTEL_METRICS_INTERVAL: "30s" # Metrics collection interval (e.g., '30s', '1m', '5m')
-  OTEL_SERVICE_NAME: "crypto-broker-server"  # Service name for OpenTelemetry traces
-  ENABLE_FIPS_MODE: "false" # Whether to enable FIPS mode ("true" or "false")
+dotenv:
+  - .env
 
 tasks:
   ################# Development Tools ####################
