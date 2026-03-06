@@ -155,6 +155,11 @@ tasks:
       - defer: {task: cleanup-socket}
       - ./bin/cryptobroker-server
 
+  env:
+    desc: "Copies example environment variables to .env file"
+    cmds:
+      - cp .env.example .env
+
   ################# Build Crypto Broker Server ####################
   build:
     desc: "Builds Crypto Broker server binary"
@@ -167,6 +172,7 @@ tasks:
       - internal/**/*.go
       - go.mod
       - go.sum
+      - .env
     generates:
       - bin/cryptobroker-server
 
