@@ -28,7 +28,7 @@ import (
 // The path is hardcoded and is also used by the clients in the different programming languages.
 var (
 	baseDir           = "/tmp/open-crypto-broker"
-	defaultSocketPath = filepath.Join(baseDir, "cryptobroker.sock")
+	defaultSocketPath = filepath.Join(baseDir, "crypto-broker-server.sock")
 
 	// defaultProfiles is predefined file name that contains profiles data
 	defaultProfiles = "Profiles.yaml"
