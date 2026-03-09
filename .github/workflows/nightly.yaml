@@ -1,0 +1,37 @@
+name: Nightly Security Scan
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: read
+
+jobs:
+  scan-released-image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Determine latest release tag
+        id: latest
+        run: |
+          TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve digest
+        id: digest
+        run: |
+          IMAGE="ghcr.io/open-crypto-broker/server:${{ steps.latest.outputs.tag }}"
+          DIGEST=$(docker buildx imagetools inspect $IMAGE --format '{{json .Manifest.Digest}}' | tr -d '"')
+          echo "IMAGE_WITH_DIGEST=ghcr.io/open-crypto-broker/server@$DIGEST" >> $GITHUB_ENV
+
+      - name: Scan image with Grype
+        uses: anchore/scan-action@v7
+        with:
+          image: ${{ env.IMAGE_WITH_DIGEST }}
+          fail-build: true
+          severity-cutoff: high
