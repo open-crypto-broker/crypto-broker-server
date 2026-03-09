@@ -134,7 +134,7 @@ tasks:
   cleanup-socket:
     desc: "Cleans up the Crypto Broker server socket"
     cmds:
-      - rm -rf /tmp/cryptobroker.sock
+      - rm -rf /tmp/open-crypto-broker/cryptobroker.sock
 
   run:
     desc: "Runs Crypto Broker server locally"
