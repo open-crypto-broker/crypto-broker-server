@@ -165,7 +165,6 @@ tasks:
     desc: "Builds Crypto Broker server binary"
     cmds:
       - cmd: go build -o bin/cryptobroker-server cmd/server/server.go
-      - go version -m bin/cryptobroker-server
     env:
       GOFIPS140: '{{ if eq .ENABLE_FIPS_MODE "true" }}v1.0.0{{ end }}'
     sources:
