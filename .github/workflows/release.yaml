@@ -52,7 +52,7 @@ jobs:
     uses: open-crypto-broker/.github/.github/workflows/build-release.yaml@main
     with:
       language: go
-      app-name: ${{ env.APP_NAME }}
+      app-name: crypto-broker-server
       tag: ${{ needs.metadata.outputs.tag }}
 
 ################################################
@@ -73,7 +73,7 @@ jobs:
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io/${{ env.ORG }}
+          registry: ghcr.io/open-crypto-broker
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -81,8 +81,8 @@ jobs:
         uses: open-crypto-broker/.github/actions/publish-ghcr@main
         id: build
         with:
-          registry: ghcr.io/${{ env.ORG }}
-          image_name: ${{ env.IMAGE_NAME }}
+          registry: ghcr.io/open-crypto-broker
+          image_name: server
           image_tag: ${{ needs.metadata.outputs.tag }}
 
       - name: Print digest
@@ -103,21 +103,21 @@ jobs:
       - name: Generate SBOM
         uses: anchore/sbom-action@v0
         with:
-          image: ghcr.io/${{ env.ORG }}/${{ env.IMAGE_NAME }}@${{ needs.docker.outputs.digest }}
+          image: ghcr.io/open-crypto-broker/server@${{ needs.docker.outputs.digest }}
           format: spdx-json
-          output-file: ${{ env.IMAGE_NAME }}-${{ needs.metadata.outputs.tag }}-sbom.spdx.json
+          output-file: server-${{ needs.metadata.outputs.tag }}-sbom.spdx.json
 
       - name: Scan image
         uses: anchore/scan-action@v7
         with:
-          image: ghcr.io/${{ env.ORG }}/${{ env.IMAGE_NAME }}@${{ needs.docker.outputs.digest }}
+          image: ghcr.io/open-crypto-broker/server@${{ needs.docker.outputs.digest }}
           fail-build: true
           severity-cutoff: high
 
       - name: Upload SBOM to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ env.IMAGE_NAME }}-${{ needs.metadata.outputs.tag }}-sbom.spdx.json
+          files: server-${{ needs.metadata.outputs.tag }}-sbom.spdx.json
 
       - name: Setup ORAS
         uses: oras-project/setup-oras@v1
