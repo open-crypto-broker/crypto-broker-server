@@ -1,0 +1,231 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  ORG: open-crypto-broker
+  IMAGE_NAME: server
+  APP_NAME: crypto-broker-server
+  COMPONENT_NAME: github.com/open-crypto-broker/crypto-broker-server
+  COMPONENT_REPO: ghcr.io/open-crypto-broker/ocm-components
+
+jobs:
+
+################################################
+# Metadata
+################################################
+  metadata:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+      commit: ${{ steps.meta.outputs.commit }}
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - id: meta
+        run: |
+          echo "tag=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          echo "commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+################################################
+# Build binaries (reusable workflow)
+################################################
+  build-binaries:
+    needs: metadata
+
+    uses: open-crypto-broker/.github/.github/workflows/build-release.yaml@main
+    with:
+      language: go
+      app-name: ${{ env.APP_NAME }}
+      tag: ${{ needs.metadata.outputs.tag }}
+
+################################################
+# Build Docker image (reusable workflow)
+################################################
+  docker:
+    needs: build-binaries
+    runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io/${{ env.ORG }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build docker image and push to GHCR
+        uses: open-crypto-broker/.github/actions/publish-ghcr@main
+        id: build
+        with:
+          registry: ghcr.io/${{ env.ORG }}
+          image_name: ${{ env.IMAGE_NAME }}
+          image_tag: ${{ needs.metadata.outputs.tag }}
+
+      - name: Print digest
+        run: echo "Digest=${{ steps.build.outputs.digest }}"
+
+################################################
+# SBOM + Scan
+################################################
+  security:
+    needs:
+      - metadata
+      - docker
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ghcr.io/${{ env.ORG }}/${{ env.IMAGE_NAME }}@${{ needs.docker.outputs.digest }}
+          format: spdx-json
+          output-file: ${{ env.IMAGE_NAME }}-${{ needs.metadata.outputs.tag }}-sbom.spdx.json
+
+      - name: Scan image
+        uses: anchore/scan-action@v7
+        with:
+          image: ghcr.io/${{ env.ORG }}/${{ env.IMAGE_NAME }}@${{ needs.docker.outputs.digest }}
+          fail-build: true
+          severity-cutoff: high
+
+      - name: Upload SBOM to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.IMAGE_NAME }}-${{ needs.metadata.outputs.tag }}-sbom.spdx.json
+
+      - name: Setup ORAS
+        uses: oras-project/setup-oras@v1
+
+      - name: Login to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+          oras login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Attach SBOM to image (OCI referrer)
+        run: |
+          IMAGE=ghcr.io/${{ env.ORG }}/${{ env.IMAGE_NAME }}@${{ needs.docker.outputs.digest }}
+          SBOM=${{ env.IMAGE_NAME }}-${{ needs.metadata.outputs.tag }}-sbom.spdx.json
+          oras attach "$IMAGE" "$SBOM" \
+            --artifact-type application/spdx+json
+
+################################################
+# OCM Component
+################################################
+  ocm:
+    needs:
+      - metadata
+      - docker
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup OCM
+        uses: open-component-model/ocm-setup-action@main
+
+      - name: Login to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+          ocm login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Create component version
+        run: |
+          TAG=${{ needs.metadata.outputs.tag }}
+          ocm create componentversion \
+            --provider github.com/${{ env.ORG }} \
+            $COMPONENT_NAME:$TAG
+
+      - name: Add git commit label
+        run: |
+          COMMIT=${{ needs.metadata.outputs.commit }}
+          ocm add label \
+            --name git.commit \
+            --value $COMMIT \
+            $COMPONENT_NAME:$TAG
+
+      - name: Add git repository label
+        run: |
+          ocm add label \
+            --name git.repository \
+            --value https://$COMPONENT_NAME \
+            $COMPONENT_NAME:$TAG
+
+      - name: Add docker image digest
+        run: |
+          ocm add label \
+            --name image.digest \
+            --value ${{ needs.docker.outputs.digest }} \
+            $COMPONENT_NAME:$TAG
+
+      - name: Add container image
+        run: |
+          TAG=${{ needs.metadata.outputs.tag }}
+
+          ocm add resource \
+            --type ociImage \
+            --access-type ociArtifact \
+            --image-reference ghcr.io/${{ env.ORG }}/${{ env.IMAGE_NAME }}@${{ needs.docker.outputs.digest }} \
+            $COMPONENT_NAME:$TAG \
+            ${{ env.IMAGE_NAME }}
+
+      - name: Add binaries
+        run: |
+          TAG=${{ needs.metadata.outputs.tag }}
+          PLATFORMS=(
+              linux-x86_64
+              macos-arm64
+            )
+
+          for platform in "${PLATFORMS[@]}"; do
+            ocm add resource \
+              --type application/zip \
+              --access-type ociArtifact \
+              --image-reference ghcr.io/${{ env.ORG }}/$APP_NAME-binary-${platform}:$TAG \
+              $COMPONENT_NAME:$TAG \
+              binary-${platform}
+          done
+
+      - name: Publish component
+        run: |
+          TAG=${{ needs.metadata.outputs.tag }}
+
+          ocm transfer componentversion \
+            $COMPONENT_NAME:$TAG \
+            $COMPONENT_REPO
+
+      - name: Sign component (Sigstore)
+        run: |
+          TAG=${{ needs.metadata.outputs.tag }}
+
+          ocm sign componentversion \
+            $COMPONENT_REPO//$COMPONENT_NAME:$TAG \
+            --signature sigstore
