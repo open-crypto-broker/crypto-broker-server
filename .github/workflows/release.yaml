@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-rc[0-9]+'
 
 permissions:
   contents: write
@@ -16,12 +17,17 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  IS_RC: ${{ contains(github.ref_name, '-rc') }}
   ORG: open-crypto-broker
   IMAGE_NAME: server
-  IMAGE_REPO: ghcr.io/open-crypto-broker/server
+  IMAGE_REPO: ${{ contains(github.ref_name, '-rc')
+    && 'ghcr.io/open-crypto-broker/server-rc'
+    || 'ghcr.io/open-crypto-broker/server' }}
   APP_NAME: crypto-broker-server
   COMPONENT_NAME: github.com/open-crypto-broker/crypto-broker-server
-  COMPONENT_REPO: ghcr.io/open-crypto-broker/ocm-components
+  COMPONENT_REPO: ${{ contains(github.ref_name, '-rc')
+    && 'ghcr.io/open-crypto-broker/ocm-components-rc'
+    || 'ghcr.io/open-crypto-broker/ocm-components' }}
 
 jobs:
 
@@ -41,8 +47,15 @@ jobs:
 
       - id: meta
         run: |
-          echo "tag=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
           echo "commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Print release summary
+        run: |
+          echo "Release tag: ${{ github.ref_name }}"
+          echo "RC mode: $IS_RC"
+          echo "Docker repo: $IMAGE_REPO"
+          echo "OCM repo: $COMPONENT_REPO"
 
 ################################################
 # Build binaries (reusable workflow)
@@ -52,6 +65,7 @@ jobs:
 
     uses: open-crypto-broker/.github/.github/workflows/build-release.yaml@main
     with:
+      is_rc: ${{ env.IS_RC }}
       language: go
       app-name: crypto-broker-server
       tag: ${{ needs.metadata.outputs.tag }}
@@ -60,7 +74,7 @@ jobs:
 # Build Docker image (reusable workflow)
 ################################################
   docker:
-    needs: build-binaries
+    needs: metadata
     runs-on: ubuntu-latest
 
     outputs:
@@ -82,9 +96,11 @@ jobs:
         id: build
         uses: open-crypto-broker/.github/actions/publish-ghcr@main
         with:
+          is_rc: ${{ env.IS_RC }}
           registry: ghcr.io/open-crypto-broker
           image_name: server
           image_tag: ${{ needs.metadata.outputs.tag }}
+          image_sha: ${{ needs.metadata.outputs.commit }}
 
       - name: Print digest
         run: echo "Digest=${{ steps.build.outputs.digest }}"
@@ -122,6 +138,7 @@ jobs:
 
       - name: Upload SBOM to GitHub Release
         uses: softprops/action-gh-release@v2
+        if: env.IS_RC != 'true'
         with:
           files: server-${{ needs.metadata.outputs.tag }}-sbom.spdx.json
 
