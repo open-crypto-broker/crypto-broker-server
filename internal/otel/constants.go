@@ -21,6 +21,7 @@ const (
 	keyExporterOTLPGRPC = "otlpgrpc"
 	keyExporterConsole  = "console"
 	keyExporterOTLPHTTP = "otlphttp"
+	keyExporterNone     = "none"
 )
 
 // sampler names

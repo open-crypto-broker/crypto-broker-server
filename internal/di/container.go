@@ -19,14 +19,14 @@ type Container struct {
 
 // NewContainer returns new dependency injection container which exposes the GRPC endpoints.
 // It panics in case of error.
-func NewContainer(ctx context.Context, profiles string, serviceName, serviceVersion string) *Container {
-	return NewContainerWithTracing(ctx, profiles, serviceName, serviceVersion, true)
+func NewContainer(ctx context.Context, profiles string) *Container {
+	return NewContainerWithTracing(ctx, profiles, true)
 }
 
 // NewContainerWithTracing returns new dependency injection container which exposes the GRPC endpoints.
 // tracingEnabled controls whether OpenTelemetry tracing is initialized.
 // It panics in case of error.
-func NewContainerWithTracing(ctx context.Context, profiles string, serviceName, serviceVersion string, tracingEnabled bool) *Container {
+func NewContainerWithTracing(ctx context.Context, profiles string, tracingEnabled bool) *Container {
 	c10yNative := c10y.NewLibraryNative()
 	if err := profile.LoadProfiles(profiles); err != nil {
 		panic(err)
@@ -35,14 +35,14 @@ func NewContainerWithTracing(ctx context.Context, profiles string, serviceName, 
 	var tracerProvider *otel.TracerProvider
 	if tracingEnabled {
 		var err error
-		tracerProvider, err = otel.NewTracerProvider(ctx, serviceName, serviceVersion)
+		tracerProvider, err = otel.NewTracerProvider(ctx)
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	// Initialize metrics provider
-	meterProvider, err := otel.NewMeterProvider(ctx, serviceName, serviceVersion)
+	meterProvider, err := otel.NewMeterProvider(ctx)
 	if err != nil {
 		panic(err)
 	}

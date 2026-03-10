@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
 	"slices"
 	"strings"
 	"time"
@@ -27,45 +26,19 @@ type MeterProvider struct {
 }
 
 // GetGlobalMeter returns the global meter for the service
-func GetGlobalMeter(serviceName string) metric.Meter {
+func GetGlobalMeter() metric.Meter {
 	return otel.Meter(serviceName)
 }
 
 // NewMeterProvider creates and initializes a new OpenTelemetry meter provider
-func NewMeterProvider(ctx context.Context, serviceName, serviceVersion string) (*MeterProvider, error) {
-	if serviceName == "" {
-		ServiceName = os.Getenv(env.OTEL_SERVICE_NAME)
-		if ServiceName == "" {
-			ServiceName = defaultServiceName
-		}
-	} else {
-		ServiceName = serviceName
-	}
-
-	if serviceVersion == "" {
-		serviceVersion = os.Getenv(env.OTEL_SERVICE_VERSION)
-		if serviceVersion == "" {
-			serviceVersion = defaultServiceVersion
-		}
-	}
-
-	metricsExporter := os.Getenv(env.OTEL_METRICS_EXPORTER)
-	if metricsExporter == "" {
-		metricsExporter = keyExporterConsole
-	}
-
-	if strings.ToLower(strings.TrimSpace(metricsExporter)) == "none" {
+func NewMeterProvider(ctx context.Context) (*MeterProvider, error) {
+	if strings.ToLower(strings.TrimSpace(metricsExporter)) == keyExporterNone {
 		slog.Info("OpenTelemetry metrics disabled by configuration",
 			slog.String("exporter", metricsExporter))
 		return nil, nil
 	}
 
 	// Parse metrics interval
-	intervalStr := os.Getenv(env.OTEL_METRICS_INTERVAL)
-	if intervalStr == "" {
-		intervalStr = "30s"
-	}
-
 	interval, err := time.ParseDuration(intervalStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse metrics interval %q: %w", intervalStr, err)
@@ -76,14 +49,13 @@ func NewMeterProvider(ctx context.Context, serviceName, serviceVersion string) (
 		exporterNames[i] = strings.TrimSpace(name)
 	}
 
-	otlpEndpoint := os.Getenv(env.OTEL_EXPORTER_OTLP_ENDPOINT)
 	var readers []sdkmetric.Reader
 	if slices.Contains(exporterNames, keyExporterOTLPHTTP) {
 		if otlpEndpoint == "" {
 			return nil, fmt.Errorf("%s is not set", env.OTEL_EXPORTER_OTLP_ENDPOINT)
 		}
 
-		readerHTTP, err := getMetricReadersHTTP(ctx, otlpEndpoint, interval)
+		readerHTTP, err := getMetricReadersHTTP(ctx, interval)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create HTTP OTLP metric exporter: %w", err)
 		}
@@ -96,7 +68,7 @@ func NewMeterProvider(ctx context.Context, serviceName, serviceVersion string) (
 			return nil, fmt.Errorf("%s is not set", env.OTEL_EXPORTER_OTLP_ENDPOINT)
 		}
 
-		readerGRPC, err := getMetricReadersGRPC(ctx, otlpEndpoint, interval)
+		readerGRPC, err := getMetricReadersGRPC(ctx, interval)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create gRPC OTLP metric exporter: %w", err)
 		}
@@ -147,7 +119,6 @@ func NewMeterProvider(ctx context.Context, serviceName, serviceVersion string) (
 	}
 
 	slog.Info("OpenTelemetry meter provider initialized",
-		slog.String("service_name", serviceName),
 		slog.String("service_version", serviceVersion),
 		slog.String("exporters", metricsExporter),
 		slog.String("interval", interval.String()))
@@ -156,7 +127,7 @@ func NewMeterProvider(ctx context.Context, serviceName, serviceVersion string) (
 }
 
 // getMetricReadersHTTP creates HTTP metric readers
-func getMetricReadersHTTP(ctx context.Context, otlpEndpoint string, interval time.Duration) (sdkmetric.Reader, error) {
+func getMetricReadersHTTP(ctx context.Context, interval time.Duration) (sdkmetric.Reader, error) {
 	var endpointHost string
 	var urlPath string
 	useSecure := true
@@ -180,9 +151,9 @@ func getMetricReadersHTTP(ctx context.Context, otlpEndpoint string, interval tim
 
 	headers := make(map[string]string)
 
-	if apiToken := os.Getenv(env.OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION); apiToken != "" {
+	if apiToken != "" {
 		headers["Authorization"] = apiToken
-		slog.Info("Dynatrace API token configured for OTLP HTTP metric exporter")
+		slog.Info("API token configured for OTLP HTTP metrics exporter")
 	}
 
 	opts := []otlpmetrichttp.Option{
@@ -205,13 +176,13 @@ func getMetricReadersHTTP(ctx context.Context, otlpEndpoint string, interval tim
 
 	reader := sdkmetric.NewPeriodicReader(exporter, sdkmetric.WithInterval(interval))
 
-	slog.Info("HTTP OTLP metric exporter configured", slog.String("endpoint", endpointHost), slog.String("path", urlPath))
+	slog.Info("HTTP OTLP metrics exporter configured", slog.String("endpoint", endpointHost), slog.String("path", urlPath))
 
 	return reader, nil
 }
 
 // getMetricReadersGRPC creates gRPC metric readers
-func getMetricReadersGRPC(ctx context.Context, otlpEndpoint string, interval time.Duration) (sdkmetric.Reader, error) {
+func getMetricReadersGRPC(ctx context.Context, interval time.Duration) (sdkmetric.Reader, error) {
 	exporter, err := otlpmetricgrpc.New(ctx,
 		otlpmetricgrpc.WithEndpoint(otlpEndpoint),
 		otlpmetricgrpc.WithInsecure(),
