@@ -37,7 +37,7 @@ func NewCryptoBrokerServer(c10yNative *c10y.LibraryNative, procedureHash *proced
 	}
 
 	if metricsEnabled {
-		server.meter = otel.GetGlobalMeter(otel.ServiceName)
+		server.meter = otel.GetGlobalMeter()
 		if err := otel.InitializeInstruments(server.meter); err != nil {
 			panic(fmt.Sprintf("failed to initialize metric instruments: %v", err))
 		}
@@ -54,7 +54,7 @@ func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRe
 		start = time.Now()
 	}
 
-	tracer := otel.GetGlobalTracer(otel.ServiceName)
+	tracer := otel.GetGlobalTracer()
 	if req.Metadata != nil && req.Metadata.TraceContext != nil {
 		traceID, err := trace.TraceIDFromHex(req.Metadata.TraceContext.TraceId)
 		if err == nil {
@@ -143,7 +143,7 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 		start = time.Now()
 	}
 
-	tracer := otel.GetGlobalTracer(otel.ServiceName)
+	tracer := otel.GetGlobalTracer()
 
 	if req.Metadata != nil && req.Metadata.TraceContext != nil {
 		traceID, err := trace.TraceIDFromHex(req.Metadata.TraceContext.TraceId)
@@ -233,7 +233,7 @@ func (server *CryptoBrokerServer) Benchmark(ctx context.Context, req *protobuf.B
 		start = time.Now()
 	}
 
-	tracer := otel.GetGlobalTracer(otel.ServiceName)
+	tracer := otel.GetGlobalTracer()
 
 	if req.Metadata != nil && req.Metadata.TraceContext != nil {
 		traceID, err := trace.TraceIDFromHex(req.Metadata.TraceContext.TraceId)
@@ -306,7 +306,7 @@ func (server *CryptoBrokerServer) FakeEndpoint(ctx context.Context, req *protobu
 		start = time.Now()
 	}
 
-	tracer := otel.GetGlobalTracer(otel.ServiceName)
+	tracer := otel.GetGlobalTracer()
 
 	if req.Metadata != nil && req.Metadata.TraceContext != nil {
 		traceID, err := trace.TraceIDFromHex(req.Metadata.TraceContext.TraceId)

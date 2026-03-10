@@ -48,7 +48,7 @@ func main() {
 	ctx := context.Background()
 	rpcLogger := clog.SetupGlobalLogger(ctx)
 	rpcLogger.Debug("Bootstrapping server dependencies")
-	container := di.NewContainer(ctx, defaultProfiles, "crypto-broker-server", "")
+	container := di.NewContainer(ctx, defaultProfiles)
 	rpcLogger.Debug("Server dependencies bootstrapped")
 
 	rpcLogger.Debug("Checking if directory for socket file exists", slog.String("path", baseDir))
