@@ -27,8 +27,8 @@ import (
 // defaultSocketPath defines default full OS path to socket file.
 // The path is hardcoded and is also used by the clients in the different programming languages.
 var (
-	baseDir           = "/tmp"
-	defaultSocketPath = filepath.Join(baseDir, "cryptobroker.sock")
+	baseDir           = "/tmp/open-crypto-broker"
+	defaultSocketPath = filepath.Join(baseDir, "crypto-broker-server.sock")
 
 	// defaultProfiles is predefined file name that contains profiles data
 	defaultProfiles = "Profiles.yaml"
@@ -54,7 +54,7 @@ func main() {
 	rpcLogger.Debug("Checking if directory for socket file exists", slog.String("path", baseDir))
 	if _, err := os.Stat(baseDir); os.IsNotExist(err) {
 		rpcLogger.Debug("Directory for socket file does not exist, creating it", slog.String("path", baseDir))
-		if err := os.Mkdir(baseDir, 0755); err != nil {
+		if err := os.MkdirAll(baseDir, 0700); err != nil {
 			rpcLogger.Error("Failed to create directory for socket file", slog.String("path", baseDir), slog.String("error", err.Error()))
 
 			panic(err)
@@ -72,6 +72,12 @@ func main() {
 		panic(err)
 	}
 
+	if err := os.Chmod(defaultSocketPath, 0600); err != nil {
+		rpcLogger.Error("Failed to set socket file permissions", slog.String("path", defaultSocketPath), slog.String("error", err.Error()))
+		listener.Close()
+		panic(err)
+	}
+	
 	rpcLogger.Debug("Successfully listened on socket", slog.String("address", listener.Addr().String()))
 
 	grpcPanicRecoveryHandler := func(p any) (err error) {

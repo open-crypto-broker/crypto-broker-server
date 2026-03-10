@@ -6,7 +6,7 @@ This repository contains the Crypto Broker server that allows the user to perfor
 
 ### Installation
 
-The server does not need to be integrated into any existing code. Instead, it is meant to be deployed as a sidecar to a main application using the client library to communicate with the server. Client and server will establish a communication via a Unix Socket over a local shared drive (fixed to `/tmp`) and exchange data via gRPC as communication protocol.
+The server does not need to be integrated into any existing code. Instead, it is meant to be deployed as a sidecar to a main application using the client library to communicate with the server. Client and server will establish a communication via a Unix Socket over a local shared drive (fixed to `/tmp/open-crypto-broker`) and exchange data via gRPC as communication protocol.
 
 ### Usage
 
