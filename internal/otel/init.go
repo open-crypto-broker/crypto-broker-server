@@ -2,29 +2,28 @@ package otel
 
 import (
 	"os"
-	
-	"github.com/open-crypto-broker/crypto-broker-server/internal/env"
 
+	"github.com/open-crypto-broker/crypto-broker-server/internal/env"
 )
 
 var (
-	serviceName = defaultServiceName
-	serviceVersion = defaultServiceVersion
+	serviceName     = defaultServiceName
+	serviceVersion  = defaultServiceVersion
 	metricsExporter = keyExporterConsole
-	tracesExporter = defaultTracesExporter
-	intervalStr = "30s"
-	otlpEndpoint = ""
-	apiToken = ""
-	samplerName = samplerAlwaysOn
-	samplingRatio = 1.0
+	tracesExporter  = defaultTracesExporter
+	intervalStr     = "30s"
+	otlpEndpoint    = ""
+	apiToken        = ""
+	samplerName     = samplerAlwaysOn
+	samplingRatio   = 1.0
 )
 
 func init() {
 	if customServiceName := os.Getenv(env.OTEL_SERVICE_NAME); customServiceName != "" {
 		serviceName = customServiceName
-	} 
+	}
 
-	if customServiceVersion := os.Getenv(env.OTEL_SERVICE_VERSION); customServiceVersion != "" {	
+	if customServiceVersion := os.Getenv(env.OTEL_SERVICE_VERSION); customServiceVersion != "" {
 		serviceVersion = customServiceVersion
 	}
 

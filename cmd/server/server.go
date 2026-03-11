@@ -77,7 +77,7 @@ func main() {
 		listener.Close()
 		panic(err)
 	}
-	
+
 	rpcLogger.Debug("Successfully listened on socket", slog.String("address", listener.Addr().String()))
 
 	grpcPanicRecoveryHandler := func(p any) (err error) {
