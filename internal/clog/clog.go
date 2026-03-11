@@ -18,18 +18,18 @@ import (
 
 var (
 	logsExporter = ""
-	logLevel = slog.LevelInfo
-	logOutput = os.Stdout
-	logHandler slog.Handler
-	serviceName = defaultServiceName
+	logLevel     = slog.LevelInfo
+	logOutput    = os.Stdout
+	logHandler   slog.Handler
+	serviceName  = defaultServiceName
 	otlpEndpoint = ""
-	apiToken = ""
+	apiToken     = ""
 )
 
 func init() {
 	if customServiceName := os.Getenv(env.OTEL_SERVICE_NAME); customServiceName != "" {
 		serviceName = customServiceName
-	} 
+	}
 
 	apiToken = os.Getenv(env.OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION)
 	otlpEndpoint = os.Getenv(env.OTEL_EXPORTER_OTLP_ENDPOINT)
