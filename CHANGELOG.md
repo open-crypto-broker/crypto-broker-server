@@ -3,64 +3,6 @@
 The list of commits in this changelog is automatically generated in the release process.
 The commits follow the Conventional Commit specification.
 
-## [0.2.0] - 2026-03-09
-
-### 🚀 Features
-
-- Add SBOM generation and OCM component generation (#56)
-- Changed socket path
-- Implemented ability to get env variables from .env file for Taskfile
-- Added ability to work with FIPS mode through Taskfile
-- Implemented metrics in server
-- Updated benchmarks
-- Updated workflow
-- Updated benchmarks, added new benchmark, updated assert-benchmark script
-- Add Subject Key Identifier (SKI) extension to certificate signing (#49)
-- Linted code
-- Updated OTEL logging by adding ability to send them using OTLP & gRPC
-- Introduced OTEL constants, updated Taskfile, updated tracer
-- Add otlphttp exporter for dynatrace
-- Updated Taskfile by adding OTEL related vars and using it in run command
-- Updated protobuf reference, regenerated code, implemented fake endpoint logic
-- Added health check for docker (#40)
-- Removed unecessary comments
-- Updated submodule reference
-- Updated code
-- Switched to explicit tracing
-- Implemented OTEL traces
-- Add workflow for generating binary during release (#33)
-- Updated assert-benchmark script, removed unnecessary code, changed func visiblity
-- Rearanged packages
-- Created procedure package
-- Rearanged code
-- Updated server to work with timestamps for validity
-- Re-generated proto
-- Implemented Benchmark procedure
-- Rename CryptoBroker to CryptoGrpc and add Benchmark methods in gRPC server
-- Add health check service to gRPC server (#85)
-
-### 🐛 Bug Fixes
-
-- Adjust env variables (#58)
-- Updated socker file name
-- Updated README.MD by removing linting errors
-- Updated naming of function
-- Updated bench name
-- Updated bench names
-- Update BasicConstraintsValid to use input.IsCA in SignCertificate method (#47)
-- Updated readme
-- Fixed lint errors in readme
-- Fixed docs misleading
-- Fixed modulo issue
-- Init submodule without the proto dependency (#44)
-- Added proto dependency for build-docker task (#41)
-- Added missing validation for ca private key (#36)
-
-### 🚜 Refactor
-
-- Optimize benchmark execution by using testing.Benchmark for improved timing (#35)
-- Adjust Task setup (#32)
-
 ## [0.1.0] - 2025-12-02
 
 ### 🚀 Features
