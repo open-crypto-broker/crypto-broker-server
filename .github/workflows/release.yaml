@@ -17,17 +17,10 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  IS_RC: ${{ contains(github.ref_name, '-rc') }}
   ORG: open-crypto-broker
   IMAGE_NAME: server
-  IMAGE_REPO: ${{ contains(github.ref_name, '-rc')
-    && 'ghcr.io/open-crypto-broker/server-rc'
-    || 'ghcr.io/open-crypto-broker/server' }}
   APP_NAME: crypto-broker-server
   COMPONENT_NAME: github.com/open-crypto-broker/crypto-broker-server
-  COMPONENT_REPO: ${{ contains(github.ref_name, '-rc')
-    && 'ghcr.io/open-crypto-broker/ocm-components-rc'
-    || 'ghcr.io/open-crypto-broker/ocm-components' }}
 
 jobs:
 
@@ -39,6 +32,9 @@ jobs:
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
       commit: ${{ steps.meta.outputs.commit }}
+      is_rc: ${{ steps.meta.outputs.is_rc }}
+      image_repo: ${{ steps.meta.outputs.image_repo }}
+      component_repo: ${{ steps.meta.outputs.component_repo }}
 
     steps:
       - uses: actions/checkout@v5
@@ -47,15 +43,31 @@ jobs:
 
       - id: meta
         run: |
-          echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-          echo "commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          TAG="${{ github.ref_name }}"
+          COMMIT=$(git rev-parse HEAD)
+
+          if [[ "$TAG" == *"-rc"* ]]; then
+            IS_RC=true
+            IMAGE_REPO="ghcr.io/open-crypto-broker/server-rc"
+            COMPONENT_REPO="ghcr.io/open-crypto-broker/ocm-components-rc"
+          else
+            IS_RC=false
+            IMAGE_REPO="ghcr.io/open-crypto-broker/server"
+            COMPONENT_REPO="ghcr.io/open-crypto-broker/ocm-components"
+          fi
+
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "commit=$COMMIT" >> $GITHUB_OUTPUT
+          echo "is_rc=$IS_RC" >> $GITHUB_OUTPUT
+          echo "image_repo=$IMAGE_REPO" >> $GITHUB_OUTPUT
+          echo "component_repo=$COMPONENT_REPO" >> $GITHUB_OUTPUT
 
       - name: Print release summary
         run: |
-          echo "Release tag: ${{ github.ref_name }}"
-          echo "RC mode: $IS_RC"
-          echo "Docker repo: $IMAGE_REPO"
-          echo "OCM repo: $COMPONENT_REPO"
+          echo "Release tag: ${{ steps.meta.outputs.tag }}"
+          echo "RC mode: ${{ steps.meta.outputs.is_rc }}"
+          echo "Docker repo: ${{ steps.meta.outputs.image_repo }}"
+          echo "OCM repo: ${{ steps.meta.outputs.component_repo }}"
 
 ################################################
 # Build binaries (reusable workflow)
@@ -65,7 +77,7 @@ jobs:
 
     uses: open-crypto-broker/.github/.github/workflows/build-release.yaml@main
     with:
-      is_rc: ${{ env.IS_RC }}
+      is_rc: ${{ needs.metadata.outputs.is_rc }}
       language: go
       app-name: crypto-broker-server
       tag: ${{ needs.metadata.outputs.tag }}
@@ -96,7 +108,7 @@ jobs:
         id: build
         uses: open-crypto-broker/.github/actions/publish-ghcr@main
         with:
-          is_rc: ${{ env.IS_RC }}
+          is_rc: ${{ needs.metadata.outputs.is_rc }}
           registry: ghcr.io/open-crypto-broker
           image_name: server
           image_tag: ${{ needs.metadata.outputs.tag }}
@@ -120,7 +132,7 @@ jobs:
       - name: Build image reference
         id: image
         run: |
-          echo "ref=${IMAGE_REPO}@${{ needs.docker.outputs.digest }}" >> $GITHUB_OUTPUT
+          echo "ref=${{ needs.metadata.outputs.image_repo }}@${{ needs.docker.outputs.digest }}"
 
       - name: Generate SBOM
         uses: anchore/sbom-action@v0
@@ -138,7 +150,7 @@ jobs:
 
       - name: Upload SBOM to GitHub Release
         uses: softprops/action-gh-release@v2
-        if: env.IS_RC != 'true'
+        if: needs.metadata.outputs.is_rc != 'true'
         with:
           files: server-${{ needs.metadata.outputs.tag }}-sbom.spdx.json
 
@@ -217,7 +229,7 @@ jobs:
           ocm add resource \
             --type ociImage \
             --access-type ociArtifact \
-            --image-reference ${IMAGE_REPO}@${{ needs.docker.outputs.digest }} \
+            --image-reference ${{ needs.metadata.outputs.image_repo }}@${{ needs.docker.outputs.digest }} \
             ${COMPONENT_NAME}:$TAG \
             ${IMAGE_NAME}
 
@@ -243,11 +255,11 @@ jobs:
           TAG=${{ needs.metadata.outputs.tag }}
           ocm transfer componentversion \
             ${COMPONENT_NAME}:$TAG \
-            ${COMPONENT_REPO}
+            ${{ needs.metadata.outputs.component_repo }}
 
       - name: Sign component (Sigstore)
         run: |
           TAG=${{ needs.metadata.outputs.tag }}
           ocm sign componentversion \
-            ${COMPONENT_REPO}//${COMPONENT_NAME}:$TAG \
+            ${{ needs.metadata.outputs.component_repo }}//${COMPONENT_NAME}:$TAG \
             --signature sigstore
