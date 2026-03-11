@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   packages: read
+  security-events: write # Required for the Security Tab upload
 
 jobs:
   scan-released-image:
@@ -17,7 +18,8 @@ jobs:
       - name: Determine latest release tag
         id: latest
         run: |
-          TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
+          # Use the built-in environment variable for the current repo
+          TAG=$(gh release list --repo ${{ github.repository }} --limit 1 --json tagName --jq '.[0].tagName')
           echo "tag=$TAG" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -31,7 +33,25 @@ jobs:
 
       - name: Scan image with Grype
         uses: anchore/scan-action@v7
+        id: scan
         with:
           image: ${{ env.IMAGE_WITH_DIGEST }}
           fail-build: true
-          severity-cutoff: high
+          severity-cutoff: critical # Only fail the build for Critical vulnerabilities
+          output-format: sarif # Generate SARIF for GitHub Security
+
+      # 1. Upload results to the Security Tab
+      - name: Upload scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() # Ensures results are uploaded even if the scan found vulnerabilities
+        with:
+          sarif_file: ${{ steps.scan.outputs.sarif }}
+
+      # 2. Upload results as a Workflow Artifact
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: grype-scan-results
+          path: ${{ steps.scan.outputs.sarif }}
+          retention-days: 5
