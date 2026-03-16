@@ -1,7 +1,13 @@
 version: '3'
 
-dotenv:
-  - .env
+dotenv: ['.env']
+
+env:
+  GOFIPS140: '{{ if eq .ENABLE_FIPS_MODE "true" }}v1.0.0{{ end }}'
+  CRYPTO_BROKER_PROFILES_DIR: '{{.PWD}}/example-profiles'
+  CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_CA_CERT: '{{.PWD}}/../crypto-broker-deployment/testing/certificates/test-ca/cert-test-CA-nist-secp256r1.pem'
+  CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_PRIVATE_KEY: '{{.PWD}}/../crypto-broker-deployment/testing/certificates/test-ca/test-CA-nist-secp256r1.pem'
+  CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_CSR: '{{.PWD}}/../crypto-broker-deployment/testing/certificates/test-csr/csr-rsa-2048.csr'
 
 tasks:
   ################# Development Tools ####################
@@ -16,30 +22,23 @@ tasks:
     cmds:
       - protoc --version && protoc-gen-go --version && govulncheck --version
 
-
   # More about benchmarks:
   # - https://pkg.go.dev/testing@go1.25.3#hdr-Benchmarks
   # - https://go.googlesource.com/proposal/+/master/design/14313-benchmark-format.md
   # - go help testflag
   run-benchmarks:
     desc: "Command runs benchmarks. For this to work, you need to have the deployment repository in the same parent directory as this repository."
-    env:
-      GOFIPS140: '{{ if eq .ENABLE_FIPS_MODE "true" }}v1.0.0{{ end }}'
-      CRYPTO_BROKER_PROFILES_DIR: '{{ .PWD }}/example-profiles'
-      CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_CA_CERT: '{{ .PWD }}/../crypto-broker-deployment/testing/certificates/test-ca/cert-test-CA-nist-secp256r1.pem'
-      CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_PRIVATE_KEY: '{{ .PWD }}/../crypto-broker-deployment/testing/certificates/test-ca/test-CA-nist-secp256r1.pem'
-      CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_CSR: '{{ .PWD }}/../crypto-broker-deployment/testing/certificates/test-csr/csr-rsa-2048.csr'
+    deps: [build]
     cmds:
-      - go test ./... -run=^$ -bench=.
+      - go version -m bin/cryptobroker-server
+      - go test ./... -run=^$ -bench=. -count=1
 
   assert-benchmarks:
     desc: "Run benchmarks with performance assertions"
-    env:
-      GOFIPS140: '{{ if eq .ENABLE_FIPS_MODE "true" }}v1.0.0{{ end }}'
-      CRYPTO_BROKER_PROFILES_DIR: '{{ .PWD }}/example-profiles'
+    deps:  [build]
     cmds:
       - echo "Running benchmarks with JSON output..."
-      - go test ./... -run=^$ -bench=. -benchmem -json > benchmark-results.json || echo "Benchmarks completed with failures, proceeding with assertions..."
+      - go test ./... -run=^$ -bench=. -benchmem -count=1 -json 2>&1 | tee benchmark-results.json || echo "Benchmarks completed with failures, proceeding with assertions..."
       - echo "Running benchmark performance assertions..."
       - chmod +x benchmark-assert.sh
       - ./benchmark-assert.sh benchmark-results.json
@@ -139,24 +138,11 @@ tasks:
   run:
     desc: "Runs Crypto Broker server locally"
     deps: [build]
-    env:
-      GOFIPS140: '{{ if eq .ENABLE_FIPS_MODE "true" }}v1.0.0{{ end }}'
-      CRYPTO_BROKER_PROFILES_DIR: '{{ .PWD }}/example-profiles'
-      OTEL_TRACES_EXPORTER: '{{.OTEL_TRACES_EXPORTER}}'
-      OTEL_LOGS_EXPORTER: '{{.OTEL_LOGS_EXPORTER}}'
-      OTEL_METRICS_EXPORTER: '{{.OTEL_METRICS_EXPORTER}}'
-      OTEL_METRICS_INTERVAL: '{{.OTEL_METRICS_INTERVAL}}'
-      OTEL_EXPORTER_OTLP_ENDPOINT: '{{.OTEL_EXPORTER_OTLP_ENDPOINT}}'
-      OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION: '{{.OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION}}'
-      OTEL_SERVICE_NAME: '{{.OTEL_SERVICE_NAME}}'
-      OTEL_SERVICE_VERSION: '{{.OTEL_SERVICE_VERSION}}'
-      OTEL_TRACES_SAMPLER: '{{.OTEL_TRACES_SAMPLER}}'
-      OTEL_TRACES_SAMPLER_ARG: '{{.OTEL_TRACES_SAMPLER_ARG}}'
     cmds:
       - defer: {task: cleanup-socket}
       - ./bin/cryptobroker-server
 
-  env:
+  copy-env:
     desc: "Copies example environment variables to .env file"
     cmds:
       - cp .env.example .env
@@ -165,9 +151,7 @@ tasks:
   build:
     desc: "Builds Crypto Broker server binary"
     cmds:
-      - cmd: go build -o bin/cryptobroker-server cmd/server/server.go
-    env:
-      GOFIPS140: '{{ if eq .ENABLE_FIPS_MODE "true" }}v1.0.0{{ end }}'
+      - go build -o bin/cryptobroker-server cmd/server/server.go
     sources:
       - cmd/server/server.go
       - internal/**/*.go
@@ -181,10 +165,12 @@ tasks:
     desc: "Builds Crypto Broker server in a Docker image"
     vars:
       TAG: '{{.TAG | default "dev"}}'
-    dotenv: ['.env']
     cmds:
       - git submodule update --init --recursive
-      - docker buildx build --build-arg="CRYPTO_BROKER_PROFILES_DIR=example-profiles" -f docker/Dockerfile -t ghcr.io/open-crypto-broker/server:{{.TAG}} .
+      - docker buildx build \
+        --build-arg="CRYPTO_BROKER_PROFILES_DIR=example-profiles" \
+        -f docker/Dockerfile \
+        -t ghcr.io/open-crypto-broker/server:{{.TAG}} .
 
   proto:
     desc: "Generates Go stubs from proto files"
@@ -225,7 +211,6 @@ tasks:
 
   ci:
     desc: "Runs continuous integration checks on source code"
-    dotenv: ['.env']
     cmds:
       - task: check-dependencies
       - task: format
