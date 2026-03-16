@@ -1,6 +1,6 @@
 module github.com/open-crypto-broker/crypto-broker-server
 
-go 1.25.0
+go 1.26.1
 
 require (
 	github.com/goccy/go-yaml v1.18.0
