@@ -29,8 +29,10 @@ tasks:
   run-benchmarks:
     desc: "Command runs benchmarks. For this to work, you need to have the deployment repository in the same parent directory as this repository."
     deps: [build]
+    vars:
+      APP_NAME: '{{.APP_NAME | default "crypto-broker-server"}}'
     cmds:
-      - go version -m bin/cryptobroker-server
+      - go version -m bin/{{.APP_NAME}}
       - go test ./... -run=^$ -bench=. -count=1
 
   assert-benchmarks:
@@ -111,23 +113,7 @@ tasks:
   install-go-vulnerability-check:
     desc: "Install Go vulnerability checking tool"
     cmds:
-      - task: install-go-vulnerability-check-linux-amd64
-      - task: install-go-vulnerability-check-darwin
-
-  install-go-vulnerability-check-linux-amd64:
-    desc: "Install Go vulnerability checking tool for Linux"
-    internal: true
-    deps: [bash-add-go-path]
-    platforms: ["linux/amd64"]
-    cmds:
       - go install golang.org/x/vuln/cmd/govulncheck@latest
-
-  install-go-vulnerability-check-darwin:
-    desc: "Install Go vulnerability checking tool for Apple/macOS"
-    internal: true
-    platforms: ["darwin"]
-    cmds:
-      - brew install govulncheck
 
   ################# Crypto Broker Server Execution ####################
   cleanup-socket:
@@ -138,9 +124,11 @@ tasks:
   run:
     desc: "Runs Crypto Broker server locally"
     deps: [build]
+    vars:
+      APP_NAME: '{{.APP_NAME | default "crypto-broker-server"}}'
     cmds:
       - defer: {task: cleanup-socket}
-      - ./bin/cryptobroker-server
+      - ./bin/{{.APP_NAME}}
 
   copy-env:
     desc: "Copies example environment variables to .env file"
@@ -150,8 +138,10 @@ tasks:
   ################# Build Crypto Broker Server ####################
   build:
     desc: "Builds Crypto Broker server binary"
+    vars:
+      APP_NAME: '{{.APP_NAME | default "crypto-broker-server"}}'
     cmds:
-      - go build -o bin/cryptobroker-server cmd/server/server.go
+      - go build -o bin/{{.APP_NAME}} cmd/server/server.go
     sources:
       - cmd/server/server.go
       - internal/**/*.go
@@ -159,7 +149,7 @@ tasks:
       - go.sum
       - .env
     generates:
-      - bin/cryptobroker-server
+      - bin/{{.APP_NAME}}
 
   build-docker:
     desc: "Builds Crypto Broker server in a Docker image"
