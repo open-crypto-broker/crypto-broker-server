@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/grpcmw"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/interceptors"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/otel"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
@@ -61,7 +61,7 @@ func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRe
 			otel.AttributeRpcMethod.String(otel.RPCMethodHash),
 			otel.AttributeCryptoProfile.String(req.Profile),
 			otel.AttributeCryptoInputSize.Int(len(req.Input)),
-			otel.AttributeCorrelationId.String(grpcmw.CorrelationIDFromProtoRequest(req)),
+			otel.AttributeCorrelationId.String(interceptors.CorrelationIDFromProtoRequest(req)),
 		))
 	defer span.End()
 
@@ -136,7 +136,7 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 			otel.AttributeCryptoCsrSize.Int(len(req.Csr)),
 			otel.AttributeCryptoCaCertSize.Int(len(req.CaCert)),
 			otel.AttributeCryptoCaKeySize.Int(len(req.CaPrivateKey)),
-			otel.AttributeCorrelationId.String(grpcmw.CorrelationIDFromProtoRequest(req)),
+			otel.AttributeCorrelationId.String(interceptors.CorrelationIDFromProtoRequest(req)),
 		))
 	defer span.End()
 
@@ -261,7 +261,7 @@ func (server *CryptoBrokerServer) FakeEndpoint(ctx context.Context, req *protobu
 	tracer := otel.GetGlobalTracer()
 	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.FakeEndpoint",
 		trace.WithAttributes(otel.AttributeRpcMethod.String(otel.RPCMethodFakeEndpoint),
-			otel.AttributeCorrelationId.String(grpcmw.CorrelationIDFromProtoRequest(req)),
+			otel.AttributeCorrelationId.String(interceptors.CorrelationIDFromProtoRequest(req)),
 		))
 	defer span.End()
 
