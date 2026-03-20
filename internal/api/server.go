@@ -77,6 +77,7 @@ func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRe
 			otel.AttributeRpcMethod.String(otel.RPCMethodHash),
 			otel.AttributeCryptoProfile.String(req.Profile),
 			otel.AttributeCryptoInputSize.Int(len(req.Input)),
+			otel.AttributeCorrelationId.String(req.Metadata.TraceContext.CorrelationId),
 		))
 	defer span.End()
 
@@ -169,6 +170,7 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 			otel.AttributeCryptoCsrSize.Int(len(req.Csr)),
 			otel.AttributeCryptoCaCertSize.Int(len(req.CaCert)),
 			otel.AttributeCryptoCaKeySize.Int(len(req.CaPrivateKey)),
+			otel.AttributeCorrelationId.String(req.Metadata.TraceContext.CorrelationId),
 		))
 	defer span.End()
 
@@ -253,7 +255,9 @@ func (server *CryptoBrokerServer) Benchmark(ctx context.Context, req *protobuf.B
 	}
 
 	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.Benchmark",
-		trace.WithAttributes(otel.AttributeRpcMethod.String(otel.RPCMethodBenchmark)))
+		trace.WithAttributes(otel.AttributeRpcMethod.String(otel.RPCMethodBenchmark),
+			otel.AttributeCorrelationId.String(req.Metadata.TraceContext.CorrelationId),
+		))
 	defer span.End()
 
 	response, err := server.procedureBenchmark.Execute(req)
@@ -326,7 +330,9 @@ func (server *CryptoBrokerServer) FakeEndpoint(ctx context.Context, req *protobu
 	}
 
 	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.FakeEndpoint",
-		trace.WithAttributes(otel.AttributeRpcMethod.String(otel.RPCMethodFakeEndpoint)))
+		trace.WithAttributes(otel.AttributeRpcMethod.String(otel.RPCMethodFakeEndpoint),
+			otel.AttributeCorrelationId.String(req.Metadata.TraceContext.CorrelationId),
+		))
 	defer span.End()
 
 	response, err := server.procedureFakeEndpoint.Execute(req)
