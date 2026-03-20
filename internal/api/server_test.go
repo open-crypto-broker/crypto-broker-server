@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/grpcmw"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
@@ -115,7 +116,10 @@ func TestCryptoBrokerServer_Hash_E2E(t *testing.T) {
 
 	// Start a mock gRPC server
 	lis = bufconn.Listen(bufSize)
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.ChainUnaryInterceptor(
+		grpcmw.UnaryRemoteTraceInterceptor(),
+		grpcmw.UnaryCorrelationInterceptor(),
+	))
 	protobuf.RegisterCryptoGrpcServer(s, grpcConnector)
 	go func() {
 		if err := s.Serve(lis); err != nil {
@@ -167,7 +171,10 @@ func TestCryptoBrokerServer_Sign_E2E(t *testing.T) {
 
 	// Start a mock gRPC server
 	lis = bufconn.Listen(bufSize)
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.ChainUnaryInterceptor(
+		grpcmw.UnaryRemoteTraceInterceptor(),
+		grpcmw.UnaryCorrelationInterceptor(),
+	))
 	protobuf.RegisterCryptoGrpcServer(s, grpcConnector)
 	go func() {
 		if err := s.Serve(lis); err != nil {
