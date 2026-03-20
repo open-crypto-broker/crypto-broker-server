@@ -28,6 +28,7 @@ type TraceContext struct {
 	SpanId        string                 `protobuf:"bytes,2,opt,name=spanId,proto3" json:"spanId,omitempty"`
 	TraceFlags    string                 `protobuf:"bytes,3,opt,name=traceFlags,proto3" json:"traceFlags,omitempty"`
 	TraceState    string                 `protobuf:"bytes,4,opt,name=traceState,proto3" json:"traceState,omitempty"`
+	CorrelationId string                 `protobuf:"bytes,5,opt,name=correlationId,proto3" json:"correlationId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -86,6 +87,13 @@ func (x *TraceContext) GetTraceFlags() string {
 func (x *TraceContext) GetTraceState() string {
 	if x != nil {
 		return x.TraceState
+	}
+	return ""
+}
+
+func (x *TraceContext) GetCorrelationId() string {
+	if x != nil {
+		return x.CorrelationId
 	}
 	return ""
 }
@@ -635,7 +643,7 @@ var File_protobuf_messages_proto protoreflect.FileDescriptor
 
 const file_protobuf_messages_proto_rawDesc = "" +
 	"\n" +
-	"\x17protobuf/messages.proto\x12\fCryptoBroker\"\x80\x01\n" +
+	"\x17protobuf/messages.proto\x12\fCryptoBroker\"\xa6\x01\n" +
 	"\fTraceContext\x12\x18\n" +
 	"\atraceId\x18\x01 \x01(\tR\atraceId\x12\x16\n" +
 	"\x06spanId\x18\x02 \x01(\tR\x06spanId\x12\x1e\n" +
@@ -644,7 +652,8 @@ const file_protobuf_messages_proto_rawDesc = "" +
 	"traceFlags\x12\x1e\n" +
 	"\n" +
 	"traceState\x18\x04 \x01(\tR\n" +
-	"traceState\"\x8e\x01\n" +
+	"traceState\x12$\n" +
+	"\rcorrelationId\x18\x05 \x01(\tR\rcorrelationId\"\x8e\x01\n" +
 	"\bMetadata\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
 	"\tcreatedAt\x18\x02 \x01(\tR\tcreatedAt\x12C\n" +
