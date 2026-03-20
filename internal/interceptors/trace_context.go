@@ -1,4 +1,4 @@
-package grpcmw
+package interceptors
 
 import (
 	"context"

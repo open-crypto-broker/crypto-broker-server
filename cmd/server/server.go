@@ -12,7 +12,7 @@ import (
 	"syscall"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/clog"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/grpcmw"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/interceptors"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/otel"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
@@ -40,7 +40,7 @@ var (
 // This code is simple enough to be copied and not imported.
 func interceptorLogger(l *slog.Logger) logging.Logger {
 	return logging.LoggerFunc(func(ctx context.Context, lvl logging.Level, msg string, fields ...any) {
-		if cid := grpcmw.CorrelationIDFromContext(ctx); cid != "" {
+		if cid := interceptors.CorrelationIDFromContext(ctx); cid != "" {
 			fields = append([]any{slog.String(string(otel.AttributeCorrelationId), cid)}, fields...)
 		}
 		l.Log(ctx, slog.Level(lvl), msg, fields...)
@@ -92,8 +92,8 @@ func main() {
 
 	server := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			grpcmw.UnaryRemoteTraceInterceptor(),
-			grpcmw.UnaryCorrelationInterceptor(),
+			interceptors.UnaryRemoteTraceInterceptor(),
+			interceptors.UnaryCorrelationInterceptor(),
 			logging.UnaryServerInterceptor(interceptorLogger(rpcLogger)),
 			recovery.UnaryServerInterceptor(recovery.WithRecoveryHandler(grpcPanicRecoveryHandler)),
 		),

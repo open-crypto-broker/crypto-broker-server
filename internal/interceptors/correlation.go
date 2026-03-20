@@ -1,5 +1,5 @@
-// Package grpcmw provides gRPC server middleware helpers.
-package grpcmw
+// Package interceptors provides gRPC server middleware helpers.
+package interceptors
 
 import (
 	"context"
