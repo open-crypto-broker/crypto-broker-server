@@ -91,6 +91,7 @@ The server generates the following trace spans:
 * **Attributes Included**(full list in [attr.go](./internal/otel/attr.go)]):
     * `rpc.method`: The gRPC method name
     * `crypto.profile`: The cryptographic profile used
+    * `correlationId`: The optional correlation ID from `TraceContext` (included only when non-empty)
 
 Traces include error information and span status codes for failed operations.
 

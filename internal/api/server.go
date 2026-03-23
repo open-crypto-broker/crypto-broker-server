@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/interceptors"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/otel"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
@@ -55,28 +56,12 @@ func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRe
 	}
 
 	tracer := otel.GetGlobalTracer()
-	if req.Metadata != nil && req.Metadata.TraceContext != nil {
-		traceID, err := trace.TraceIDFromHex(req.Metadata.TraceContext.TraceId)
-		if err == nil {
-			spanID, err := trace.SpanIDFromHex(req.Metadata.TraceContext.SpanId)
-			if err == nil {
-				remoteSpanContext := trace.NewSpanContext(trace.SpanContextConfig{
-					TraceID:    traceID,
-					SpanID:     spanID,
-					TraceFlags: trace.FlagsSampled,
-					Remote:     true,
-				})
-
-				ctx = trace.ContextWithRemoteSpanContext(ctx, remoteSpanContext)
-			}
-		}
-	}
-
 	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.Hash",
 		trace.WithAttributes(
 			otel.AttributeRpcMethod.String(otel.RPCMethodHash),
 			otel.AttributeCryptoProfile.String(req.Profile),
 			otel.AttributeCryptoInputSize.Int(len(req.Input)),
+			otel.AttributeCorrelationId.String(interceptors.CorrelationIDFromProtoRequest(req)),
 		))
 	defer span.End()
 
@@ -144,24 +129,6 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 	}
 
 	tracer := otel.GetGlobalTracer()
-
-	if req.Metadata != nil && req.Metadata.TraceContext != nil {
-		traceID, err := trace.TraceIDFromHex(req.Metadata.TraceContext.TraceId)
-		if err == nil {
-			spanID, err := trace.SpanIDFromHex(req.Metadata.TraceContext.SpanId)
-			if err == nil {
-				remoteSpanContext := trace.NewSpanContext(trace.SpanContextConfig{
-					TraceID:    traceID,
-					SpanID:     spanID,
-					TraceFlags: trace.FlagsSampled,
-					Remote:     true,
-				})
-
-				ctx = trace.ContextWithRemoteSpanContext(ctx, remoteSpanContext)
-			}
-		}
-	}
-
 	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.Sign",
 		trace.WithAttributes(
 			otel.AttributeRpcMethod.String(otel.RPCMethodSign),
@@ -169,6 +136,7 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 			otel.AttributeCryptoCsrSize.Int(len(req.Csr)),
 			otel.AttributeCryptoCaCertSize.Int(len(req.CaCert)),
 			otel.AttributeCryptoCaKeySize.Int(len(req.CaPrivateKey)),
+			otel.AttributeCorrelationId.String(interceptors.CorrelationIDFromProtoRequest(req)),
 		))
 	defer span.End()
 
@@ -234,26 +202,10 @@ func (server *CryptoBrokerServer) Benchmark(ctx context.Context, req *protobuf.B
 	}
 
 	tracer := otel.GetGlobalTracer()
-
-	if req.Metadata != nil && req.Metadata.TraceContext != nil {
-		traceID, err := trace.TraceIDFromHex(req.Metadata.TraceContext.TraceId)
-		if err == nil {
-			spanID, err := trace.SpanIDFromHex(req.Metadata.TraceContext.SpanId)
-			if err == nil {
-				remoteSpanContext := trace.NewSpanContext(trace.SpanContextConfig{
-					TraceID:    traceID,
-					SpanID:     spanID,
-					TraceFlags: trace.FlagsSampled,
-					Remote:     true,
-				})
-
-				ctx = trace.ContextWithRemoteSpanContext(ctx, remoteSpanContext)
-			}
-		}
-	}
-
 	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.Benchmark",
-		trace.WithAttributes(otel.AttributeRpcMethod.String(otel.RPCMethodBenchmark)))
+		trace.WithAttributes(otel.AttributeRpcMethod.String(otel.RPCMethodBenchmark),
+			otel.AttributeCorrelationId.String(req.Metadata.TraceContext.CorrelationId),
+		))
 	defer span.End()
 
 	response, err := server.procedureBenchmark.Execute(req)
@@ -307,26 +259,10 @@ func (server *CryptoBrokerServer) FakeEndpoint(ctx context.Context, req *protobu
 	}
 
 	tracer := otel.GetGlobalTracer()
-
-	if req.Metadata != nil && req.Metadata.TraceContext != nil {
-		traceID, err := trace.TraceIDFromHex(req.Metadata.TraceContext.TraceId)
-		if err == nil {
-			spanID, err := trace.SpanIDFromHex(req.Metadata.TraceContext.SpanId)
-			if err == nil {
-				remoteSpanContext := trace.NewSpanContext(trace.SpanContextConfig{
-					TraceID:    traceID,
-					SpanID:     spanID,
-					TraceFlags: trace.FlagsSampled,
-					Remote:     true,
-				})
-
-				ctx = trace.ContextWithRemoteSpanContext(ctx, remoteSpanContext)
-			}
-		}
-	}
-
 	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.FakeEndpoint",
-		trace.WithAttributes(otel.AttributeRpcMethod.String(otel.RPCMethodFakeEndpoint)))
+		trace.WithAttributes(otel.AttributeRpcMethod.String(otel.RPCMethodFakeEndpoint),
+			otel.AttributeCorrelationId.String(interceptors.CorrelationIDFromProtoRequest(req)),
+		))
 	defer span.End()
 
 	response, err := server.procedureFakeEndpoint.Execute(req)
