@@ -274,19 +274,19 @@ func (keyConstraints rawProfileAPISignCertificateKeyConstraints) validate() erro
 
 	for _, limits := range keyConstraints.Subject {
 		if limits.MinKeySize < 0 {
-			errors.Join(err, errors.New("minKeySize in Subject is negative"))
+			err = errors.Join(err, errors.New("minKeySize in Subject is negative"))
 		}
 		if limits.MaxKeySize < 0 {
-			errors.Join(err, errors.New("maxKeySize in Subject is negative"))
+			err = errors.Join(err, errors.New("maxKeySize in Subject is negative"))
 		}
 	}
 
 	for _, limits := range keyConstraints.Issuer {
 		if limits.MinKeySize < 0 {
-			errors.Join(err, errors.New("minKeySize in Issuer is negative"))
+			err = errors.Join(err, errors.New("minKeySize in Issuer is negative"))
 		}
 		if limits.MaxKeySize < 0 {
-			errors.Join(err, errors.New("maxKeySize in Issuer is negative"))
+			err = errors.Join(err, errors.New("maxKeySize in Issuer is negative"))
 		}
 	}
 

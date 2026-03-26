@@ -1,9 +1,14 @@
 package c10y
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"crypto/x509"
+	"encoding/asn1"
 	"encoding/pem"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -678,5 +683,103 @@ kLCBYOHSXIZVDr/GFND1zYDbMky/HNWFo0RxhEZL7ihtvugnHhGuOno=
 				t.Errorf("ValidatePrivateKey() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func TestMapKeyUsageToExtension(t *testing.T) {
+	tests := []struct {
+		name       string
+		usage      x509.KeyUsage
+		wantBytes  []byte
+		wantBitLen int
+		wantErr    bool
+	}{
+		{
+			name:       "MapKeyUsageToExtension() encodes digitalSignature correctly",
+			usage:      x509.KeyUsageDigitalSignature,
+			wantBytes:  []byte{0x80},
+			wantBitLen: 1,
+			wantErr:    false,
+		},
+		{
+			name:       "MapKeyUsageToExtension() encodes decipherOnly (9th bit) correctly",
+			usage:      x509.KeyUsageDecipherOnly,
+			wantBytes:  []byte{0x00, 0x80},
+			wantBitLen: 9,
+			wantErr:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ext, err := MapKeyUsageToExtension(tt.usage)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("MapKeyUsageToExtension() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if err != nil {
+				return
+			}
+
+			if !ext.Critical {
+				t.Fatalf("expected extension to be critical")
+			}
+
+			wantOID := asn1.ObjectIdentifier{2, 5, 29, 15}
+			if !ext.Id.Equal(wantOID) {
+				t.Fatalf("expected OID %v, got %v", wantOID, ext.Id)
+			}
+
+			var bitStr asn1.BitString
+			rest, err := asn1.Unmarshal(ext.Value, &bitStr)
+			if err != nil {
+				t.Fatalf("failed to unmarshal extension value as bit string: %v", err)
+			}
+			if len(rest) != 0 {
+				t.Fatalf("unexpected trailing bytes after ASN.1 unmarshal: %x", rest)
+			}
+
+			if !reflect.DeepEqual(bitStr.Bytes, tt.wantBytes) {
+				t.Fatalf("bit string bytes = %x, want %x", bitStr.Bytes, tt.wantBytes)
+			}
+			if bitStr.BitLength != tt.wantBitLen {
+				t.Fatalf("bit string bit length = %d, want %d", bitStr.BitLength, tt.wantBitLen)
+			}
+		})
+	}
+}
+
+func TestValidatePublicKey_UnsupportedType(t *testing.T) {
+	err := ValidatePublicKey("not-a-key", map[Algorithm]BitSizeConstraints{
+		RSA: {MinKeySize: 2048, MaxKeySize: 4096},
+	})
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+	if !strings.Contains(err.Error(), "unsupported") {
+		t.Fatalf("expected unsupported-type error, got: %v", err)
+	}
+}
+
+func TestValidatePrivateKey_ECDSA_UnsupportedType(t *testing.T) {
+	ecdsaKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatalf("failed to generate ecdsa key: %v", err)
+	}
+
+	if err := ValidatePrivateKey(ecdsaKey, map[Algorithm]BitSizeConstraints{
+		ECDSA: {MinKeySize: 256, MaxKeySize: 384},
+	}); err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+
+	err = ValidatePrivateKey("not-a-key", map[Algorithm]BitSizeConstraints{
+		ECDSA: {MinKeySize: 256, MaxKeySize: 384},
+	})
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+	if !strings.Contains(err.Error(), "unsupported") {
+		t.Fatalf("expected unsupported-type error, got: %v", err)
 	}
 }
