@@ -124,10 +124,28 @@ func ParsePrivateKeyFromPEM(key []byte) (any, error) {
 
 // MapKeyUsageToExtension maps x509.KeyUsage to pkix.Extension or returns non-nil error if any
 func MapKeyUsageToExtension(usage x509.KeyUsage) (pkix.Extension, error) {
-	bitString := asn1.BitString{
-		Bytes:     []byte{byte(usage), byte(usage >> 8)},
-		BitLength: 9,
+	// x509.KeyUsage is a bitmask where bit 0 corresponds to digitalSignature, etc.
+	// ASN.1 BIT STRING encodes bits MSB-first in each byte (bit 0 is 0x80).
+	var bytes []byte
+	var bitLen int
+	for i := 0; i < 9; i++ {
+		if usage&(1<<i) == 0 {
+			continue
+		}
+
+		if i+1 > bitLen {
+			bitLen = i + 1
+		}
+
+		byteIndex := i / 8
+		bitInByte := i % 8
+		for len(bytes) <= byteIndex {
+			bytes = append(bytes, 0)
+		}
+		bytes[byteIndex] |= 0x80 >> bitInByte
 	}
+
+	bitString := asn1.BitString{Bytes: bytes, BitLength: bitLen}
 
 	encoded, err := asn1.Marshal(bitString)
 	if err != nil {
