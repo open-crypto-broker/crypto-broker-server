@@ -3,6 +3,96 @@
 The list of commits in this changelog is automatically generated in the release process.
 The commits follow the Conventional Commit specification.
 
+## [0.2.0] - 2026-03-31
+
+### 🚀 Features
+
+- Removed test-case
+- Updated test cases coverage & fixed bugs
+
+### ⚙️ Miscellaneous Tasks
+
+- Update actions to latest versions for Node 24 support (#73)
+
+## [0.1.1-rc6] - 2026-03-23
+
+### 🚀 Features
+
+- Add nightly security scan (#70)
+- Collectively updated dependencies
+- Updated go-grpc-middleware/v2
+- Updated go-yaml dep
+- Renamed package grpcmw to interceptors
+- Moved logic to middlewares
+- Implemented correlationId support for traces
+- Updated proto reference and re-generated messages
+- Update go version to latest
+- Add two upload paths for Grype scans (#62)
+- Removed not needed 'go version' invokement in Taskfile, updated workflow by adding new step related to FIPS mode benchmarks
+- Updated build command so it displays details of server binary
+- Added env command to Taskfile, added .env as dependency for build command
+- Add SBOM generation and OCM component generation (#56)
+- Changed socket path
+- Implemented ability to get env variables from .env file for Taskfile
+- Added ability to work with FIPS mode through Taskfile
+- Implemented metrics in server
+- Updated benchmarks
+- Updated workflow
+- Updated benchmarks, added new benchmark, updated assert-benchmark script
+- Add Subject Key Identifier (SKI) extension to certificate signing (#49)
+- Linted code
+- Updated OTEL logging by adding ability to send them using OTLP & gRPC
+- Introduced OTEL constants, updated Taskfile, updated tracer
+- Add otlphttp exporter for dynatrace
+- Updated Taskfile by adding OTEL related vars and using it in run command
+- Updated protobuf reference, regenerated code, implemented fake endpoint logic
+- Added health check for docker (#40)
+- Removed unecessary comments
+- Updated submodule reference
+- Updated code
+- Switched to explicit tracing
+- Implemented OTEL traces
+- Add workflow for generating binary during release (#33)
+- Updated assert-benchmark script, removed unnecessary code, changed func visiblity
+- Rearanged packages
+- Created procedure package
+- Rearanged code
+- Updated server to work with timestamps for validity
+- Re-generated proto
+- Implemented Benchmark procedure
+- Rename CryptoBroker to CryptoGrpc and add Benchmark methods in gRPC server
+- Add health check service to gRPC server (#85)
+
+### 🐛 Bug Fixes
+
+- Adjust Dockerfile (#68)
+- Remove OCM support (#67)
+- Adjust env file and Taksfile (#65)
+- Add submodule checkout (#63)
+- Linted code
+- Fixed service name & version issue and refactored code
+- Adjust release workflow (#61)
+- Adjust release workflow (#60)
+- Adjust env variables (#58)
+- Updated socker file name
+- Updated README.MD by removing linting errors
+- Updated naming of function
+- Updated bench name
+- Updated bench names
+- Update BasicConstraintsValid to use input.IsCA in SignCertificate method (#47)
+- Updated readme
+- Fixed lint errors in readme
+- Fixed docs misleading
+- Fixed modulo issue
+- Init submodule without the proto dependency (#44)
+- Added proto dependency for build-docker task (#41)
+- Added missing validation for ca private key (#36)
+
+### 🚜 Refactor
+
+- Optimize benchmark execution by using testing.Benchmark for improved timing (#35)
+- Adjust Task setup (#32)
+
 ## [0.1.0] - 2025-12-02
 
 ### 🚀 Features
