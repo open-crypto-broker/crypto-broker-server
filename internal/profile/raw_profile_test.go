@@ -133,8 +133,6 @@ func TestRawProfileAPISignCertificateBasicConstraints_validate(t *testing.T) {
 }
 
 func TestRawProfileAPISignCertificateKeyConstraints_validate_negativeSizes(t *testing.T) {
-	// This should be rejected (min/max sizes cannot be negative).
-	// The test guards against silently accepting invalid profiles.
 	err := (rawProfileAPISignCertificateKeyConstraints{
 		Subject: map[string]rawProfileAPISignCertificateKeyConstraintsLimits{
 			"rsa": {MinKeySize: -1, MaxKeySize: 2048},
