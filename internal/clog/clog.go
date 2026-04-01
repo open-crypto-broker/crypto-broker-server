@@ -27,6 +27,10 @@ var (
 )
 
 func init() {
+	loadConfigFromEnv()
+}
+
+func loadConfigFromEnv() {
 	if customServiceName := os.Getenv(env.OTEL_SERVICE_NAME); customServiceName != "" {
 		serviceName = customServiceName
 	}

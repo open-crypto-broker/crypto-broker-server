@@ -363,8 +363,7 @@ G3XM0iYE0H/fX6JnVHervw+RTAtYLkYZT/Hecyyvam9CBvVwL1Z2Ly8AfPhvEOw8
 
 func TestLibraryNative_composeAttributeTypeAndValue(t *testing.T) {
 	tests := []struct {
-		name string // description of this test case
-		// Named input parameters for target function.
+		name    string
 		part    string
 		want    []pkix.AttributeTypeAndValue
 		wantErr bool
