@@ -1,0 +1,58 @@
+version: "2"
+run:
+  timeout: 5m
+  relative-path-mode: gomod
+  modules-download-mode: readonly
+output:
+  sort-order:
+    - linter
+    - severity
+    - file
+severity:
+  default: warning
+  rules:
+    - linters:
+        - gosec
+        - errorlint
+        - nilerr
+      severity: error
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+linters:
+  default: standard
+  enable:
+    - gosec
+    - errorlint
+    - protogetter
+    - nilerr
+    - gocritic
+    - exhaustive
+    - unparam
+    - bodyclose
+  settings:
+    govet:
+      enable:
+        - shadow
+    gosec:
+      excludes:
+        - G115
+    exhaustive:
+      default-signifies-exhaustive: true
+  exclusions:
+    generated: lax
+    warn-unused: true
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - internal/protobuf
+    rules:
+      - linters:
+          - staticcheck
+        text: "QF1008:"
+      - linters:
+          - gocritic
+        text: "hugeParam:"
