@@ -200,11 +200,17 @@ tasks:
     cmds:
       - govulncheck ./...
 
+  golangci-lint:
+    desc: "Run golangci-lint"
+    cmds:
+      - golangci-lint run ./...
+
   ci:
     desc: "Runs continuous integration checks on source code"
     cmds:
       - task: check-dependencies
       - task: format
       - task: lint
+      - task: golangci-lint
       - task: unit-test
       - task: vulnerability-check
