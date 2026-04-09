@@ -55,7 +55,8 @@ func NewMeterProvider(ctx context.Context) (*MeterProvider, error) {
 			return nil, fmt.Errorf("%s is not set", env.OTEL_EXPORTER_OTLP_ENDPOINT)
 		}
 
-		readerHTTP, err := getMetricReadersHTTP(ctx, interval)
+		var readerHTTP sdkmetric.Reader
+		readerHTTP, err = getMetricReadersHTTP(ctx, interval)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create HTTP OTLP metric exporter: %w", err)
 		}
@@ -68,7 +69,8 @@ func NewMeterProvider(ctx context.Context) (*MeterProvider, error) {
 			return nil, fmt.Errorf("%s is not set", env.OTEL_EXPORTER_OTLP_ENDPOINT)
 		}
 
-		readerGRPC, err := getMetricReadersGRPC(ctx, interval)
+		var readerGRPC sdkmetric.Reader
+		readerGRPC, err = getMetricReadersGRPC(ctx, interval)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create gRPC OTLP metric exporter: %w", err)
 		}
@@ -77,7 +79,8 @@ func NewMeterProvider(ctx context.Context) (*MeterProvider, error) {
 	}
 
 	if slices.Contains(exporterNames, keyExporterConsole) {
-		readerConsole, err := getMetricReadersConsole(interval)
+		var readerConsole sdkmetric.Reader
+		readerConsole, err = getMetricReadersConsole(interval)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create console metric exporter: %w", err)
 		}

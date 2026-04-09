@@ -33,6 +33,6 @@ func (procedure *FakeEndpoint) Execute(req *protobuf.FakeEndpointRequest) (*prot
 
 	return &protobuf.FakeEndpointResponse{
 		Message:  "Fake endpoint called successfully",
-		Metadata: req.Metadata,
+		Metadata: req.GetMetadata(),
 	}, nil
 }

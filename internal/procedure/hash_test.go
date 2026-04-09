@@ -33,10 +33,10 @@ func TestHash_Execute(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Execute() error: %v", err)
 	}
-	if resp.HashAlgorithm != "sha3-512" {
-		t.Fatalf("HashAlgorithm = %q, want %q", resp.HashAlgorithm, "sha3-512")
+	if resp.GetHashAlgorithm() != "sha3-512" {
+		t.Fatalf("HashAlgorithm = %q, want %q", resp.GetHashAlgorithm(), "sha3-512")
 	}
-	if len(resp.HashValue) != 128 { // sha3-512 is 64 bytes which is 128 hex chars
-		t.Fatalf("HashValue length = %d, want 128", len(resp.HashValue))
+	if len(resp.GetHashValue()) != 128 { // sha3-512 is 64 bytes which is 128 hex chars
+		t.Fatalf("HashValue length = %d, want 128", len(resp.GetHashValue()))
 	}
 }

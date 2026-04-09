@@ -92,7 +92,7 @@ func TestCryptoBrokerServer_FakeEndpoint_MetricsEnabled_CoversErrorAndSuccess(t 
 	if err != nil {
 		t.Fatalf("expected success on 5th call, got: %v", err)
 	}
-	if resp.Message == "" {
+	if resp.GetMessage() == "" {
 		t.Fatalf("expected non-empty response message")
 	}
 }
@@ -121,7 +121,7 @@ func TestCryptoBrokerServer_Hash_MetricsEnabled_Success_RecordsMetricsBranch(t *
 	if err != nil {
 		t.Fatalf("expected success, got err: %v", err)
 	}
-	if resp == nil || resp.HashAlgorithm == "" || resp.HashValue == "" {
+	if resp == nil || resp.GetHashAlgorithm() == "" || resp.GetHashValue() == "" {
 		t.Fatalf("expected non-empty hash response")
 	}
 }
@@ -180,7 +180,7 @@ func TestCryptoBrokerServer_Sign_MetricsEnabled_Success_RecordsMetricsBranch(t *
 	if err != nil {
 		t.Fatalf("expected success, got err: %v", err)
 	}
-	if resp == nil || resp.SignedCertificate == "" {
+	if resp == nil || resp.GetSignedCertificate() == "" {
 		t.Fatalf("expected non-empty signed certificate")
 	}
 }
@@ -212,7 +212,7 @@ func TestCryptoBrokerServer_Benchmark_MetricsEnabled_Success_RecordsMetricsBranc
 	if err != nil {
 		t.Fatalf("expected success, got err: %v", err)
 	}
-	if resp == nil || len(resp.BenchmarkResults) == 0 {
+	if resp == nil || len(resp.GetBenchmarkResults()) == 0 {
 		t.Fatalf("expected non-empty benchmark results")
 	}
 }

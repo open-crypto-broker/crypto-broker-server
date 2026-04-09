@@ -30,7 +30,7 @@ func TestFakeEndpoint_Execute(t *testing.T) {
 	if err != nil {
 		t.Fatalf("call 5: expected success, got err: %v", err)
 	}
-	if resp.Message == "" {
+	if resp.GetMessage() == "" {
 		t.Fatalf("expected non-empty message")
 	}
 }

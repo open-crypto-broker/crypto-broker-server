@@ -116,7 +116,8 @@ func (p rawProfile) mapToProfile() (Profile, error) {
 		// Key usage
 		ckus := []x509.KeyUsage{}
 		for _, cku := range p.API.SignCertificate.KeyUsage {
-			parsedKeyUsage, err := c10y.MapStringToKeyUsage(cku)
+			var parsedKeyUsage x509.KeyUsage
+			parsedKeyUsage, err = c10y.MapStringToKeyUsage(cku)
 			if err != nil {
 				return Profile{}, fmt.Errorf("could not map critical key usage string into its golang representation, err: %w", err)
 			}
@@ -126,7 +127,8 @@ func (p rawProfile) mapToProfile() (Profile, error) {
 		// Extended key usage
 		ekus := []x509.ExtKeyUsage{}
 		for _, eku := range p.API.SignCertificate.ExtendedKeyUsage {
-			ku, err := c10y.MapExtKeyUsage(eku)
+			var ku x509.ExtKeyUsage
+			ku, err = c10y.MapExtKeyUsage(eku)
 			if err != nil {
 				return Profile{}, fmt.Errorf("could not map extended key usage into its golang representation, err: %w", err)
 			}
@@ -188,28 +190,28 @@ func (settings rawProfileSettings) validate() error {
 	return nil
 }
 
-func (API rawProfileAPI) validate() error {
-	if reflect.DeepEqual(API.SignData, rawProfileAPISignData{}) && reflect.DeepEqual(API.HashData, rawProfileAPIHashData{}) && reflect.DeepEqual(API.SignCertificate, rawProfileAPISignCertificate{}) {
+func (api rawProfileAPI) validate() error {
+	if reflect.DeepEqual(api.SignData, rawProfileAPISignData{}) && reflect.DeepEqual(api.HashData, rawProfileAPIHashData{}) && reflect.DeepEqual(api.SignCertificate, rawProfileAPISignCertificate{}) {
 		return errors.New("profile should contain at least one API")
 	}
 
 	var err error
-	if !reflect.DeepEqual(API.SignData, rawProfileAPISignData{}) {
-		err = errors.Join(err, API.SignData.validate())
+	if !reflect.DeepEqual(api.SignData, rawProfileAPISignData{}) {
+		err = errors.Join(err, api.SignData.validate())
 	}
 
-	if !reflect.DeepEqual(API.HashData, rawProfileAPIHashData{}) {
-		err = errors.Join(err, API.HashData.validate())
+	if !reflect.DeepEqual(api.HashData, rawProfileAPIHashData{}) {
+		err = errors.Join(err, api.HashData.validate())
 	}
 
-	if !reflect.DeepEqual(API.SignCertificate, rawProfileAPISignCertificate{}) {
-		err = errors.Join(err, API.SignCertificate.validate())
+	if !reflect.DeepEqual(api.SignCertificate, rawProfileAPISignCertificate{}) {
+		err = errors.Join(err, api.SignCertificate.validate())
 	}
 
 	return err
 }
 
-func (API rawProfileAPISignData) validate() error {
+func (api rawProfileAPISignData) validate() error {
 	return nil
 }
 

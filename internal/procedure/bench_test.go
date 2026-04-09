@@ -24,10 +24,10 @@ func TestBenchmark_Execute(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Execute() error: %v", err)
 	}
-	if resp.BenchmarkResults == "" {
+	if resp.GetBenchmarkResults() == "" {
 		t.Fatalf("expected non-empty BenchmarkResults")
 	}
-	if !strings.Contains(resp.BenchmarkResults, `"results"`) {
-		t.Fatalf("expected JSON results to contain \"results\" key, got: %s", resp.BenchmarkResults)
+	if !strings.Contains(resp.GetBenchmarkResults(), `"results"`) {
+		t.Fatalf("expected JSON results to contain \"results\" key, got: %s", resp.GetBenchmarkResults())
 	}
 }

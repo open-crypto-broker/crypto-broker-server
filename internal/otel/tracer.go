@@ -91,8 +91,8 @@ func NewTracerProvider(ctx context.Context) (*TracerProvider, error) {
 	}
 
 	sampler := defineSampler()
-	options := append(batchers, sdktrace.WithResource(res), sdktrace.WithSampler(sampler))
-	tp := sdktrace.NewTracerProvider(options...)
+	batchers = append(batchers, sdktrace.WithResource(res), sdktrace.WithSampler(sampler))
+	tp := sdktrace.NewTracerProvider(batchers...)
 	otel.SetTracerProvider(tp)
 
 	slog.Info("OpenTelemetry tracer provider initialized",
@@ -193,8 +193,7 @@ func getBatchersConsole() ([]sdktrace.TracerProviderOption, error) {
 
 // defineSampler defines the sampler for the tracer provider
 func defineSampler() sdktrace.Sampler {
-	sampler := sdktrace.AlwaysSample()
-
+	var sampler sdktrace.Sampler
 	switch samplerName {
 	case samplerAlwaysOn, samplerAlways:
 		sampler = sdktrace.AlwaysSample()

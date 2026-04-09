@@ -77,7 +77,7 @@ func main() {
 		panic(err)
 	}
 
-	if err := os.Chmod(defaultSocketPath, 0600); err != nil {
+	if err = os.Chmod(defaultSocketPath, 0600); err != nil {
 		rpcLogger.Error("Failed to set socket file permissions", slog.String("path", defaultSocketPath), slog.String("error", err.Error()))
 		listener.Close()
 		panic(err)
@@ -119,7 +119,7 @@ func main() {
 
 		// Shutdown tracer provider if initialized
 		if container.TracerProvider != nil {
-			if err := container.TracerProvider.Shutdown(ctx); err != nil {
+			if err = container.TracerProvider.Shutdown(ctx); err != nil {
 				rpcLogger.Error("Failed to shutdown tracer provider", slog.String("error", err.Error()))
 			}
 		}
