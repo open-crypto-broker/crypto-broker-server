@@ -18,9 +18,9 @@ tasks:
   # - https://go.dev/doc/tutorial/govulncheck
   tools:
     desc: "Download tools required for development"
-    deps: [install-protobuf-compiler, install-go-protoc-modules, install-go-vulnerability-check]
+    deps: [install-protobuf-compiler, install-go-protoc-modules, install-go-vulnerability-check, install-golangci-lint]
     cmds:
-      - protoc --version && protoc-gen-go --version && govulncheck --version
+      - protoc --version && protoc-gen-go --version && govulncheck --version && golangci-lint --version
 
   # More about benchmarks:
   # - https://pkg.go.dev/testing@go1.25.3#hdr-Benchmarks
@@ -44,6 +44,11 @@ tasks:
       - echo "Running benchmark performance assertions..."
       - chmod +x benchmark-assert.sh
       - ./benchmark-assert.sh benchmark-results.json
+
+  install-golangci-lint:
+    desc: "Install golangci-lint"
+    cmds:
+      - curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.11.4
 
   # Public task to install the pre-built protobuf compiler depending on the architecture
   install-protobuf-compiler:
@@ -202,6 +207,7 @@ tasks:
 
   golangci-lint:
     desc: "Run golangci-lint"
+    deps: [install-golangci-lint]
     cmds:
       - golangci-lint run ./...
 
