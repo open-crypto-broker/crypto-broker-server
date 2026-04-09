@@ -35,7 +35,7 @@ func NewSign(cryptographicEngineNative *c10y.LibraryNative) *Sign {
 
 // Execute executes the sign procedure
 func (procedure *Sign) Execute(req *protobuf.SignRequest) (*protobuf.SignResponse, error) {
-	reqProfile, err := profile.Retrieve(req.Profile)
+	reqProfile, err := profile.Retrieve(req.GetProfile())
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve profile, err: %w", err)
 	}
@@ -52,7 +52,7 @@ func (procedure *Sign) Execute(req *protobuf.SignRequest) (*protobuf.SignRespons
 
 	return &protobuf.SignResponse{
 		SignedCertificate: base64.StdEncoding.EncodeToString(clientCRTRaw),
-		Metadata:          req.Metadata,
+		Metadata:          req.GetMetadata(),
 	}, nil
 }
 
@@ -76,7 +76,7 @@ func (procedure *Sign) sign(req signRequest, p profile.Profile) (certDER []byte,
 		subject = *req.subject
 	}
 
-	if err := c10y.ValidatePublicKey(req.csr.PublicKey, p.API.SignCertificate.KeyConstraints.Subject); err != nil {
+	if err = c10y.ValidatePublicKey(req.csr.PublicKey, p.API.SignCertificate.KeyConstraints.Subject); err != nil {
 		if errors.Is(err, c10y.ErrMissingKeyConstraints) {
 			return nil, fmt.Errorf("profile does not contain key constraints for algorithm used in the CSR's public key, err: %w", err)
 		}
@@ -107,7 +107,7 @@ func (procedure *Sign) sign(req signRequest, p profile.Profile) (certDER []byte,
 
 	var finalKU x509.KeyUsage
 	for _, ku := range p.API.SignCertificate.KeyUsage {
-		finalKU = finalKU | ku
+		finalKU |= ku
 	}
 
 	input := c10y.SignCertificateInput{
@@ -137,22 +137,22 @@ func (procedure *Sign) sign(req signRequest, p profile.Profile) (certDER []byte,
 
 // parseRawSignRequest parses the request and returns the signClientInput
 func (procedure *Sign) parseRawSignRequest(req *protobuf.SignRequest) (signRequest, error) {
-	block, _ := pem.Decode([]byte(req.Csr))
+	block, _ := pem.Decode([]byte(req.GetCsr()))
 	if block == nil {
 		return signRequest{}, fmt.Errorf("could not decode CSR as PEM file")
 	}
 
 	csr, err := x509.ParseCertificateRequest(block.Bytes)
 	if err != nil {
-		return signRequest{}, fmt.Errorf("could not parse certificate request, err: %s", err)
+		return signRequest{}, fmt.Errorf("could not parse certificate request, err: %w", err)
 	}
 
-	caPrivateKey, err := c10y.ParsePrivateKeyFromPEM([]byte(req.CaPrivateKey))
+	caPrivateKey, err := c10y.ParsePrivateKeyFromPEM([]byte(req.GetCaPrivateKey()))
 	if err != nil {
-		return signRequest{}, fmt.Errorf("could not parse private key, err: %s", err)
+		return signRequest{}, fmt.Errorf("could not parse private key, err: %w", err)
 	}
 
-	cert, err := c10y.ParseX509Cert([]byte(req.CaCert))
+	cert, err := c10y.ParseX509Cert([]byte(req.GetCaCert()))
 	if err != nil {
 		return signRequest{}, fmt.Errorf("could not parse x.509 CA cert from request, err: %w", err)
 	}
@@ -162,16 +162,16 @@ func (procedure *Sign) parseRawSignRequest(req *protobuf.SignRequest) (signReque
 		caPrivateKey:          caPrivateKey,
 		caCert:                cert,
 		subject:               req.Subject,
-		CrlDistributionPoints: req.CrlDistributionPoints,
+		CrlDistributionPoints: req.GetCrlDistributionPoints(),
 	}
 
 	if req.ValidNotBefore != nil {
-		startValidity := time.Unix(int64(*req.ValidNotBefore), 0).UTC()
+		startValidity := time.Unix(int64(req.GetValidNotBefore()), 0).UTC()
 		input.validNotBefore = &startValidity
 	}
 
 	if req.ValidNotAfter != nil {
-		endValidity := time.Unix(int64(*req.ValidNotAfter), 0).UTC()
+		endValidity := time.Unix(int64(req.GetValidNotAfter()), 0).UTC()
 		input.validNotAfter = &endValidity
 	}
 

@@ -39,7 +39,7 @@ func (procedure *Benchmark) Execute(req *protobuf.BenchmarkRequest) (*protobuf.B
 		return nil, fmt.Errorf("failed to encode benchmark results: %w", err)
 	}
 
-	return &protobuf.BenchmarkResponse{BenchmarkResults: string(jsonResults), Metadata: req.Metadata}, nil
+	return &protobuf.BenchmarkResponse{BenchmarkResults: string(jsonResults), Metadata: req.GetMetadata()}, nil
 }
 
 // runAllBenchmarks executes all cryptographic benchmarks and returns the results

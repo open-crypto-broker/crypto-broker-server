@@ -59,8 +59,8 @@ func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRe
 	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.Hash",
 		trace.WithAttributes(
 			otel.AttributeRpcMethod.String(otel.RPCMethodHash),
-			otel.AttributeCryptoProfile.String(req.Profile),
-			otel.AttributeCryptoInputSize.Int(len(req.Input)),
+			otel.AttributeCryptoProfile.String(req.GetProfile()),
+			otel.AttributeCryptoInputSize.Int(len(req.GetInput())),
 			otel.AttributeCorrelationId.String(interceptors.CorrelationIDFromProtoRequest(req)),
 		))
 	defer span.End()
@@ -81,7 +81,7 @@ func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRe
 
 			otel.RequestDuration.Record(ctx, duration, metric.WithAttributes(
 				attribute.String("rpc_method", otel.RPCMethodHash),
-				attribute.String("profile", req.Profile),
+				attribute.String("profile", req.GetProfile()),
 				attribute.String("status", otel.StatusError),
 			))
 		}
@@ -90,8 +90,8 @@ func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRe
 	}
 
 	span.SetAttributes(
-		otel.AttributeCryptoHashAlgorithm.String(response.HashAlgorithm),
-		otel.AttributeCryptoHashOutputSize.Int(len(response.HashValue)),
+		otel.AttributeCryptoHashAlgorithm.String(response.GetHashAlgorithm()),
+		otel.AttributeCryptoHashOutputSize.Int(len(response.GetHashValue())),
 	)
 	span.SetStatus(codes.Ok, "Hash operation completed successfully")
 
@@ -99,21 +99,21 @@ func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRe
 		duration := time.Since(start).Seconds()
 		otel.RequestsTotal.Add(ctx, 1, metric.WithAttributes(
 			attribute.String("rpc_method", otel.RPCMethodHash),
-			attribute.String("profile", req.Profile),
+			attribute.String("profile", req.GetProfile()),
 			attribute.String("status", otel.StatusSuccess),
 		))
 
 		otel.RequestDuration.Record(ctx, duration, metric.WithAttributes(
 			attribute.String("rpc_method", otel.RPCMethodHash),
-			attribute.String("profile", req.Profile),
+			attribute.String("profile", req.GetProfile()),
 			attribute.String("status", otel.StatusSuccess),
 		))
 
 		otel.HashOperationsTotal.Add(ctx, 1, metric.WithAttributes(
-			attribute.String("algorithm", response.HashAlgorithm),
+			attribute.String("algorithm", response.GetHashAlgorithm()),
 		))
 
-		otel.OperationBytesProcessed.Add(ctx, int64(len(req.Input)), metric.WithAttributes(
+		otel.OperationBytesProcessed.Add(ctx, int64(len(req.GetInput())), metric.WithAttributes(
 			attribute.String("rpc_method", otel.RPCMethodHash),
 		))
 	}
@@ -132,10 +132,10 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.Sign",
 		trace.WithAttributes(
 			otel.AttributeRpcMethod.String(otel.RPCMethodSign),
-			otel.AttributeCryptoProfile.String(req.Profile),
-			otel.AttributeCryptoCsrSize.Int(len(req.Csr)),
-			otel.AttributeCryptoCaCertSize.Int(len(req.CaCert)),
-			otel.AttributeCryptoCaKeySize.Int(len(req.CaPrivateKey)),
+			otel.AttributeCryptoProfile.String(req.GetProfile()),
+			otel.AttributeCryptoCsrSize.Int(len(req.GetCsr())),
+			otel.AttributeCryptoCaCertSize.Int(len(req.GetCaCert())),
+			otel.AttributeCryptoCaKeySize.Int(len(req.GetCaPrivateKey())),
 			otel.AttributeCorrelationId.String(interceptors.CorrelationIDFromProtoRequest(req)),
 		))
 	defer span.End()
@@ -156,7 +156,7 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 
 			otel.RequestDuration.Record(ctx, duration, metric.WithAttributes(
 				attribute.String("rpc_method", otel.RPCMethodSign),
-				attribute.String("profile", req.Profile),
+				attribute.String("profile", req.GetProfile()),
 				attribute.String("status", otel.StatusError),
 			))
 		}
@@ -164,7 +164,7 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 		return nil, fmt.Errorf("something went wrong while signing certificate: %s", err.Error())
 	}
 
-	span.SetAttributes(otel.AttributeCryptoSignedCertSize.Int(len(response.SignedCertificate)))
+	span.SetAttributes(otel.AttributeCryptoSignedCertSize.Int(len(response.GetSignedCertificate())))
 	span.SetStatus(codes.Ok, "Certificate signing completed successfully")
 
 	if server.metricsEnabled {
@@ -172,21 +172,21 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 		// Record success metrics
 		otel.RequestsTotal.Add(ctx, 1, metric.WithAttributes(
 			attribute.String("rpc_method", otel.RPCMethodSign),
-			attribute.String("profile", req.Profile),
+			attribute.String("profile", req.GetProfile()),
 			attribute.String("status", otel.StatusSuccess),
 		))
 
 		otel.RequestDuration.Record(ctx, duration, metric.WithAttributes(
 			attribute.String("rpc_method", otel.RPCMethodSign),
-			attribute.String("profile", req.Profile),
+			attribute.String("profile", req.GetProfile()),
 			attribute.String("status", otel.StatusSuccess),
 		))
 
 		otel.SignOperationsTotal.Add(ctx, 1, metric.WithAttributes(
-			attribute.String("profile", req.Profile),
+			attribute.String("profile", req.GetProfile()),
 		))
 
-		otel.OperationBytesProcessed.Add(ctx, int64(len(req.Csr)+len(req.CaCert)+len(req.CaPrivateKey)), metric.WithAttributes(
+		otel.OperationBytesProcessed.Add(ctx, int64(len(req.GetCsr())+len(req.GetCaCert())+len(req.GetCaPrivateKey())), metric.WithAttributes(
 			attribute.String("rpc_method", otel.RPCMethodSign),
 		))
 	}
@@ -204,7 +204,7 @@ func (server *CryptoBrokerServer) Benchmark(ctx context.Context, req *protobuf.B
 	tracer := otel.GetGlobalTracer()
 	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.Benchmark",
 		trace.WithAttributes(otel.AttributeRpcMethod.String(otel.RPCMethodBenchmark),
-			otel.AttributeCorrelationId.String(req.Metadata.TraceContext.CorrelationId),
+			otel.AttributeCorrelationId.String(req.GetMetadata().GetTraceContext().GetCorrelationId()),
 		))
 	defer span.End()
 
@@ -231,7 +231,7 @@ func (server *CryptoBrokerServer) Benchmark(ctx context.Context, req *protobuf.B
 		return nil, fmt.Errorf("something went wrong while running benchmarks: %s", err.Error())
 	}
 
-	span.SetAttributes(otel.AttributeCryptoBenchmarkResultsSize.Int(len(response.BenchmarkResults)))
+	span.SetAttributes(otel.AttributeCryptoBenchmarkResultsSize.Int(len(response.GetBenchmarkResults())))
 	span.SetStatus(codes.Ok, "Benchmark operation completed successfully")
 
 	if server.metricsEnabled {

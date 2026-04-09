@@ -152,8 +152,8 @@ func TestCryptoBrokerServer_Hash_E2E(t *testing.T) {
 		}
 
 		expectedHash := "YmI5ZTJhMDIyMzdlNmY4YWRjYWVmOWZjMTRiODk4YjdjODBjZWRjMTE0MTEwNDcyY2RmOTI1MjMzNjIxYjcwNTk2M2M3NmU3YjExM2JlZDNjMjc4ZmYxMTY3MWE2ZDFjZGNiYTU0NWUwMDlmZjRjMGMwMjUzOTg5OTI0MTk5M2I="
-		if base64.StdEncoding.EncodeToString([]byte(resp.HashValue)) != expectedHash {
-			t.Errorf("Expected hash %s, got %s", expectedHash, base64.StdEncoding.EncodeToString([]byte(resp.HashValue)))
+		if base64.StdEncoding.EncodeToString([]byte(resp.GetHashValue())) != expectedHash {
+			t.Errorf("Expected hash %s, got %s", expectedHash, base64.StdEncoding.EncodeToString([]byte(resp.GetHashValue())))
 		}
 	})
 }
@@ -235,7 +235,7 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 			t.Fatalf("Sign failed: %s", err.Error())
 		}
 
-		if len(resp.SignedCertificate) == 0 {
+		if len(resp.GetSignedCertificate()) == 0 {
 			t.Errorf("Expected signed certificate, got empty response")
 		}
 	})
@@ -340,7 +340,7 @@ func TestCryptoBrokerServer_Benchmark(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Benchmark failed: %v", err)
 	}
-	if len(resp.BenchmarkResults) == 0 {
+	if len(resp.GetBenchmarkResults()) == 0 {
 		t.Fatalf("expected non-empty benchmark results")
 	}
 }
@@ -367,7 +367,7 @@ func TestCryptoBrokerServer_FakeEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected success on 5th call, got: %v", err)
 	}
-	if resp.Message == "" {
+	if resp.GetMessage() == "" {
 		t.Fatalf("expected non-empty response message")
 	}
 }

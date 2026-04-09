@@ -767,7 +767,7 @@ func TestValidatePrivateKey_ECDSA_UnsupportedType(t *testing.T) {
 		t.Fatalf("failed to generate ecdsa key: %v", err)
 	}
 
-	if err := ValidatePrivateKey(ecdsaKey, map[Algorithm]BitSizeConstraints{
+	if err = ValidatePrivateKey(ecdsaKey, map[Algorithm]BitSizeConstraints{
 		ECDSA: {MinKeySize: 256, MaxKeySize: 384},
 	}); err != nil {
 		t.Fatalf("expected no error, got: %v", err)

@@ -195,7 +195,7 @@ NrPbJOOC/7QNdsuxmDFGEapyZg==
 	kus := []x509.KeyUsage{x509.KeyUsageDigitalSignature, x509.KeyUsageKeyEncipherment}
 	var finalKU x509.KeyUsage
 	for _, ku := range kus {
-		finalKU = finalKU | ku
+		finalKU |= ku
 	}
 
 	input := c10y.SignCertificateInput{
@@ -302,7 +302,7 @@ xz4as/yt+3tVfrJa9Yaf3TjDqlTlncA8kJ3hhsRX5U/dwEJv2/ZMO7MWh12XUrQL
 	kus := []x509.KeyUsage{x509.KeyUsageDigitalSignature, x509.KeyUsageKeyEncipherment}
 	var finalKU x509.KeyUsage
 	for _, ku := range kus {
-		finalKU = finalKU | ku
+		finalKU |= ku
 	}
 	input := c10y.SignCertificateInput{
 		CSR:                csrParsed,
@@ -339,6 +339,7 @@ func RunSignCertificateBenchmark(b *testing.B) error {
 
 	service := c10y.NewLibraryNative()
 
+	// #nosec G703 -- trusted benchmark input
 	caCert, err := os.ReadFile(os.Getenv(env.BENCHMARK_SIGN_CERTIFICATE_CA_CERT))
 	if err != nil {
 		b.Fatalf("could not read CA cert, err: %s", err.Error())
@@ -348,6 +349,7 @@ func RunSignCertificateBenchmark(b *testing.B) error {
 		b.Fatalf("could not parse CA cert, err: %s", err.Error())
 	}
 
+	// #nosec G703 -- trusted benchmark input
 	caPrivateKey, err := os.ReadFile(os.Getenv(env.BENCHMARK_SIGN_CERTIFICATE_PRIVATE_KEY))
 	if err != nil {
 		b.Fatalf("could not read CA private key, err: %s", err.Error())
@@ -357,6 +359,7 @@ func RunSignCertificateBenchmark(b *testing.B) error {
 		b.Fatalf("could not parse CA private key, err: %s", err.Error())
 	}
 
+	// #nosec G703 -- trusted benchmark input
 	csrBytes, err := os.ReadFile(os.Getenv(env.BENCHMARK_SIGN_CERTIFICATE_CSR))
 	if err != nil {
 		b.Fatalf("could not read CSR, err: %s", err.Error())
@@ -380,7 +383,7 @@ func RunSignCertificateBenchmark(b *testing.B) error {
 	kus := []x509.KeyUsage{x509.KeyUsageDigitalSignature, x509.KeyUsageKeyEncipherment}
 	var finalKU x509.KeyUsage
 	for _, ku := range kus {
-		finalKU = finalKU | ku
+		finalKU |= ku
 	}
 	input := c10y.SignCertificateInput{
 		CSR:                csrParsed,
@@ -479,7 +482,7 @@ NrPbJOOC/7QNdsuxmDFGEapyZg==
 	kus := []x509.KeyUsage{x509.KeyUsageDigitalSignature, x509.KeyUsageKeyEncipherment}
 	var finalKU x509.KeyUsage
 	for _, ku := range kus {
-		finalKU = finalKU | ku
+		finalKU |= ku
 	}
 	input := c10y.SignCertificateInput{
 		CSR:                csrParsed,

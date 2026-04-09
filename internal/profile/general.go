@@ -31,7 +31,11 @@ func init() {
 	}
 	root, err := os.OpenRoot(profilesDirFullOSPath)
 	if err != nil {
-		slog.Debug(fmt.Sprintf("could not open dir: %s, err: %s", profilesDirFullOSPath, err.Error()))
+		// #nosec G706 - Debug should handle sanitization
+		slog.Debug("could not open dir",
+			"path", profilesDirFullOSPath,
+			"error", err,
+		)
 
 		panic(fmt.Errorf("could not open dir: %s, err: %w", profilesDirFullOSPath, err))
 	}

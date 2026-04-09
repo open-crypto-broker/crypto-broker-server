@@ -2,6 +2,7 @@ package c10y
 
 import (
 	"crypto/rand"
+	// #nosec G505 G401 -- SHA-1 is required for Subject Key Identifier per RFC 5280
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha3"
@@ -165,9 +166,14 @@ func (service *LibraryNative) HashSHA_512_256(dataToHash []byte) (Hash, error) {
 // HashShake_128 returns Shake128 hash of provided bytes or non-nil error if any.
 func (service *LibraryNative) HashShake_128(size int, dataToHash []byte) (Hash, error) {
 	shake := sha3.NewSHAKE128()
-	shake.Write(dataToHash)
+	if _, err := shake.Write(dataToHash); err != nil {
+		return Hash(""), fmt.Errorf("failed to write data to shake: %w", err)
+	}
+
 	output := make([]byte, size)
-	shake.Read(output)
+	if _, err := shake.Read(output); err != nil {
+		return Hash(""), fmt.Errorf("failed to read data from shake: %w", err)
+	}
 
 	return Hash(fmt.Sprintf("%x", output)), nil
 }
@@ -175,9 +181,14 @@ func (service *LibraryNative) HashShake_128(size int, dataToHash []byte) (Hash, 
 // HashShake_256 returns Shake256 hash of provided bytes or non-nil error if any.
 func (service *LibraryNative) HashShake_256(size int, dataToHash []byte) (Hash, error) {
 	shake := sha3.NewSHAKE256()
-	shake.Write(dataToHash)
+	if _, err := shake.Write(dataToHash); err != nil {
+		return Hash(""), fmt.Errorf("failed to write data to shake: %w", err)
+	}
+
 	output := make([]byte, size)
-	shake.Read(output)
+	if _, err := shake.Read(output); err != nil {
+		return Hash(""), fmt.Errorf("failed to read data from shake: %w", err)
+	}
 
 	return Hash(fmt.Sprintf("%x", output)), nil
 }
@@ -231,6 +242,7 @@ func (service *LibraryNative) computeSubjectKeyIdentifier(publicKey any) ([]byte
 	}
 
 	// Compute SHA-1 of the public key bytes
+	// #nosec G505 G401 -- SHA-1 is required for Subject Key Identifier per RFC 5280
 	hash := sha1.Sum(spki.SubjectPublicKey.Bytes)
 	return hash[:], nil
 }

@@ -39,6 +39,7 @@ dAHEn4LToNX0cl1oAkIB8Cv/F/7TJ0tJn0FpwtCBbNWzlUpz6TJj2wz5e4t80dzi
 DKXl/HVVm/pvigXURZC+DzE90ztDcthH55yHm+sMhuE=
 -----END CERTIFICATE-----`
 
+	// #nosec G101 -- trusted test input
 	caPrivateKeyPEM := `-----BEGIN EC PRIVATE KEY-----
 MIHcAgEBBEIAsaSvwGS0nfPXCBX7MY0nt2VYYkOrf1dygvH8oIxyDE9LyWJ7eDBx
 T77tKXW71fO1Kq0WOcocNp89wg6PMsUFZxWgBwYFK4EEACOhgYkDgYYABAERlddb
@@ -68,11 +69,11 @@ NrPbJOOC/7QNdsuxmDFGEapyZg==
 	if err != nil {
 		t.Fatalf("Execute() error: %v", err)
 	}
-	if resp.SignedCertificate == "" {
+	if resp.GetSignedCertificate() == "" {
 		t.Fatalf("expected non-empty SignedCertificate")
 	}
 
-	der, err := base64.StdEncoding.DecodeString(resp.SignedCertificate)
+	der, err := base64.StdEncoding.DecodeString(resp.GetSignedCertificate())
 	if err != nil {
 		t.Fatalf("failed to base64 decode SignedCertificate: %v", err)
 	}
@@ -114,6 +115,8 @@ H6K3+1vqastXKjfhnv12eNOZuv+Awo0Q1RPqYHhZxF5x5gykw0clhgy6wfmqB+Km
 dAHEn4LToNX0cl1oAkIB8Cv/F/7TJ0tJn0FpwtCBbNWzlUpz6TJj2wz5e4t80dzi
 DKXl/HVVm/pvigXURZC+DzE90ztDcthH55yHm+sMhuE=
 -----END CERTIFICATE-----`
+
+	// #nosec G101 -- trusted test input
 	caPrivateKeyPEM := `-----BEGIN EC PRIVATE KEY-----
 MIHcAgEBBEIAsaSvwGS0nfPXCBX7MY0nt2VYYkOrf1dygvH8oIxyDE9LyWJ7eDBx
 T77tKXW71fO1Kq0WOcocNp89wg6PMsUFZxWgBwYFK4EEACOhgYkDgYYABAERlddb

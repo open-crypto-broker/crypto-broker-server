@@ -115,19 +115,21 @@ func SetupGlobalLogger(ctx context.Context) *slog.Logger {
 	}
 
 	var otlpLogger *slog.Logger
-	if useOTLPHTTP {
+	switch {
+	case useOTLPHTTP:
 		otlpLogger = setupOTLPLoggerWithProtocol(ctx, "http")
-	} else if useOTLPGRPC {
+	case useOTLPGRPC:
 		otlpLogger = setupOTLPLoggerWithProtocol(ctx, "grpc")
-	} else if useOTLPAuto {
+	case useOTLPAuto:
 		otlpLogger = setupOTLPLogger(ctx)
 	}
 
-	if (useOTLPHTTP || useOTLPGRPC || useOTLPAuto) && useConsole {
+	switch {
+	case (useOTLPHTTP || useOTLPGRPC || useOTLPAuto) && useConsole:
 		return setupMultiLoggerWithOTLP(otlpLogger)
-	} else if useOTLPHTTP || useOTLPGRPC || useOTLPAuto {
+	case useOTLPHTTP || useOTLPGRPC || useOTLPAuto:
 		return otlpLogger
-	} else {
+	default:
 		return setupConsoleLogger()
 	}
 }

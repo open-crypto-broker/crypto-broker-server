@@ -19,12 +19,12 @@ func NewHash(cryptographicEngineNative *c10y.LibraryNative) *Hash {
 
 // Execute executes the hash procedure
 func (procedure *Hash) Execute(req *protobuf.HashRequest) (*protobuf.HashResponse, error) {
-	reqProfile, err := profile.Retrieve(req.Profile)
+	reqProfile, err := profile.Retrieve(req.GetProfile())
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve profile, err: %w", err)
 	}
 
-	hashedBytes, err := procedure.hash(req.Input, reqProfile)
+	hashedBytes, err := procedure.hash(req.GetInput(), reqProfile)
 	if err != nil {
 		return nil, fmt.Errorf("error while hashing data: %s", err.Error())
 	}
@@ -32,7 +32,7 @@ func (procedure *Hash) Execute(req *protobuf.HashRequest) (*protobuf.HashRespons
 	return &protobuf.HashResponse{
 		HashValue:     string(hashedBytes),
 		HashAlgorithm: reqProfile.API.HashData.HashAlg.String(),
-		Metadata:      req.Metadata,
+		Metadata:      req.GetMetadata(),
 	}, nil
 }
 
@@ -89,7 +89,7 @@ func (procedure *Hash) hash(data []byte, p profile.Profile) (c10y.Hash, error) {
 	}
 
 	if err != nil {
-		return "", fmt.Errorf("could not hash provided bytes, err: %s", err)
+		return "", fmt.Errorf("could not hash provided bytes, err: %w", err)
 	}
 
 	return hash, nil
