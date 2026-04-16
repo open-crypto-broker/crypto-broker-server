@@ -153,7 +153,7 @@ tasks:
       APP_NAME: '{{.APP_NAME | default "crypto-broker-server"}}'
     cmds:
       - 'echo "Building {{.APP_NAME}} with Git SHA: {{.CB_GIT_SHA}} and Git Tag: {{.CB_GIT_TAG}}"'
-      - go build -o bin/{{.APP_NAME}} -ldflags="-X 'main.gitSHA={{.CB_GIT_SHA}}' -X 'main.gitTag={{.CB_GIT_TAG}}'" cmd/server/server.go
+      - go build -o bin/{{.APP_NAME}} -ldflags="-X main.gitSHA={{.CB_GIT_SHA}} -X main.gitTag={{.CB_GIT_TAG}}" cmd/server/server.go
     sources: 
       - cmd/server/server.go
       - internal/**/*.go
