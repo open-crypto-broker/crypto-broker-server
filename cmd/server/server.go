@@ -34,6 +34,10 @@ var (
 
 	// defaultProfiles is predefined file name that contains profiles data
 	defaultProfiles = "Profiles.yaml"
+
+	// gitSHA and gitTag are set at build time using ldflags
+	gitSHA = "unknown"
+	gitTag = "unknown"
 )
 
 // interceptorLogger adapts slog logger to interceptor logger.
@@ -52,6 +56,7 @@ func main() {
 	// Create context for initialization
 	ctx := context.Background()
 	rpcLogger := clog.SetupGlobalLogger(ctx)
+	rpcLogger.Info("Server info", slog.String("git.sha", gitSHA), slog.String("git.tag", gitTag))
 	rpcLogger.Debug("Bootstrapping server dependencies")
 	container := di.NewContainer(ctx, defaultProfiles)
 	rpcLogger.Debug("Server dependencies bootstrapped")
