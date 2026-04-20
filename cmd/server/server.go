@@ -10,8 +10,10 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/clog"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/env"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/interceptors"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/otel"
 
@@ -60,6 +62,26 @@ func main() {
 	rpcLogger.Debug("Bootstrapping server dependencies")
 	container := di.NewContainer(ctx, defaultProfiles)
 	rpcLogger.Debug("Server dependencies bootstrapped")
+
+	exporter, endpoint, sampler := os.Getenv(env.OTEL_TRACES_EXPORTER), os.Getenv(env.OTEL_EXPORTER_OTLP_ENDPOINT), os.Getenv(env.OTEL_TRACES_SAMPLER)
+	switch otel.TracingBootstrapProbeDecision() {
+	case otel.BootstrapProbeAttempted:
+		if err := container.TracerProvider.ProbeExport(ctx, 5*time.Second); err != nil {
+			rpcLogger.Warn("Tracing bootstrap probe failed",
+				slog.String("exporters", exporter),
+				slog.String("endpoint", endpoint),
+				slog.String("error", err.Error()))
+		} else {
+			rpcLogger.Info("Tracing bootstrap probe succeeded",
+				slog.String("exporters", exporter),
+				slog.String("endpoint", endpoint))
+		}
+	case otel.BootstrapProbeSkippedDueToSampler:
+		rpcLogger.Info("Tracing bootstrap probe skipped due to sampler",
+			slog.String("sampler", sampler),
+			slog.String("exporters", exporter))
+	default:
+	}
 
 	rpcLogger.Debug("Checking if directory for socket file exists", slog.String("path", baseDir))
 	if _, err := os.Stat(baseDir); os.IsNotExist(err) {

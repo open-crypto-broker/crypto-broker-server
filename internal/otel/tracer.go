@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/env"
 	"go.opentelemetry.io/otel"
@@ -24,17 +25,35 @@ type TracerProvider struct {
 	tp *sdktrace.TracerProvider
 }
 
+// BootstrapProbeDecision describes whether the tracing bootstrap probe should run.
+type BootstrapProbeDecision string
+
 // GetGlobalTracer returns the global tracer for the service
 func GetGlobalTracer() trace.Tracer {
 	return otel.Tracer(serviceName)
 }
 
+// TracingBootstrapProbeDecision describes whether the tracing bootstrap probe should run.
+//
+// The probe is only relevant for OTLP exporters (gRPC/HTTP). It is skipped when sampling is
+// effectively disabled (has the value always_off), because no spans will be recorded/exported.
+func TracingBootstrapProbeDecision() BootstrapProbeDecision {
+	exporterNames := parseExporterNames(tracesExporter)
+	usesOTLP := slices.Contains(exporterNames, keyExporterOTLPHTTP) || slices.Contains(exporterNames, keyExporterOTLPGRPC)
+	if !usesOTLP {
+		return BootstrapProbeNotConfigured
+	}
+
+	if shouldSkipBootstrapProbeDueToSampler() {
+		return BootstrapProbeSkippedDueToSampler
+	}
+
+	return BootstrapProbeAttempted
+}
+
 // NewTracerProvider creates and initializes a new OpenTelemetry tracer provider
 func NewTracerProvider(ctx context.Context) (*TracerProvider, error) {
-	exporterNames := strings.Split(strings.ToLower(tracesExporter), ",")
-	for i, name := range exporterNames {
-		exporterNames[i] = strings.TrimSpace(name)
-	}
+	exporterNames := parseExporterNames(tracesExporter)
 
 	var batchers []sdktrace.TracerProviderOption
 	if slices.Contains(exporterNames, keyExporterOTLPHTTP) {
@@ -231,4 +250,46 @@ func (tp *TracerProvider) GetTracer(name string, opts ...trace.TracerOption) tra
 // parseFloat64 parses a string to float64
 func parseFloat64(s string) (float64, error) {
 	return strconv.ParseFloat(s, 64)
+}
+
+// ForceFlush requests the SDK to export any pending spans.
+func (tp *TracerProvider) ForceFlush(ctx context.Context) error {
+	if tp == nil || tp.tp == nil {
+		return nil
+	}
+	return tp.tp.ForceFlush(ctx)
+}
+
+// ProbeExport attempts a real trace export by emitting a short span and forcing a flush.
+// This is intended for bootstrap-time connectivity validation of OTLP exporters.
+func (tp *TracerProvider) ProbeExport(ctx context.Context, timeout time.Duration) error {
+	if tp == nil || tp.tp == nil {
+		return nil
+	}
+
+	tracer := GetGlobalTracer()
+	probeCtx, span := tracer.Start(ctx, fmt.Sprintf("%s.tracing.bootstrap_probe", serviceName))
+	span.End()
+
+	flushCtx, cancel := context.WithTimeout(probeCtx, timeout)
+	defer cancel()
+
+	return tp.tp.ForceFlush(flushCtx)
+}
+
+func parseExporterNames(exporters string) []string {
+	names := strings.Split(strings.ToLower(exporters), ",")
+	for i, name := range names {
+		names[i] = strings.TrimSpace(name)
+	}
+	return names
+}
+
+func shouldSkipBootstrapProbeDueToSampler() bool {
+	switch samplerName {
+	case samplerAlwaysOff, samplerNever, samplerParentBasedAlwaysOff:
+		return true
+	default:
+		return false
+	}
 }

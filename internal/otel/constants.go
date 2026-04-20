@@ -36,3 +36,14 @@ const (
 	samplerParentBasedAlwaysOff    = "parentbased_always_off"
 	samplerParentBasedTraceIDRatio = "parentbased_traceidratio"
 )
+
+const (
+	// BootstrapProbeNotConfigured indicates that the tracing bootstrap probe should not run.
+	BootstrapProbeNotConfigured BootstrapProbeDecision = "not_configured"
+
+	// BootstrapProbeSkippedDueToSampler indicates that the tracing bootstrap probe should not run due to the sampler.
+	BootstrapProbeSkippedDueToSampler BootstrapProbeDecision = "skipped_due_to_sampler"
+
+	// BootstrapProbeAttempted indicates that the tracing bootstrap probe should run.
+	BootstrapProbeAttempted BootstrapProbeDecision = "attempted"
+)
