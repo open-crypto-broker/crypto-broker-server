@@ -120,3 +120,26 @@ func TestDefineSampler_Selection(t *testing.T) {
 		}
 	})
 }
+
+func TestTracingBootstrapProbeDecision(t *testing.T) {
+	tests := []struct {
+		name      string // description of this test case
+		exporters string
+		sampler   string
+		want      BootstrapProbeDecision
+	}{
+		{name: "not configured when console only", exporters: "console", sampler: "always_on", want: BootstrapProbeNotConfigured},
+		{name: "skipped due to sampler when otlpgrpc and always_off", exporters: "otlpgrpc", sampler: "always_off", want: BootstrapProbeSkippedDueToSampler},
+		{name: "attempted when otlphttp and always_on", exporters: "otlphttp", sampler: "always_on", want: BootstrapProbeAttempted},
+		{name: "attempted when otlpgrpc and always_on", exporters: "otlpgrpc", sampler: "always_on", want: BootstrapProbeAttempted},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tracesExporter = tt.exporters
+			samplerName = tt.sampler
+			if got := TracingBootstrapProbeDecision(); got != tt.want {
+				t.Errorf("TracingBootstrapProbeDecision() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
