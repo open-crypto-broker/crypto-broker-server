@@ -3,6 +3,34 @@
 The list of commits in this changelog is automatically generated in the release process.
 The commits follow the Conventional Commit specification.
 
+## [0.2.1] - 2026-04-20
+
+### 🚀 Features
+
+- Added bootstrap time trace probe
+- Injected git sha and git commit during build time
+- Update submodule commit reference in protobuf (#84)
+- Use hash tagged actions, fix lint issues (#77)
+- Updated go deps & updated required minimial go version
+- Add workflow lint (#78)
+- Added golangci-lint installation
+- Added golangci-lint to local pipeline
+- Added config file
+- Removed problematic unit tests
+
+### 🐛 Bug Fixes
+
+- Remove persist credentials (#86)
+- Simplified Taskfile command
+- Refactor workflow lint action (#81)
+- Adjust permissions for nightly workflow (#82)
+- Fixed linting issues
+- Add artifact-metadata in release workflow for docker stage (#75)
+
+### ⚙️ Miscellaneous Tasks
+
+- Update grpc-health-probe in Dockerfile (#79)
+
 ## [0.2.0] - 2026-03-31
 
 ### 🚀 Features
