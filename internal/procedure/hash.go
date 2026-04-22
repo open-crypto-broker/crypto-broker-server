@@ -21,7 +21,7 @@ func NewHash(cryptographicEngineNative *c10y.LibraryNative) *Hash {
 func (procedure *Hash) Execute(req *protobuf.HashRequest) (*protobuf.HashResponse, error) {
 	reqProfile, err := profile.Retrieve(req.GetProfile())
 	if err != nil {
-		return nil, fmt.Errorf("could not retrieve profile, err: %w", err)
+		return nil, ArgumentError("could not retrieve profile, err: %w", err)
 	}
 
 	hashedBytes, err := procedure.hash(req.GetInput(), reqProfile)
@@ -57,7 +57,7 @@ func (procedure *Hash) hash(data []byte, p profile.Profile) (c10y.Hash, error) {
 	case c10y.LibNative:
 		h = procedure.cryptographicEngineNative
 	default:
-		return "", fmt.Errorf("unknown '%s' cryptographic engine, available values: %v",
+		return "", ArgumentError("unknown '%s' cryptographic engine, available values: %v",
 			p.Settings.CryptoLibrary, c10y.SupportedCryptographicLibraries)
 	}
 
@@ -85,7 +85,7 @@ func (procedure *Hash) hash(data []byte, p profile.Profile) (c10y.Hash, error) {
 	case c10y.SHAKE_256:
 		hash, err = h.HashShake_256(32, data)
 	default:
-		return "", fmt.Errorf("unknown '%s' algorithm value, available values: %v", p.API.HashData.HashAlg, c10y.HashDataAlgorithmsSupported)
+		return "", ArgumentError("unknown '%s' algorithm value, available values: %v", p.API.HashData.HashAlg, c10y.HashDataAlgorithmsSupported)
 	}
 
 	if err != nil {

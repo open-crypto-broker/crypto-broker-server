@@ -23,7 +23,9 @@ import (
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 )
 
@@ -156,6 +158,18 @@ func TestCryptoBrokerServer_Hash_E2E(t *testing.T) {
 			t.Errorf("Expected hash %s, got %s", expectedHash, base64.StdEncoding.EncodeToString([]byte(resp.GetHashValue())))
 		}
 	})
+
+	t.Run("Hash - Invalid profile", func(t *testing.T) {
+		req := &protobuf.HashRequest{
+			Profile: "Invalid",
+			Input:   []byte("test data"),
+		}
+
+		_, err := client.Hash(ctx, req)
+		if status.Code(err) != codes.InvalidArgument {
+			t.Fatalf("Expected status code 3 (InvalidArgument), got %d", status.Code(err))
+		}
+	})
 }
 
 // TestCryptoBrokerServer_Sign_E2E tests the Sign method of the gRPC API.
@@ -253,7 +267,6 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 	})
 
 	t.Run("Sign - Invalid CaCERT", func(t *testing.T) {
-
 		privKey, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 		csrTemplate := &x509.CertificateRequest{
 			Subject: pkix.Name{CommonName: "Test CSR"},
@@ -271,10 +284,13 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 		if err == nil {
 			t.Fatalf("Expected error for invalid CaCERT, got nil")
 		}
+
+		if status.Code(err) != codes.InvalidArgument {
+			t.Fatalf("Expected status code 3 (InvalidArgument), got %d", status.Code(err))
+		}
 	})
 
 	t.Run("Sign - Insecure public Key", func(t *testing.T) {
-
 		// Sign the CSR with a too short key length
 		privKey, _ := ecdsa.GenerateKey(elliptic.P224(), rand.Reader)
 		csrTemplate := &x509.CertificateRequest{
@@ -293,6 +309,10 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 		_, err := client.Sign(ctx, req)
 		if err == nil || !strings.Contains(err.Error(), "expected public key to be at least") {
 			t.Fatalf("Expected error for insecure public key, got nil or unexpected error: %s", err)
+		}
+
+		if status.Code(err) != codes.InvalidArgument {
+			t.Fatalf("Expected status code 3 (InvalidArgument), got %d", status.Code(err))
 		}
 	})
 }

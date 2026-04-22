@@ -86,7 +86,7 @@ func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRe
 			))
 		}
 
-		return nil, fmt.Errorf("something went wrong while hashing data: %s", err.Error())
+		return nil, fmt.Errorf("something went wrong while hashing data: %w", err)
 	}
 
 	span.SetAttributes(
@@ -161,7 +161,7 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 			))
 		}
 
-		return nil, fmt.Errorf("something went wrong while signing certificate: %s", err.Error())
+		return nil, fmt.Errorf("something went wrong while signing certificate: %w", err)
 	}
 
 	span.SetAttributes(otel.AttributeCryptoSignedCertSize.Int(len(response.GetSignedCertificate())))
@@ -228,7 +228,7 @@ func (server *CryptoBrokerServer) Benchmark(ctx context.Context, req *protobuf.B
 			))
 		}
 
-		return nil, fmt.Errorf("something went wrong while running benchmarks: %s", err.Error())
+		return nil, fmt.Errorf("something went wrong while running benchmarks: %w", err)
 	}
 
 	span.SetAttributes(otel.AttributeCryptoBenchmarkResultsSize.Int(len(response.GetBenchmarkResults())))
