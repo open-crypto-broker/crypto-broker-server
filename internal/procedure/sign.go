@@ -37,12 +37,12 @@ func NewSign(cryptographicEngineNative *c10y.LibraryNative) *Sign {
 func (procedure *Sign) Execute(req *protobuf.SignRequest) (*protobuf.SignResponse, error) {
 	reqProfile, err := profile.Retrieve(req.GetProfile())
 	if err != nil {
-		return nil, fmt.Errorf("could not retrieve profile, err: %w", err)
+		return nil, ArgumentError("could not retrieve profile, err: %w", err)
 	}
 
 	input, err := procedure.parseRawSignRequest(req)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing request data: %w", err)
+		return nil, ArgumentError("error parsing request data: %w", err)
 	}
 
 	clientCRTRaw, err := procedure.sign(input, reqProfile)
@@ -67,7 +67,7 @@ func (procedure *Sign) sign(req signRequest, p profile.Profile) (certDER []byte,
 	case c10y.LibNative:
 		s = procedure.cryptographicEngineNative
 	default:
-		return nil, fmt.Errorf("unknown '%s' cryptographic engine, available values: %v",
+		return nil, ArgumentError("unknown '%s' cryptographic engine, available values: %v",
 			p.Settings.CryptoLibrary, c10y.SupportedCryptographicLibraries)
 	}
 
@@ -78,10 +78,10 @@ func (procedure *Sign) sign(req signRequest, p profile.Profile) (certDER []byte,
 
 	if err = c10y.ValidatePublicKey(req.csr.PublicKey, p.API.SignCertificate.KeyConstraints.Subject); err != nil {
 		if errors.Is(err, c10y.ErrMissingKeyConstraints) {
-			return nil, fmt.Errorf("profile does not contain key constraints for algorithm used in the CSR's public key, err: %w", err)
+			return nil, ArgumentError("profile does not contain key constraints for algorithm used in the CSR's public key, err: %w", err)
 		}
 
-		return nil, fmt.Errorf("invalid public key, err: %w", err)
+		return nil, ArgumentError("invalid public key, err: %w", err)
 	}
 
 	// Check whether the private key from the CA is secure enough according to profile
@@ -139,22 +139,22 @@ func (procedure *Sign) sign(req signRequest, p profile.Profile) (certDER []byte,
 func (procedure *Sign) parseRawSignRequest(req *protobuf.SignRequest) (signRequest, error) {
 	block, _ := pem.Decode([]byte(req.GetCsr()))
 	if block == nil {
-		return signRequest{}, fmt.Errorf("could not decode CSR as PEM file")
+		return signRequest{}, ArgumentError("could not decode CSR as PEM file")
 	}
 
 	csr, err := x509.ParseCertificateRequest(block.Bytes)
 	if err != nil {
-		return signRequest{}, fmt.Errorf("could not parse certificate request, err: %w", err)
+		return signRequest{}, ArgumentError("could not parse certificate request, err: %w", err)
 	}
 
 	caPrivateKey, err := c10y.ParsePrivateKeyFromPEM([]byte(req.GetCaPrivateKey()))
 	if err != nil {
-		return signRequest{}, fmt.Errorf("could not parse private key, err: %w", err)
+		return signRequest{}, ArgumentError("could not parse private key, err: %w", err)
 	}
 
 	cert, err := c10y.ParseX509Cert([]byte(req.GetCaCert()))
 	if err != nil {
-		return signRequest{}, fmt.Errorf("could not parse x.509 CA cert from request, err: %w", err)
+		return signRequest{}, ArgumentError("could not parse x.509 CA cert from request, err: %w", err)
 	}
 
 	input := signRequest{
