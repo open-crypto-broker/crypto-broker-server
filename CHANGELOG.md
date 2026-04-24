@@ -3,6 +3,15 @@
 The list of commits in this changelog is automatically generated in the release process.
 The commits follow the Conventional Commit specification.
 
+## [0.2.2] - 2026-04-24
+
+### 🐛 Bug Fixes
+
+- Adjust release permission (#91)
+- Adjust permissions for docker release, add GitHub release stage (#90)
+- Return InvalidArgument status code (#89)
+- Add id-token permission (#88)
+
 ## [0.2.1] - 2026-04-20
 
 ### 🚀 Features
@@ -20,6 +29,7 @@ The commits follow the Conventional Commit specification.
 
 ### 🐛 Bug Fixes
 
+- Adjust permissions for release workflow (#87)
 - Remove persist credentials (#86)
 - Simplified Taskfile command
 - Refactor workflow lint action (#81)
