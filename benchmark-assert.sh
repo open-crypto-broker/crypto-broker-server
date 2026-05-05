@@ -9,6 +9,7 @@ if [ -z "$RESULTS_FILE" ]; then
 fi
 
 echo "Running benchmark performance assertions..."
+echo "Please note that this script is only meant to be run by github workflow worker and thresholds may not be accurate for local runs."
 
 extract_benchmark_result() {
     local bench_name="$1"
