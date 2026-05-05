@@ -11,6 +11,7 @@ import (
 	"github.com/open-crypto-broker/crypto-broker-server/internal/otel"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/validation"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
@@ -53,6 +54,10 @@ func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRe
 	var start time.Time
 	if server.metricsEnabled {
 		start = time.Now()
+	}
+
+	if err := validation.ValidateHashRequest(req); err != nil {
+		return nil, fmt.Errorf("something went wrong while hashing data: %w", err)
 	}
 
 	tracer := otel.GetGlobalTracer()
@@ -128,6 +133,10 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 		start = time.Now()
 	}
 
+	if err := validation.ValidateSignRequest(req); err != nil {
+		return nil, fmt.Errorf("something went wrong while signing certificate: %w", err)
+	}
+
 	tracer := otel.GetGlobalTracer()
 	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.Sign",
 		trace.WithAttributes(
@@ -201,10 +210,14 @@ func (server *CryptoBrokerServer) Benchmark(ctx context.Context, req *protobuf.B
 		start = time.Now()
 	}
 
+	if err := validation.ValidateBenchmarkRequest(req); err != nil {
+		return nil, fmt.Errorf("something went wrong while running benchmarks: %w", err)
+	}
+
 	tracer := otel.GetGlobalTracer()
 	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.Benchmark",
 		trace.WithAttributes(otel.AttributeRpcMethod.String(otel.RPCMethodBenchmark),
-			otel.AttributeCorrelationId.String(req.GetMetadata().GetTraceContext().GetCorrelationId()),
+			otel.AttributeCorrelationId.String(interceptors.CorrelationIDFromProtoRequest(req)),
 		))
 	defer span.End()
 
@@ -256,6 +269,10 @@ func (server *CryptoBrokerServer) FakeEndpoint(ctx context.Context, req *protobu
 	var start time.Time
 	if server.metricsEnabled {
 		start = time.Now()
+	}
+
+	if err := validation.ValidateFakeEndpointRequest(req); err != nil {
+		return nil, err
 	}
 
 	tracer := otel.GetGlobalTracer()

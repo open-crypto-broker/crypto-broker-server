@@ -16,6 +16,7 @@ import (
 	"github.com/open-crypto-broker/crypto-broker-server/internal/env"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/interceptors"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/otel"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/validation"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
@@ -124,6 +125,8 @@ func main() {
 			logging.UnaryServerInterceptor(interceptorLogger(rpcLogger)),
 			recovery.UnaryServerInterceptor(recovery.WithRecoveryHandler(grpcPanicRecoveryHandler)),
 		),
+		grpc.MaxRecvMsgSize(validation.MaxGrpcRecvMsgSize),
+		grpc.MaxSendMsgSize(validation.MaxGrpcSendMsgSize),
 	)
 	pb.RegisterCryptoGrpcServer(server, container.Server)
 
