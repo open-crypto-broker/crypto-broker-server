@@ -14,15 +14,17 @@ import (
 
 	"crypto/fips140"
 
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/api"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/clog"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/di"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/env"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/interceptors"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/otel"
-
-	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
-	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/di"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
 	pb "github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health"
@@ -42,6 +44,9 @@ var (
 	// gitSHA and gitTag are set at build time using ldflags
 	gitSHA = "unknown"
 	gitTag = "unknown"
+
+	// ENV
+	devENV = "dev"
 )
 
 // interceptorLogger adapts slog logger to interceptor logger.
@@ -138,7 +143,15 @@ func main() {
 			recovery.UnaryServerInterceptor(recovery.WithRecoveryHandler(grpcPanicRecoveryHandler)),
 		),
 	)
+
+	// Register crypto broker service
 	pb.RegisterCryptoGrpcServer(server, container.Server)
+
+	// Register crypto broker dev service
+	if os.Getenv(env.APP_ENV) == devENV {
+		dev := api.NewCryptoBrokerDevServer(procedure.NewBenchmark(), procedure.NewFakeEndpoint(), true)
+		pb.RegisterCryptoGrpcDevServer(server, dev)
+	}
 
 	// Register health check service
 	healthServer := health.NewServer()

@@ -20,21 +20,17 @@ import (
 // CryptoBrokerServer defines crypto broker's server
 type CryptoBrokerServer struct {
 	protobuf.CryptoGrpcServer
-	procedureHash         *procedure.Hash
-	procedureSign         *procedure.Sign
-	procedureBenchmark    *procedure.Benchmark
-	procedureFakeEndpoint *procedure.FakeEndpoint
-	meter                 metric.Meter
-	metricsEnabled        bool
+	procedureHash  *procedure.Hash
+	procedureSign  *procedure.Sign
+	meter          metric.Meter
+	metricsEnabled bool
 }
 
-func NewCryptoBrokerServer(c10yNative *c10y.LibraryNative, procedureHash *procedure.Hash, procedureSign *procedure.Sign, procedureBenchmark *procedure.Benchmark, procedureFakeEndpoint *procedure.FakeEndpoint, metricsEnabled bool) *CryptoBrokerServer {
+func NewCryptoBrokerServer(c10yNative *c10y.LibraryNative, procedureHash *procedure.Hash, procedureSign *procedure.Sign, metricsEnabled bool) *CryptoBrokerServer {
 	server := &CryptoBrokerServer{
-		procedureHash:         procedureHash,
-		procedureSign:         procedureSign,
-		procedureBenchmark:    procedureBenchmark,
-		procedureFakeEndpoint: procedureFakeEndpoint,
-		metricsEnabled:        metricsEnabled,
+		procedureHash:  procedureHash,
+		procedureSign:  procedureSign,
+		metricsEnabled: metricsEnabled,
 	}
 
 	if metricsEnabled {
@@ -188,119 +184,6 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 
 		otel.OperationBytesProcessed.Add(ctx, int64(len(req.GetCsr())+len(req.GetCaCert())+len(req.GetCaPrivateKey())), metric.WithAttributes(
 			attribute.String("rpc_method", otel.RPCMethodSign),
-		))
-	}
-
-	return response, nil
-}
-
-// Benchmark runs performance benchmarks on cryptographic operations
-func (server *CryptoBrokerServer) Benchmark(ctx context.Context, req *protobuf.BenchmarkRequest) (*protobuf.BenchmarkResponse, error) {
-	var start time.Time
-	if server.metricsEnabled {
-		start = time.Now()
-	}
-
-	tracer := otel.GetGlobalTracer()
-	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.Benchmark",
-		trace.WithAttributes(otel.AttributeRpcMethod.String(otel.RPCMethodBenchmark),
-			otel.AttributeCorrelationId.String(req.GetMetadata().GetTraceContext().GetCorrelationId()),
-		))
-	defer span.End()
-
-	response, err := server.procedureBenchmark.Execute(req)
-
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-
-		if server.metricsEnabled {
-			duration := time.Since(start).Seconds()
-			// Record error metrics
-			otel.OperationsErrorsTotal.Add(ctx, 1, metric.WithAttributes(
-				attribute.String("rpc_method", otel.RPCMethodBenchmark),
-				attribute.String("error_type", "benchmark_error"),
-			))
-
-			otel.RequestDuration.Record(ctx, duration, metric.WithAttributes(
-				attribute.String("rpc_method", otel.RPCMethodBenchmark),
-				attribute.String("status", otel.StatusError),
-			))
-		}
-
-		return nil, fmt.Errorf("something went wrong while running benchmarks: %w", err)
-	}
-
-	span.SetAttributes(otel.AttributeCryptoBenchmarkResultsSize.Int(len(response.GetBenchmarkResults())))
-	span.SetStatus(codes.Ok, "Benchmark operation completed successfully")
-
-	if server.metricsEnabled {
-		duration := time.Since(start).Seconds()
-		// Record success metrics
-		otel.RequestsTotal.Add(ctx, 1, metric.WithAttributes(
-			attribute.String("rpc_method", otel.RPCMethodBenchmark),
-			attribute.String("status", otel.StatusSuccess),
-		))
-
-		otel.RequestDuration.Record(ctx, duration, metric.WithAttributes(
-			attribute.String("rpc_method", otel.RPCMethodBenchmark),
-			attribute.String("status", otel.StatusSuccess),
-		))
-	}
-
-	return response, nil
-}
-
-// FakeEndpoint runs the fake endpoint procedure
-func (server *CryptoBrokerServer) FakeEndpoint(ctx context.Context, req *protobuf.FakeEndpointRequest) (*protobuf.FakeEndpointResponse, error) {
-	var start time.Time
-	if server.metricsEnabled {
-		start = time.Now()
-	}
-
-	tracer := otel.GetGlobalTracer()
-	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.FakeEndpoint",
-		trace.WithAttributes(otel.AttributeRpcMethod.String(otel.RPCMethodFakeEndpoint),
-			otel.AttributeCorrelationId.String(interceptors.CorrelationIDFromProtoRequest(req)),
-		))
-	defer span.End()
-
-	response, err := server.procedureFakeEndpoint.Execute(req)
-
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-
-		if server.metricsEnabled {
-			duration := time.Since(start).Seconds()
-			// Record error metrics
-			otel.OperationsErrorsTotal.Add(ctx, 1, metric.WithAttributes(
-				attribute.String("rpc_method", otel.RPCMethodFakeEndpoint),
-				attribute.String("error_type", "fake_endpoint_error"),
-			))
-
-			otel.RequestDuration.Record(ctx, duration, metric.WithAttributes(
-				attribute.String("rpc_method", otel.RPCMethodFakeEndpoint),
-				attribute.String("status", otel.StatusError),
-			))
-		}
-
-		return nil, err
-	}
-
-	span.SetStatus(codes.Ok, "Fake endpoint operation completed successfully")
-
-	if server.metricsEnabled {
-		duration := time.Since(start).Seconds()
-		// Record success metrics
-		otel.RequestsTotal.Add(ctx, 1, metric.WithAttributes(
-			attribute.String("rpc_method", otel.RPCMethodFakeEndpoint),
-			attribute.String("status", otel.StatusSuccess),
-		))
-
-		otel.RequestDuration.Record(ctx, duration, metric.WithAttributes(
-			attribute.String("rpc_method", otel.RPCMethodFakeEndpoint),
-			attribute.String("status", otel.StatusSuccess),
 		))
 	}
 

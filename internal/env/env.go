@@ -2,6 +2,9 @@
 package env
 
 const (
+	// APP_ENV defines the current application environment (e.g. dev, prod).
+	APP_ENV = "CRYPTO_BROKER_APP_ENV"
+
 	// PROFILES_DIRECTORY is environment variable that should contain full OS path
 	// to directory that contains files with defined profiles in YAML format.
 	PROFILES_DIRECTORY = "CRYPTO_BROKER_PROFILES_DIR"
