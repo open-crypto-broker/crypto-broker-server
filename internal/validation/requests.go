@@ -51,20 +51,22 @@ func validateMetadata(m *pb.Metadata) error {
 	if tc == nil {
 		return nil
 	}
-	if err := checkMaxLen("metadata.traceContext.traceId", len(tc.GetTraceId()), MaxTraceIdLen); err != nil {
-		return err
+
+	fields := []struct {
+		name  string
+		value string
+		max   int
+	}{
+		{"metadata.traceContext.traceId", tc.GetTraceId(), MaxTraceIdLen},
+		{"metadata.traceContext.spanId", tc.GetSpanId(), MaxSpanIdLen},
+		{"metadata.traceContext.traceFlags", tc.GetTraceFlags(), MaxTraceFlagsLen},
+		{"metadata.traceContext.traceState", tc.GetTraceState(), MaxTraceStateLen},
+		{"metadata.traceContext.correlationId", tc.GetCorrelationId(), MaxCorrelationIdLen},
 	}
-	if err := checkMaxLen("metadata.traceContext.spanId", len(tc.GetSpanId()), MaxSpanIdLen); err != nil {
-		return err
-	}
-	if err := checkMaxLen("metadata.traceContext.traceFlags", len(tc.GetTraceFlags()), MaxTraceFlagsLen); err != nil {
-		return err
-	}
-	if err := checkMaxLen("metadata.traceContext.traceState", len(tc.GetTraceState()), MaxTraceStateLen); err != nil {
-		return err
-	}
-	if err := checkMaxLen("metadata.traceContext.correlationId", len(tc.GetCorrelationId()), MaxCorrelationIdLen); err != nil {
-		return err
+	for _, f := range fields {
+		if err := checkMaxLen(f.name, len(f.value), f.max); err != nil {
+			return err
+		}
 	}
 	return nil
 }
