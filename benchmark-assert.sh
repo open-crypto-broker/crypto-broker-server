@@ -108,40 +108,40 @@ ceil() {
 }
 
 # threshold=$((baseline * (1 + margin + env_factor)))
-threshold_ns_per_op_BenchmarkLibraryNative_HashSHA3_256=$(awk 'BEGIN {print 1953 * (1 + 0.25)}')
+threshold_ns_per_op_BenchmarkLibraryNative_HashSHA3_256=$(ceil "$(awk 'BEGIN {print 1953 * (1 + 0.25)}')")
 threshold_allocs_per_op_BenchmarkLibraryNative_HashSHA3_256=$(ceil "$(awk 'BEGIN {print 3 * (1 + 0.1)}')")
 
-threshold_ns_per_op_BenchmarkLibraryNative_HashSHA3_384=$(awk 'BEGIN {print 2386 * (1 + 0.25)}')
+threshold_ns_per_op_BenchmarkLibraryNative_HashSHA3_384=$(ceil "$(awk 'BEGIN {print 2386 * (1 + 0.25)}')")
 threshold_allocs_per_op_BenchmarkLibraryNative_HashSHA3_384=$(ceil "$(awk 'BEGIN {print 3 * (1 + 0.1)}')")
 
-threshold_ns_per_op_BenchmarkLibraryNative_HashSHA3_512=$(awk 'BEGIN {print 3237 * (1 + 0.25)}')
+threshold_ns_per_op_BenchmarkLibraryNative_HashSHA3_512=$(ceil "$(awk 'BEGIN {print 3237 * (1 + 0.25)}')")
 threshold_allocs_per_op_BenchmarkLibraryNative_HashSHA3_512=$(ceil "$(awk 'BEGIN {print 3 * (1 + 0.1)}')")
 
-threshold_ns_per_op_BenchmarkLibraryNative_HashSHA_256=$(awk 'BEGIN {print 731 * (1 + 0.25)}')
+threshold_ns_per_op_BenchmarkLibraryNative_HashSHA_256=$(ceil "$(awk 'BEGIN {print 731 * (1 + 0.25)}')")
 threshold_allocs_per_op_BenchmarkLibraryNative_HashSHA_256=$(ceil "$(awk 'BEGIN {print 3 * (1 + 0.1)}')")
 
-threshold_ns_per_op_BenchmarkLibraryNative_HashSHA_384=$(awk 'BEGIN {print 1339 * (1 + 0.25)}')
+threshold_ns_per_op_BenchmarkLibraryNative_HashSHA_384=$(ceil "$(awk 'BEGIN {print 1339 * (1 + 0.25)}')")
 threshold_allocs_per_op_BenchmarkLibraryNative_HashSHA_384=$(ceil "$(awk 'BEGIN {print 3 * (1 + 0.1)}')")
 
-threshold_ns_per_op_BenchmarkLibraryNative_HashSHA_512=$(awk 'BEGIN {print 1240 * (1 + 0.25)}')
+threshold_ns_per_op_BenchmarkLibraryNative_HashSHA_512=$(ceil "$(awk 'BEGIN {print 1240 * (1 + 0.25)}')")
 threshold_allocs_per_op_BenchmarkLibraryNative_HashSHA_512=$(ceil "$(awk 'BEGIN {print 3 * (1 + 0.1)}')")
 
-threshold_ns_per_op_BenchmarkLibraryNative_HashSHA_512_256=$(awk 'BEGIN {print 1240 * (1 + 0.25)}')
+threshold_ns_per_op_BenchmarkLibraryNative_HashSHA_512_256=$(ceil "$(awk 'BEGIN {print 1240 * (1 + 0.25)}')")
 threshold_allocs_per_op_BenchmarkLibraryNative_HashSHA_512_256=$(ceil "$(awk 'BEGIN {print 3 * (1 + 0.1)}')")
 
-threshold_ns_per_op_BenchmarkLibraryNative_HashShake_128=$(awk 'BEGIN {print 1551 * (1 + 0.25)}')
+threshold_ns_per_op_BenchmarkLibraryNative_HashShake_128=$(ceil "$(awk 'BEGIN {print 1551 * (1 + 0.25)}')")
 threshold_allocs_per_op_BenchmarkLibraryNative_HashShake_128=$(ceil "$(awk 'BEGIN {print 3 * (1 + 0.1)}')")
 
-threshold_ns_per_op_BenchmarkLibraryNative_HashShake_256=$(awk 'BEGIN {print 1943 * (1 + 0.25)}')
+threshold_ns_per_op_BenchmarkLibraryNative_HashShake_256=$(ceil "$(awk 'BEGIN {print 1943 * (1 + 0.25)}')")
 threshold_allocs_per_op_BenchmarkLibraryNative_HashShake_256=$(ceil "$(awk 'BEGIN {print 3 * (1 + 0.1)}')")
 
-threshold_ns_per_op_BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_RSA4096=$(awk 'BEGIN {print 3981588 * (1 + 0.4)}')
+threshold_ns_per_op_BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_RSA4096=$(ceil "$(awk 'BEGIN {print 3981588 * (1 + 0.4)}')")
 threshold_allocs_per_op_BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_RSA4096=$(ceil "$(awk 'BEGIN {print 427 * (1 + 0.1)}')")
 
-threshold_ns_per_op_BenchmarkLibraryNative_SignCertificate_CSR_SECP521R1_CA_SECP521R1=$(awk 'BEGIN {print 6944619 * (1 + 0.4)}')
+threshold_ns_per_op_BenchmarkLibraryNative_SignCertificate_CSR_SECP521R1_CA_SECP521R1=$(ceil "$(awk 'BEGIN {print 6944619 * (1 + 0.4)}')")
 threshold_allocs_per_op_BenchmarkLibraryNative_SignCertificate_CSR_SECP521R1_CA_SECP521R1=$(ceil "$(awk 'BEGIN {print 440 * (1 + 0.1)}')")
 
-threshold_ns_per_op_BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_SECP384R1=$(awk 'BEGIN {print 1137300 * (1 + 0.4)}')
+threshold_ns_per_op_BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_SECP384R1=$(ceil "$(awk 'BEGIN {print 1137300 * (1 + 0.4)}')")
 threshold_allocs_per_op_BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_SECP384R1=$(ceil "$(awk 'BEGIN {print 426 * (1 + 0.1)}')")
 
 # Run assertions for all benchmarks with automatic failure handling
