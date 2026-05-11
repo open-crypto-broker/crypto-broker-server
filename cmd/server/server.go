@@ -12,6 +12,8 @@ import (
 	"syscall"
 	"time"
 
+	"crypto/fips140"
+
 	"github.com/open-crypto-broker/crypto-broker-server/internal/clog"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/env"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/interceptors"
@@ -62,6 +64,14 @@ func main() {
 	rpcLogger.Debug("Bootstrapping server dependencies")
 	container := di.NewContainer(ctx, defaultProfiles)
 	rpcLogger.Debug("Server dependencies bootstrapped")
+
+	if fips140.Enabled() {
+		rpcLogger.Info("FIPS mode is enabled")
+		rpcLogger.Info("FIPS mode version", slog.String("version", fips140.Version()))
+		rpcLogger.Info("FIPS mode enforced", slog.Bool("enforced", fips140.Enforced()))
+	} else {
+		rpcLogger.Info("FIPS mode is disabled")
+	}
 
 	exporter, endpoint, sampler := os.Getenv(env.OTEL_TRACES_EXPORTER), os.Getenv(env.OTEL_EXPORTER_OTLP_ENDPOINT), os.Getenv(env.OTEL_TRACES_SAMPLER)
 	switch otel.TracingBootstrapProbeDecision() {
