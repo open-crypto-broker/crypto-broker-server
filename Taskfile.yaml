@@ -9,7 +9,7 @@ vars:
     sh: git tag --sort=-creatordate | head -n 1
 
 env:
-  GOFIPS140: '{{ if eq .ENABLE_FIPS_MODE "true" }}v1.0.0{{ end }}'
+  GOFIPS140: '{{ if eq .FIPS_MODE_ENABLED "true" }}{{ .FIPS_MODE_MODULE_VERSION }}{{ end }}'
   CRYPTO_BROKER_PROFILES_DIR: '{{.PWD}}/example-profiles'
   CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_CA_CERT: '{{.PWD}}/../crypto-broker-deployment/testing/certificates/test-ca/cert-test-CA-nist-secp256r1.pem'
   CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_PRIVATE_KEY: '{{.PWD}}/../crypto-broker-deployment/testing/certificates/test-ca/test-CA-nist-secp256r1.pem'
@@ -199,9 +199,6 @@ tasks:
 
   unit-test:
     desc: "Run unit-tests"
-    env:
-      GOFIPS140: '{{ if eq .ENABLE_FIPS_MODE "true" }}v1.0.0{{ end }}'
-      CRYPTO_BROKER_PROFILES_DIR: '{{ .PWD }}/example-profiles'
     cmds:
       - go test ./... -skip E2E -cover
       - go test ./... -run E2E -cover
