@@ -1,4 +1,4 @@
-package validation
+package apivalidation
 
 // Size limits are intentionally conservative; they bound memory usage and avoid
 // expensive parsing work on obviously unreasonable input.
@@ -21,16 +21,16 @@ const (
 	MaxCACertBytes       = 64 << 10 // 64 KiB
 	MaxSubjectLen        = 1024
 
-	MaxCRLDistributionPoints    = 16
-	MaxCRLDistributionPointLen  = 2048
+	MaxCRLDistributionPoints   = 16
+	MaxCRLDistributionPointLen = 2048
 
 	// Metadata / trace propagation
 	MaxMetadataIdLen        = 128
 	MaxMetadataCreatedAtLen = 64
 
-	MaxTraceIdLen        = 32
-	MaxSpanIdLen         = 16
-	MaxTraceFlagsLen     = 2
-	MaxTraceStateLen     = 512
-	MaxCorrelationIdLen  = 128
+	MaxTraceIdLen       = 32
+	MaxSpanIdLen        = 16
+	MaxTraceFlagsLen    = 2
+	MaxTraceStateLen    = 512
+	MaxCorrelationIdLen = 128
 )
