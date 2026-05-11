@@ -10,6 +10,7 @@ vars:
 
 env:
   GOFIPS140: '{{ if eq .FIPS_MODE_ENABLED "true" }}{{ .FIPS_MODE_MODULE_VERSION }}{{ end }}'
+  GODEBUG: '{{ if eq .FIPS_MODE_ENABLED "true" }}{{ .FIPS_GODEBUG_VALUE }}{{ end }}'
   CRYPTO_BROKER_PROFILES_DIR: '{{.PWD}}/example-profiles'
   CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_CA_CERT: '{{.PWD}}/../crypto-broker-deployment/testing/certificates/test-ca/cert-test-CA-nist-secp256r1.pem'
   CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_PRIVATE_KEY: '{{.PWD}}/../crypto-broker-deployment/testing/certificates/test-ca/test-CA-nist-secp256r1.pem'
@@ -154,6 +155,7 @@ tasks:
     cmds:
       - 'echo "Building {{.APP_NAME}} with Git SHA: {{.CB_GIT_SHA}} and Git Tag: {{.CB_GIT_TAG}}"'
       - go build -o bin/{{.APP_NAME}} -ldflags="-X main.gitSHA={{.CB_GIT_SHA}} -X main.gitTag={{.CB_GIT_TAG}}" cmd/server/server.go
+      - go version -m bin/{{.APP_NAME}}
     sources: 
       - cmd/server/server.go
       - internal/**/*.go
