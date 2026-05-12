@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/open-crypto-broker/crypto-broker-server/internal/apivalidation"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/api"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/clog"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/env"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/interceptors"
@@ -125,8 +125,8 @@ func main() {
 			logging.UnaryServerInterceptor(interceptorLogger(rpcLogger)),
 			recovery.UnaryServerInterceptor(recovery.WithRecoveryHandler(grpcPanicRecoveryHandler)),
 		),
-		grpc.MaxRecvMsgSize(apivalidation.MaxGrpcRecvMsgSize),
-		grpc.MaxSendMsgSize(apivalidation.MaxGrpcSendMsgSize),
+		grpc.MaxRecvMsgSize(api.MaxGrpcRecvMsgSize),
+		grpc.MaxSendMsgSize(api.MaxGrpcSendMsgSize),
 	)
 	pb.RegisterCryptoGrpcServer(server, container.Server)
 

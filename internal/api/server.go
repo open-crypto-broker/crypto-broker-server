@@ -6,7 +6,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/open-crypto-broker/crypto-broker-server/internal/apivalidation"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/interceptors"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/otel"
@@ -56,7 +55,7 @@ func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRe
 		start = time.Now()
 	}
 
-	if err := apivalidation.ValidateHashRequest(req); err != nil {
+	if err := validateHashRequest(req); err != nil {
 		return nil, fmt.Errorf("something went wrong while hashing data: %w", err)
 	}
 
@@ -133,7 +132,7 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 		start = time.Now()
 	}
 
-	if err := apivalidation.ValidateSignRequest(req); err != nil {
+	if err := validateSignRequest(req); err != nil {
 		return nil, fmt.Errorf("something went wrong while signing certificate: %w", err)
 	}
 
@@ -210,7 +209,7 @@ func (server *CryptoBrokerServer) Benchmark(ctx context.Context, req *protobuf.B
 		start = time.Now()
 	}
 
-	if err := apivalidation.ValidateBenchmarkRequest(req); err != nil {
+	if err := validateBenchmarkRequest(req); err != nil {
 		return nil, fmt.Errorf("something went wrong while running benchmarks: %w", err)
 	}
 
@@ -271,7 +270,7 @@ func (server *CryptoBrokerServer) FakeEndpoint(ctx context.Context, req *protobu
 		start = time.Now()
 	}
 
-	if err := apivalidation.ValidateFakeEndpointRequest(req); err != nil {
+	if err := validateFakeEndpointRequest(req); err != nil {
 		return nil, err
 	}
 
