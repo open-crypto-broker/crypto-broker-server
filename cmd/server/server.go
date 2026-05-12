@@ -98,12 +98,15 @@ func main() {
 
 	rpcLogger.Debug("Directory for socket file exists", slog.String("path", baseDir))
 	rpcLogger.Debug("Attempting to listen on socket", slog.String("address", defaultSocketPath))
+
+	// Restrict unix socket permissions to owner during creation.
+	mask := syscall.Umask(0177)
 	listener, err := net.Listen("unix", defaultSocketPath)
 	if err != nil {
 		rpcLogger.Error("Failed to listen on socket", slog.String("address", defaultSocketPath), slog.String("error", err.Error()))
-
 		panic(err)
 	}
+	syscall.Umask(mask)
 
 	if err = os.Chmod(defaultSocketPath, 0600); err != nil {
 		rpcLogger.Error("Failed to set socket file permissions", slog.String("path", defaultSocketPath), slog.String("error", err.Error()))
