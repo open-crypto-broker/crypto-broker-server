@@ -36,7 +36,7 @@ Following environment variables can be used related with FIPS concept:
 Please note that `FIPS_GODEBUG_VALUE` equal to `fips140=only` restrics Go program to allow only FIPS140 compliant operations (and therefore algorithms).
 Server has built-in recover middleware, therefore any panic that would occur from Go in that mode will be changed to server error that may look like this:
 
-```
+```text
 crypto/md5: use of MD5 is not allowed in FIPS 140-only mode 
 ```
 

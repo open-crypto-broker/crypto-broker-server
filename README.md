@@ -17,15 +17,15 @@ Documentation on how to deploy the server on these methods can be found on the [
 
 ### Environment Variables
 
-The Crypto Broker Server supports several environment variables for configuration. [Here](./docs/envs.md) you can find their detailed description.
+The Crypto Broker Server supports several environment variables for configuration. [Please read environment variables table](./docs/envs.md) to understand them in detail.
 
 ### FIPS compliance
 
-Goal of `crypto-broker-server` is to be FIPS compliant. [Here](./docs/fips.md) you can learn how to utilize it.
+Goal of `crypto-broker-server` is to be FIPS compliant. [click here for more info](./docs/fips.md) to learn how to utilize it.
 
-## OTEL 
+## OTEL
 
-`crypto-broker-server` implements OTEL standard for `logs`, `traces` and `metrics`. [Click here](./docs/otel.md) to learn more.
+`crypto-broker-server` implements OTEL standard for `logs`, `traces` and `metrics` [Click here to learn more](./docs/otel.md).
 
 ## Development
 
