@@ -138,6 +138,8 @@ tasks:
     deps: [build]
     vars:
       APP_NAME: '{{.APP_NAME | default "crypto-broker-server"}}'
+    env:
+      CRYPTO_BROKER_APP_ENV: '{{.APP_ENV}}'
     cmds:
       - defer: {task: cleanup-socket}
       - ./bin/{{.APP_NAME}}

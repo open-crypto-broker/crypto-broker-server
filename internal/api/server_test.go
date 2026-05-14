@@ -111,10 +111,8 @@ func TestCryptoBrokerServer_Hash_E2E(t *testing.T) {
 	libraryNative := c10y.NewLibraryNative()
 	procedureHash := procedure.NewHash(libraryNative)
 	procedureSign := procedure.NewSign(libraryNative)
-	procedureBenchmark := procedure.NewBenchmark()
-	procedureFakeEndpoint := procedure.NewFakeEndpoint()
 	metricsEnabled := false
-	grpcConnector := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, procedureBenchmark, procedureFakeEndpoint, metricsEnabled)
+	grpcConnector := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, metricsEnabled)
 
 	// Start a mock gRPC server
 	lis = bufconn.Listen(bufSize)
@@ -178,10 +176,8 @@ func TestCryptoBrokerServer_Sign_E2E(t *testing.T) {
 	libraryNative := c10y.NewLibraryNative()
 	procedureHash := procedure.NewHash(libraryNative)
 	procedureSign := procedure.NewSign(libraryNative)
-	procedureBenchmark := procedure.NewBenchmark()
-	procedureFakeEndpoint := procedure.NewFakeEndpoint()
 	metricsEnabled := false
-	grpcConnector := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, procedureBenchmark, procedureFakeEndpoint, metricsEnabled)
+	grpcConnector := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, metricsEnabled)
 
 	// Start a mock gRPC server
 	lis = bufconn.Listen(bufSize)
@@ -326,68 +322,9 @@ func TestNewCryptoBrokerServer(t *testing.T) {
 	libraryNative := c10y.NewLibraryNative()
 	procedureHash := procedure.NewHash(libraryNative)
 	procedureSign := procedure.NewSign(libraryNative)
-	procedureBenchmark := procedure.NewBenchmark()
-	procedureFakeEndpoint := procedure.NewFakeEndpoint()
 
-	server := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, procedureBenchmark, procedureFakeEndpoint, false)
+	server := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, false)
 	if server == nil {
 		t.Fatalf("expected non-nil server")
-	}
-}
-
-func TestCryptoBrokerServer_Benchmark(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping benchmark endpoint test in -short mode")
-	}
-
-	libraryNative := c10y.NewLibraryNative()
-	server := NewCryptoBrokerServer(
-		libraryNative,
-		procedure.NewHash(libraryNative),
-		procedure.NewSign(libraryNative),
-		procedure.NewBenchmark(),
-		procedure.NewFakeEndpoint(),
-		false,
-	)
-
-	resp, err := server.Benchmark(context.Background(), &protobuf.BenchmarkRequest{
-		Metadata: &protobuf.Metadata{
-			TraceContext: &protobuf.TraceContext{
-				CorrelationId: "corr-benchmark-1",
-			},
-		},
-	})
-	if err != nil {
-		t.Fatalf("Benchmark failed: %v", err)
-	}
-	if len(resp.GetBenchmarkResults()) == 0 {
-		t.Fatalf("expected non-empty benchmark results")
-	}
-}
-
-func TestCryptoBrokerServer_FakeEndpoint(t *testing.T) {
-	libraryNative := c10y.NewLibraryNative()
-	server := NewCryptoBrokerServer(
-		libraryNative,
-		procedure.NewHash(libraryNative),
-		procedure.NewSign(libraryNative),
-		procedure.NewBenchmark(),
-		procedure.NewFakeEndpoint(),
-		false,
-	)
-
-	for i := 1; i <= 4; i++ {
-		_, err := server.FakeEndpoint(context.Background(), &protobuf.FakeEndpointRequest{})
-		if err == nil {
-			t.Fatalf("expected error on call %d", i)
-		}
-	}
-
-	resp, err := server.FakeEndpoint(context.Background(), &protobuf.FakeEndpointRequest{})
-	if err != nil {
-		t.Fatalf("expected success on 5th call, got: %v", err)
-	}
-	if resp.GetMessage() == "" {
-		t.Fatalf("expected non-empty response message")
 	}
 }
