@@ -59,6 +59,7 @@ func pprofHandler() http.Handler {
 	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
 	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+
 	return mux
 }
 
@@ -173,6 +174,7 @@ func main() {
 			}
 			go func() {
 				rpcLogger.Info("pprof HTTP server listening", slog.String("address", pprofAddr))
+				
 				if serveErr := pprofSrv.ListenAndServe(); serveErr != nil && serveErr != http.ErrServerClosed {
 					rpcLogger.Error("pprof HTTP server exited", slog.String("error", serveErr.Error()))
 				}
@@ -197,6 +199,7 @@ func main() {
 
 		if pprofSrv != nil {
 			shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+
 			if shutdownErr := pprofSrv.Shutdown(shutdownCtx); shutdownErr != nil {
 				rpcLogger.Warn("pprof HTTP server shutdown failed", slog.String("error", shutdownErr.Error()))
 			}
