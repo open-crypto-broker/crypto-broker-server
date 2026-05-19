@@ -23,6 +23,10 @@ The Crypto Broker Server supports several environment variables for configuratio
 
 Goal of `crypto-broker-server` is to be FIPS compliant. [click here for more info](./docs/fips.md) to learn how to utilize it.
 
+### PGO & profiling
+
+Server can be build with PGO for fine tuning. Please familarize yourself with [pgo](./docs/pgo.md) guide.
+
 ## OTEL
 
 `crypto-broker-server` implements OTEL standard for `logs`, `traces` and `metrics` [Click here to learn more](./docs/otel.md).

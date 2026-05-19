@@ -82,4 +82,8 @@ const (
 	// Valid values: duration strings like "30s", "1m", "5m".
 	// If not set, defaults to "30s".
 	OTEL_METRICS_INTERVAL = "OTEL_METRICS_INTERVAL"
+
+	// PPROF_ADDR is optional TCP listen address for net/http/pprof (CPU, heap, etc.).
+	// When empty, the pprof HTTP endpoint is disabled. Use a loopback address (e.g. "127.0.0.1:6060") for local profiling and PGO.
+	PPROF_ADDR = "CRYPTO_BROKER_PPROF_ADDR"
 )
