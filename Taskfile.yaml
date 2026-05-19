@@ -136,7 +136,7 @@ tasks:
 
   run:
     desc: "Runs Crypto Broker server locally"
-    # deps: [build]
+    deps: [build]
     vars:
       APP_NAME: '{{.APP_NAME | default "crypto-broker-server"}}'
     env:

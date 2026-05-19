@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
-	_ "net/http/pprof" // registers handlers on DefaultServeMux
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -50,6 +50,17 @@ var (
 	// ENV
 	devENV = "dev"
 )
+
+// pprofHandler returns an HTTP handler with pprof endpoints registered on a dedicated mux.
+func pprofHandler() http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/debug/pprof/", pprof.Index)
+	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	return mux
+}
 
 // interceptorLogger adapts slog logger to interceptor logger.
 // This code is simple enough to be copied and not imported.
@@ -132,8 +143,6 @@ func main() {
 
 	rpcLogger.Debug("Successfully listened on socket", slog.String("address", listener.Addr().String()))
 
-	
-
 	grpcPanicRecoveryHandler := func(p any) (err error) {
 		rpcLogger.Error("recovered from panic", slog.String("panic", fmt.Sprintf("%v", p)))
 		return status.Errorf(codes.Internal, "%s", p)
@@ -155,16 +164,17 @@ func main() {
 	if os.Getenv(env.APP_ENV) == devENV {
 		dev := api.NewCryptoBrokerDevServer(procedure.NewBenchmark(), procedure.NewFakeEndpoint(), true)
 		pb.RegisterCryptoGrpcDevServer(server, dev)
-		
+
 		if pprofAddr := os.Getenv(env.PPROF_ADDR); pprofAddr != "" {
 			pprofSrv = &http.Server{
-				Addr:    pprofAddr,
-				Handler: nil, // DefaultServeMux (pprof handlers registered by import)
+				Addr:              pprofAddr,
+				Handler:           pprofHandler(),
+				ReadHeaderTimeout: 10 * time.Second,
 			}
 			go func() {
 				rpcLogger.Info("pprof HTTP server listening", slog.String("address", pprofAddr))
-				if err := pprofSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-					rpcLogger.Error("pprof HTTP server exited", slog.String("error", err.Error()))
+				if serveErr := pprofSrv.ListenAndServe(); serveErr != nil && serveErr != http.ErrServerClosed {
+					rpcLogger.Error("pprof HTTP server exited", slog.String("error", serveErr.Error()))
 				}
 			}()
 		}
@@ -187,8 +197,8 @@ func main() {
 
 		if pprofSrv != nil {
 			shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			if err := pprofSrv.Shutdown(shutdownCtx); err != nil {
-				rpcLogger.Warn("pprof HTTP server shutdown failed", slog.String("error", err.Error()))
+			if shutdownErr := pprofSrv.Shutdown(shutdownCtx); shutdownErr != nil {
+				rpcLogger.Warn("pprof HTTP server shutdown failed", slog.String("error", shutdownErr.Error()))
 			}
 			cancel()
 		}
