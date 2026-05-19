@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"net/http"
+	_ "net/http/pprof" // registers handlers on DefaultServeMux
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -130,6 +132,8 @@ func main() {
 
 	rpcLogger.Debug("Successfully listened on socket", slog.String("address", listener.Addr().String()))
 
+	
+
 	grpcPanicRecoveryHandler := func(p any) (err error) {
 		rpcLogger.Error("recovered from panic", slog.String("panic", fmt.Sprintf("%v", p)))
 		return status.Errorf(codes.Internal, "%s", p)
@@ -147,10 +151,23 @@ func main() {
 	// Register crypto broker service
 	pb.RegisterCryptoGrpcServer(server, container.Server)
 
-	// Register crypto broker dev service
+	var pprofSrv *http.Server
 	if os.Getenv(env.APP_ENV) == devENV {
 		dev := api.NewCryptoBrokerDevServer(procedure.NewBenchmark(), procedure.NewFakeEndpoint(), true)
 		pb.RegisterCryptoGrpcDevServer(server, dev)
+		
+		if pprofAddr := os.Getenv(env.PPROF_ADDR); pprofAddr != "" {
+			pprofSrv = &http.Server{
+				Addr:    pprofAddr,
+				Handler: nil, // DefaultServeMux (pprof handlers registered by import)
+			}
+			go func() {
+				rpcLogger.Info("pprof HTTP server listening", slog.String("address", pprofAddr))
+				if err := pprofSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+					rpcLogger.Error("pprof HTTP server exited", slog.String("error", err.Error()))
+				}
+			}()
+		}
 	}
 
 	// Register health check service
@@ -167,6 +184,14 @@ func main() {
 
 		rpcLogger.Info("Received termination signal, shutting down gRPC server")
 		healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+
+		if pprofSrv != nil {
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			if err := pprofSrv.Shutdown(shutdownCtx); err != nil {
+				rpcLogger.Warn("pprof HTTP server shutdown failed", slog.String("error", err.Error()))
+			}
+			cancel()
+		}
 
 		server.GracefulStop()
 
