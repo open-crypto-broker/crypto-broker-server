@@ -5,6 +5,7 @@ Profile-guided optimization (PGO), also known as feedback-directed optimization 
 This document describes how [PGO](https://go.dev/doc/pgo) was implemented in `crypto-broker-server`.
 
 ## Table of contents
+
 - [Implementation](#implementation) - general description of implementation and how to use it
     - [How to get server profile data](#how-to-get-server-profile-data)
     - [How to build server binary with PGO](#how-to-build-server-binary-with-pgo)
@@ -16,10 +17,12 @@ This document describes how [PGO](https://go.dev/doc/pgo) was implemented in `cr
 ## Implementation
 
 To provide ability of ingesting profiling data, `"net/http/pprof"` server was added to `crypto-broker-server` binary. It can be only turned on in dev mode:
+
 - can be set via `APP_ENV="dev"` in `Taskfile`,
 - `CRYPTO_BROKER_APP_ENV=dev` in shell for direct access by server (when not using Taskfile).
 
 Having that, user need to provide server address and port through:
+
 - `PPROF_ADDR=127.0.0.1:6060` in `Taskfile`,
 - `CRYPTO_BROKER_PPROF_ADDR=127.0.0.1:6060` in shell for direct access by server (when not using Taskfile).
 
@@ -54,7 +57,7 @@ Install `benchstat` program with `go install golang.org/x/perf/cmd/benchstat@lat
 
 1. Get benchmark output from server that *is not* build with PGO
 2. Get benchmark output from server that *is* build with PGO
-3. Compare it using *benchstat* program to understand difference 
+3. Compare it using *benchstat* program to understand difference
 
 #### Exact steps
 
