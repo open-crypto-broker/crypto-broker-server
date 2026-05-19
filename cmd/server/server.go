@@ -12,16 +12,19 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/open-crypto-broker/crypto-broker-server/internal/api"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/clog"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/env"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/interceptors"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/otel"
+	"crypto/fips140"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/api"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/clog"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/di"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/env"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/interceptors"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/otel"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
 	pb "github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health"
@@ -41,6 +44,9 @@ var (
 	// gitSHA and gitTag are set at build time using ldflags
 	gitSHA = "unknown"
 	gitTag = "unknown"
+
+	// ENV
+	devENV = "dev"
 )
 
 // interceptorLogger adapts slog logger to interceptor logger.
@@ -63,6 +69,14 @@ func main() {
 	rpcLogger.Debug("Bootstrapping server dependencies")
 	container := di.NewContainer(ctx, defaultProfiles)
 	rpcLogger.Debug("Server dependencies bootstrapped")
+
+	if fips140.Enabled() {
+		rpcLogger.Info("FIPS mode is enabled")
+		rpcLogger.Info("FIPS mode version", slog.String("version", fips140.Version()))
+		rpcLogger.Info("FIPS mode enforced", slog.Bool("enforced", fips140.Enforced()))
+	} else {
+		rpcLogger.Info("FIPS mode is disabled")
+	}
 
 	exporter, endpoint, sampler := os.Getenv(env.OTEL_TRACES_EXPORTER), os.Getenv(env.OTEL_EXPORTER_OTLP_ENDPOINT), os.Getenv(env.OTEL_TRACES_SAMPLER)
 	switch otel.TracingBootstrapProbeDecision() {
@@ -131,7 +145,15 @@ func main() {
 		grpc.MaxRecvMsgSize(api.MaxGrpcRecvMsgSize),
 		grpc.MaxSendMsgSize(api.MaxGrpcSendMsgSize),
 	)
+
+	// Register crypto broker service
 	pb.RegisterCryptoGrpcServer(server, container.Server)
+
+	// Register crypto broker dev service
+	if os.Getenv(env.APP_ENV) == devENV {
+		dev := api.NewCryptoBrokerDevServer(procedure.NewBenchmark(), procedure.NewFakeEndpoint(), true)
+		pb.RegisterCryptoGrpcDevServer(server, dev)
+	}
 
 	// Register health check service
 	healthServer := health.NewServer()

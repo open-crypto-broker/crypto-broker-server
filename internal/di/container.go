@@ -49,14 +49,12 @@ func NewContainerWithTracing(ctx context.Context, profiles string, tracingEnable
 
 	procedureHash := procedure.NewHash(c10yNative)
 	procedureSign := procedure.NewSign(c10yNative)
-	procedureBenchmark := procedure.NewBenchmark()
-	procedureFakeEndpoint := procedure.NewFakeEndpoint()
 
 	// Check if metrics are enabled (not nil)
 	metricsEnabled := meterProvider != nil
 
 	return &Container{
-		Server:         api.NewCryptoBrokerServer(c10yNative, procedureHash, procedureSign, procedureBenchmark, procedureFakeEndpoint, metricsEnabled),
+		Server:         api.NewCryptoBrokerServer(c10yNative, procedureHash, procedureSign, metricsEnabled),
 		TracerProvider: tracerProvider,
 		MeterProvider:  meterProvider,
 	}

@@ -29,8 +29,6 @@ func TestCryptoBrokerServer_MetricsEnabled_CollectSystemMetrics_NoPanic(t *testi
 		libraryNative,
 		procedure.NewHash(libraryNative),
 		procedure.NewSign(libraryNative),
-		procedure.NewBenchmark(),
-		procedure.NewFakeEndpoint(),
 		true,
 	)
 
@@ -49,8 +47,6 @@ func TestCryptoBrokerServer_Hash_MetricsEnabled_ErrorOnInvalidProfile(t *testing
 		libraryNative,
 		procedure.NewHash(libraryNative),
 		procedure.NewSign(libraryNative),
-		procedure.NewBenchmark(),
-		procedure.NewFakeEndpoint(),
 		true,
 	)
 
@@ -66,37 +62,6 @@ func TestCryptoBrokerServer_Hash_MetricsEnabled_ErrorOnInvalidProfile(t *testing
 	}
 }
 
-func TestCryptoBrokerServer_FakeEndpoint_MetricsEnabled_CoversErrorAndSuccess(t *testing.T) {
-	otel.SetMeterProvider(metricnoop.NewMeterProvider())
-
-	libraryNative := c10y.NewLibraryNative()
-	server := NewCryptoBrokerServer(
-		libraryNative,
-		procedure.NewHash(libraryNative),
-		procedure.NewSign(libraryNative),
-		procedure.NewBenchmark(),
-		procedure.NewFakeEndpoint(),
-		true,
-	)
-
-	// First 4 calls should return error.
-	for i := 1; i <= 4; i++ {
-		_, err := server.FakeEndpoint(context.Background(), &protobuf.FakeEndpointRequest{})
-		if err == nil {
-			t.Fatalf("expected error on call %d", i)
-		}
-	}
-
-	// 5th call succeeds.
-	resp, err := server.FakeEndpoint(context.Background(), &protobuf.FakeEndpointRequest{})
-	if err != nil {
-		t.Fatalf("expected success on 5th call, got: %v", err)
-	}
-	if resp.GetMessage() == "" {
-		t.Fatalf("expected non-empty response message")
-	}
-}
-
 func TestCryptoBrokerServer_Hash_MetricsEnabled_Success_RecordsMetricsBranch(t *testing.T) {
 	otel.SetMeterProvider(metricnoop.NewMeterProvider())
 
@@ -109,8 +74,6 @@ func TestCryptoBrokerServer_Hash_MetricsEnabled_Success_RecordsMetricsBranch(t *
 		libraryNative,
 		procedure.NewHash(libraryNative),
 		procedure.NewSign(libraryNative),
-		procedure.NewBenchmark(),
-		procedure.NewFakeEndpoint(),
 		true,
 	)
 
@@ -138,8 +101,6 @@ func TestCryptoBrokerServer_Sign_MetricsEnabled_ErrorOnInvalidCSR(t *testing.T) 
 		libraryNative,
 		procedure.NewHash(libraryNative),
 		procedure.NewSign(libraryNative),
-		procedure.NewBenchmark(),
-		procedure.NewFakeEndpoint(),
 		true,
 	)
 
@@ -166,8 +127,6 @@ func TestCryptoBrokerServer_Sign_MetricsEnabled_Success_RecordsMetricsBranch(t *
 		libraryNative,
 		procedure.NewHash(libraryNative),
 		procedure.NewSign(libraryNative),
-		procedure.NewBenchmark(),
-		procedure.NewFakeEndpoint(),
 		true,
 	)
 
@@ -182,38 +141,6 @@ func TestCryptoBrokerServer_Sign_MetricsEnabled_Success_RecordsMetricsBranch(t *
 	}
 	if resp == nil || resp.GetSignedCertificate() == "" {
 		t.Fatalf("expected non-empty signed certificate")
-	}
-}
-
-func TestCryptoBrokerServer_Benchmark_MetricsEnabled_Success_RecordsMetricsBranch(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping benchmark endpoint test in -short mode")
-	}
-
-	otel.SetMeterProvider(metricnoop.NewMeterProvider())
-
-	libraryNative := c10y.NewLibraryNative()
-	server := NewCryptoBrokerServer(
-		libraryNative,
-		procedure.NewHash(libraryNative),
-		procedure.NewSign(libraryNative),
-		procedure.NewBenchmark(),
-		procedure.NewFakeEndpoint(),
-		true,
-	)
-
-	resp, err := server.Benchmark(context.Background(), &protobuf.BenchmarkRequest{
-		Metadata: &protobuf.Metadata{
-			TraceContext: &protobuf.TraceContext{
-				CorrelationId: "corr-benchmark-metrics-1",
-			},
-		},
-	})
-	if err != nil {
-		t.Fatalf("expected success, got err: %v", err)
-	}
-	if resp == nil || len(resp.GetBenchmarkResults()) == 0 {
-		t.Fatalf("expected non-empty benchmark results")
 	}
 }
 
