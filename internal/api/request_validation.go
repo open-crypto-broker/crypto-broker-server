@@ -126,17 +126,3 @@ func validateSignRequest(req *pb.SignRequest) error {
 
 	return validateMetadata(req.GetMetadata())
 }
-
-func validateBenchmarkRequest(req *pb.BenchmarkRequest) error {
-	if req == nil {
-		return invalidArg("request", "required")
-	}
-	return validateMetadata(req.GetMetadata())
-}
-
-func validateFakeEndpointRequest(req *pb.FakeEndpointRequest) error {
-	if req == nil {
-		return invalidArg("request", "required")
-	}
-	return validateMetadata(req.GetMetadata())
-}
