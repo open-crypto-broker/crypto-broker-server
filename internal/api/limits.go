@@ -9,9 +9,6 @@ const (
 	MaxGrpcRecvMsgSize = 2 << 20 // 2 MiB
 	MaxGrpcSendMsgSize = 1 << 20 // 1 MiB
 
-	// Common fields
-	maxProfileLen = 64
-
 	// Hash
 	maxHashInputBytes = 1 << 20 // 1 MiB
 

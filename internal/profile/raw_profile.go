@@ -178,7 +178,7 @@ func (p rawProfile) mapToProfile() (Profile, error) {
 }
 
 func (p rawProfile) validate() error {
-	return errors.Join(p.Settings.validate(), p.API.validate())
+	return errors.Join(ValidateName(p.Name), p.Settings.validate(), p.API.validate())
 }
 
 func (settings rawProfileSettings) validate() error {

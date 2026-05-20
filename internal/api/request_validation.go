@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 
+	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
 	pb "github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -23,10 +24,10 @@ func checkMaxLen(field string, valueLen, max int) error {
 }
 
 func validateProfileName(profileName string) error {
-	if profileName == "" {
-		return invalidArg("profile", "required")
+	if err := profile.ValidateName(profileName); err != nil {
+		return invalidArg("profile", err.Error())
 	}
-	return checkMaxLen("profile", len(profileName), maxProfileLen)
+	return nil
 }
 
 func validateMetadata(m *pb.Metadata) error {
