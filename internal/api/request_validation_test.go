@@ -200,10 +200,11 @@ func TestValidateSignRequest_AllowsValidBoundaryRequest(t *testing.T) {
 	req.CaPrivateKey = strings.Repeat("A", maxCAPrivateKeyBytes)
 	req.CaCert = strings.Repeat("A", maxCACertBytes)
 	req.Subject = &subject
-	req.CrlDistributionPoints = make([]string, maxCRLDistributionPoints)
-	for i := range req.CrlDistributionPoints {
-		req.CrlDistributionPoints[i] = strings.Repeat("A", maxCRLDistributionPointLen)
+	crlDistributionPoints := make([]string, maxCRLDistributionPoints)
+	for i := range crlDistributionPoints {
+		crlDistributionPoints[i] = strings.Repeat("A", maxCRLDistributionPointLen)
 	}
+	req.CrlDistributionPoints = crlDistributionPoints
 
 	assertNoError(t, validateSignRequest(req))
 }
