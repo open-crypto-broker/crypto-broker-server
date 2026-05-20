@@ -51,6 +51,10 @@ func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRe
 		start = time.Now()
 	}
 
+	if err := validateHashRequest(req); err != nil {
+		return nil, fmt.Errorf("something went wrong while hashing data: %w", err)
+	}
+
 	tracer := otel.GetGlobalTracer()
 	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.Hash",
 		trace.WithAttributes(
@@ -122,6 +126,10 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 	var start time.Time
 	if server.metricsEnabled {
 		start = time.Now()
+	}
+
+	if err := validateSignRequest(req); err != nil {
+		return nil, fmt.Errorf("something went wrong while signing certificate: %w", err)
 	}
 
 	tracer := otel.GetGlobalTracer()

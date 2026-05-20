@@ -156,6 +156,8 @@ func main() {
 			logging.UnaryServerInterceptor(interceptorLogger(rpcLogger)),
 			recovery.UnaryServerInterceptor(recovery.WithRecoveryHandler(grpcPanicRecoveryHandler)),
 		),
+		grpc.MaxRecvMsgSize(api.MaxGrpcRecvMsgSize),
+		grpc.MaxSendMsgSize(api.MaxGrpcSendMsgSize),
 	)
 
 	// Register crypto broker service
