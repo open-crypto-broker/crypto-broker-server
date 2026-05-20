@@ -18,3 +18,4 @@
 | `OTEL_LOGS_EXPORTER` | No | `console` | OpenTelemetry log exporter(s) to use | `console`, `otlphttp`, `otlpgrpc`, or comma-separated combinations like `otlphttp,console` |
 | `OTEL_METRICS_EXPORTER` | No | `console` | OpenTelemetry metrics exporter(s) to use | `none`, `console`, `otlphttp`, `otlpgrpc`, or comma-separated combinations like `otlphttp,console` |
 | `OTEL_METRICS_INTERVAL` | No | `30s` | Metrics collection interval | Duration strings like `30s`, `1m`, `5m` |
+| `CRYPTO_BROKER_PPROF_ADDR` | No | - | When set, enables `net/http/pprof` on this TCP address (e.g. for CPU profiles / PGO). Prefer loopback only | e.g. `127.0.0.1:6060` |

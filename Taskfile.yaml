@@ -15,6 +15,7 @@ env:
   CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_CA_CERT: '{{.PWD}}/../crypto-broker-deployment/testing/certificates/test-ca/cert-test-CA-nist-secp256r1.pem'
   CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_PRIVATE_KEY: '{{.PWD}}/../crypto-broker-deployment/testing/certificates/test-ca/test-CA-nist-secp256r1.pem'
   CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_CSR: '{{.PWD}}/../crypto-broker-deployment/testing/certificates/test-csr/csr-rsa-2048.csr'
+  CRYPTO_BROKER_PPROF_ADDR: '{{.PPROF_ADDR}}'
 
 tasks:
   ################# Development Tools ####################
