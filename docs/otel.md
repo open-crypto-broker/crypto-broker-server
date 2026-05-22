@@ -58,6 +58,13 @@ Traces include error information and span status codes for failed operations.
 
 The Crypto Broker Server includes OpenTelemetry (OTEL) logging support for centralized log aggregation and correlation with traces. Logs are automatically structured and can be exported to both console and OTLP-compatible backends simultaneously.
 
+Following environment variables are related with logging, for more info please see [envs.md](./envs.md):
+
+* `CRYPTO_BROKER_LOG_LEVEL`
+* `CRYPTO_BROKER_LOG_FORMAT`
+* `CRYPTO_BROKER_LOG_OUTPUT`
+* `OTEL_LOGS_EXPORTER` 
+
 #### Log Exporter Options
 
 The `OTEL_LOGS_EXPORTER` variable supports several values:

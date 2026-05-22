@@ -16,6 +16,9 @@ env:
   CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_PRIVATE_KEY: '{{.PWD}}/../crypto-broker-deployment/testing/certificates/test-ca/test-CA-nist-secp256r1.pem'
   CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_CSR: '{{.PWD}}/../crypto-broker-deployment/testing/certificates/test-csr/csr-rsa-2048.csr'
   CRYPTO_BROKER_PPROF_ADDR: '{{.PPROF_ADDR}}'
+  CRYPTO_BROKER_LOG_LEVEL: '{{.OTEL_LOGS_LEVEL}}'
+  CRYPTO_BROKER_LOG_FORMAT: '{{.OTEL_LOGS_FORMAT}}'
+  CRYPTO_BROKER_LOG_OUTPUT: '{{.OTEL_LOGS_OUTPUT}}'
 
 tasks:
   ################# Development Tools ####################
