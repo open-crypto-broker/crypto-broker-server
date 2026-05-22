@@ -63,7 +63,7 @@ Following environment variables are related with logging, for more info please s
 * `CRYPTO_BROKER_LOG_LEVEL`
 * `CRYPTO_BROKER_LOG_FORMAT`
 * `CRYPTO_BROKER_LOG_OUTPUT`
-* `OTEL_LOGS_EXPORTER` 
+* `OTEL_LOGS_EXPORTER`
 
 #### Log Exporter Options
 
