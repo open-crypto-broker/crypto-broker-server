@@ -14,7 +14,7 @@ pprof is started only when **both** are true:
 The server registers these HTTP routes (`cmd/server/server.go`):
 
 | Path | Purpose |
-|------|---------|
+| ------ | --------- |
 | `/debug/pprof/` | Index (links to all profile types) |
 | `/debug/pprof/profile` | CPU profile (blocking sample) |
 | `/debug/pprof/heap` | Heap memory (via index handler) |
@@ -66,7 +66,7 @@ Confirm it is up: logs contain `pprof HTTP server listening` with your address.
 ## Profiles to use when optimizing
 
 | Goal | Capture | Analyze |
-|------|---------|---------|
+| ------ | --------- | --------- |
 | Slow RPC / hot functions | CPU: `curl …/profile?seconds=30` | `go tool pprof -http=… cpu.pprof` — focus on `flat` + `cum` % |
 | High allocations | Heap while under load: `curl -sS -o heap.pprof 'http://127.0.0.1:6060/debug/pprof/heap'` | `go tool pprof -alloc_space -http=… heap.pprof` |
 | Goroutine leak / stall | `curl -sS -o goroutine.pprof 'http://127.0.0.1:6060/debug/pprof/goroutine'` | `go tool pprof goroutine.pprof` — compare two snapshots |
@@ -105,7 +105,7 @@ Install the web UI helper once if needed: `go install github.com/google/pprof@la
 ## Environment reference
 
 | Taskfile / `.env` | Server env var |
-|-------------------|----------------|
+| ------------------- | ---------------- |
 | `APP_ENV=dev` | `CRYPTO_BROKER_APP_ENV` |
 | `PPROF_ADDR=127.0.0.1:6060` | `CRYPTO_BROKER_PPROF_ADDR` |
 
