@@ -223,8 +223,32 @@ func TestValidateMetadata(t *testing.T) {
 			metadata: &pb.Metadata{Id: strings.Repeat("A", maxMetadataIdLen)},
 		},
 		{
+			name:     "allows uuid-shaped id and correlation id",
+			metadata: &pb.Metadata{Id: "550e8400-e29b-41d4-a716-446655440000", TraceContext: &pb.TraceContext{CorrelationId: "6ba7b810-9dad-11d1-80b4-00c04fd430c8"}},
+		},
+		{
 			name:      "rejects oversized id",
 			metadata:  &pb.Metadata{Id: strings.Repeat("A", maxMetadataIdLen+1)},
+			wantField: "metadata.id",
+		},
+		{
+			name:      "rejects id with control character",
+			metadata:  &pb.Metadata{Id: "id\x00"},
+			wantField: "metadata.id",
+		},
+		{
+			name:      "rejects id with newline",
+			metadata:  &pb.Metadata{Id: "id\n"},
+			wantField: "metadata.id",
+		},
+		{
+			name:      "rejects id with tab",
+			metadata:  &pb.Metadata{Id: "id\t"},
+			wantField: "metadata.id",
+		},
+		{
+			name:      "rejects id with non-ascii",
+			metadata:  &pb.Metadata{Id: "café"},
 			wantField: "metadata.id",
 		},
 		{
@@ -250,6 +274,16 @@ func TestValidateMetadata(t *testing.T) {
 		{
 			name:      "rejects oversized correlation id",
 			metadata:  &pb.Metadata{TraceContext: &pb.TraceContext{CorrelationId: strings.Repeat("A", maxCorrelationIdLen+1)}},
+			wantField: "metadata.traceContext.correlationId",
+		},
+		{
+			name:      "rejects correlation id with control character",
+			metadata:  &pb.Metadata{TraceContext: &pb.TraceContext{CorrelationId: "corr\x1b"}},
+			wantField: "metadata.traceContext.correlationId",
+		},
+		{
+			name:      "rejects correlation id with newline",
+			metadata:  &pb.Metadata{TraceContext: &pb.TraceContext{CorrelationId: "corr\n"}},
 			wantField: "metadata.traceContext.correlationId",
 		},
 	}

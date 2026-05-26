@@ -3,6 +3,7 @@ package bench
 import (
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -367,7 +368,10 @@ func RunSignCertificateBenchmark(b *testing.B) error {
 
 	block, _ := pem.Decode([]byte(csrBytes))
 	if block == nil {
-		b.Fatalf("could not decode CSR as PEM file")
+		errString := "could not decode CSR as PEM file"
+		b.Fatal(errString)
+
+		return errors.New(errString)
 	}
 
 	csrParsed, err := x509.ParseCertificateRequest(block.Bytes)

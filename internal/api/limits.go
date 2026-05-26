@@ -22,8 +22,7 @@ const (
 	maxCRLDistributionPointLen = 2048
 
 	// Metadata / trace propagation
-	maxMetadataIdLen        = 128
-	maxMetadataCreatedAtLen = 64
+	maxMetadataIdLen = 128
 
 	maxTraceIdLen       = 32
 	maxSpanIdLen        = 16
