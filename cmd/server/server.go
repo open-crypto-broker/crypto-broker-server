@@ -176,7 +176,7 @@ func main() {
 			}
 			go func() {
 				rpcLogger.Info("pprof HTTP server listening", slog.String("address", pprofAddr))
-				
+
 				if serveErr := pprofSrv.ListenAndServe(); serveErr != nil && serveErr != http.ErrServerClosed {
 					rpcLogger.Error("pprof HTTP server exited", slog.String("error", serveErr.Error()))
 				}

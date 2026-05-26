@@ -23,6 +23,24 @@ func checkMaxLen(field string, valueLen, max int) error {
 	return nil
 }
 
+func checkPrintableASCII(field, value string) error {
+	for _, r := range value {
+		if r < ' ' || r > '~' {
+			return invalidArg(field, "must contain only printable ASCII characters (0x20-0x7E)")
+		}
+	}
+
+	return nil
+}
+
+func validateMetadataIdentifier(field, value string, maxLen int) error {
+	if err := checkMaxLen(field, len(value), maxLen); err != nil {
+		return err
+	}
+
+	return checkPrintableASCII(field, value)
+}
+
 func validateProfileName(profileName string) error {
 	if err := profile.ValidateName(profileName); err != nil {
 		return invalidArg("profile", err.Error())
@@ -34,7 +52,7 @@ func validateMetadata(m *pb.Metadata) error {
 	if m == nil {
 		return nil
 	}
-	if err := checkMaxLen("metadata.id", len(m.GetId()), maxMetadataIdLen); err != nil {
+	if err := validateMetadataIdentifier("metadata.id", m.GetId(), maxMetadataIdLen); err != nil {
 		return err
 	}
 
@@ -52,14 +70,13 @@ func validateMetadata(m *pb.Metadata) error {
 		{"metadata.traceContext.spanId", tc.GetSpanId(), maxSpanIdLen},
 		{"metadata.traceContext.traceFlags", tc.GetTraceFlags(), maxTraceFlagsLen},
 		{"metadata.traceContext.traceState", tc.GetTraceState(), maxTraceStateLen},
-		{"metadata.traceContext.correlationId", tc.GetCorrelationId(), maxCorrelationIdLen},
 	}
 	for _, f := range fields {
 		if err := checkMaxLen(f.name, len(f.value), f.max); err != nil {
 			return err
 		}
 	}
-	return nil
+	return validateMetadataIdentifier("metadata.traceContext.correlationId", tc.GetCorrelationId(), maxCorrelationIdLen)
 }
 
 func validateHashRequest(req *pb.HashRequest) error {
