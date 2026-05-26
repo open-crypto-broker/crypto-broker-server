@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v7.34.1
-// source: messages.proto
+// source: protobuf/messages.proto
 
 package protobuf
 
@@ -155,7 +155,7 @@ var CryptoGrpc_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "messages.proto",
+	Metadata: "protobuf/messages.proto",
 }
 
 const (
@@ -295,5 +295,5 @@ var CryptoGrpcDev_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "messages.proto",
+	Metadata: "protobuf/messages.proto",
 }

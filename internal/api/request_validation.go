@@ -37,9 +37,6 @@ func validateMetadata(m *pb.Metadata) error {
 	if err := checkMaxLen("metadata.id", len(m.GetId()), maxMetadataIdLen); err != nil {
 		return err
 	}
-	if err := checkMaxLen("metadata.createdAt", len(m.GetCreatedAt()), maxMetadataCreatedAtLen); err != nil {
-		return err
-	}
 
 	tc := m.GetTraceContext()
 	if tc == nil {

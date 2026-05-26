@@ -220,17 +220,12 @@ func TestValidateMetadata(t *testing.T) {
 		},
 		{
 			name:     "allows metadata without trace context",
-			metadata: &pb.Metadata{Id: strings.Repeat("A", maxMetadataIdLen), CreatedAt: strings.Repeat("A", maxMetadataCreatedAtLen)},
+			metadata: &pb.Metadata{Id: strings.Repeat("A", maxMetadataIdLen)},
 		},
 		{
 			name:      "rejects oversized id",
 			metadata:  &pb.Metadata{Id: strings.Repeat("A", maxMetadataIdLen+1)},
 			wantField: "metadata.id",
-		},
-		{
-			name:      "rejects oversized created at",
-			metadata:  &pb.Metadata{CreatedAt: strings.Repeat("A", maxMetadataCreatedAtLen+1)},
-			wantField: "metadata.createdAt",
 		},
 		{
 			name:      "rejects oversized trace id",

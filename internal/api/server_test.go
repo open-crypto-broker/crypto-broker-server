@@ -237,7 +237,6 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 		req.ValidNotAfter = toPointerUint64(timeAfter.UTC().Unix())
 		req.Metadata = &protobuf.Metadata{
 			Id:        "00001-2345689-abcdefg-1",
-			CreatedAt: time.Now().String(),
 		}
 
 		resp, err := client.Sign(ctx, req)
