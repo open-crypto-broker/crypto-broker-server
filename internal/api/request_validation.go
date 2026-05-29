@@ -2,6 +2,8 @@ package api
 
 import (
 	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
 	pb "github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
@@ -39,6 +41,27 @@ func validateMetadataIdentifier(field, value string, maxLen int) error {
 	}
 
 	return checkPrintableASCII(field, value)
+}
+
+func validateURL(rawURL string) bool {
+	// 1. Parse the string usiwhng the RFC-compliant standard parser
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return false
+	}
+
+	// 2. Validate the Network Scheme (typically http or https)
+	scheme := strings.ToLower(u.Scheme)
+	if scheme != "http" && scheme != "https" {
+		return false
+	}
+
+	// 3. Ensure the Host is not empty
+	if u.Host == "" {
+		return false
+	}
+
+	return true
 }
 
 func validateProfileName(profileName string) error {
@@ -133,9 +156,14 @@ func validateSignRequest(req *pb.SignRequest) error {
 	if len(crl) > maxCRLDistributionPoints {
 		return invalidArg("crlDistributionPoints", fmt.Sprintf("too many entries (max %d)", maxCRLDistributionPoints))
 	}
+
 	for i, v := range crl {
 		if len(v) > maxCRLDistributionPointLen {
 			return invalidArg(fmt.Sprintf("crlDistributionPoints[%d]", i), fmt.Sprintf("too large (max %d)", maxCRLDistributionPointLen))
+		}
+
+		if !validateURL(v) {
+			return invalidArg(fmt.Sprintf("crlDistributionPoints[%d]", i), "is not valid URL")
 		}
 	}
 

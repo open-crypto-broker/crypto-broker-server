@@ -176,9 +176,17 @@ func TestValidateSignRequest_RejectsSizeLimits(t *testing.T) {
 		{
 			name: "oversized crl distribution point",
 			mutate: func(req *pb.SignRequest) {
-				req.CrlDistributionPoints = []string{strings.Repeat("A", maxCRLDistributionPointLen+1)}
+				prefix := "https://example.com/"
+				req.CrlDistributionPoints = []string{prefix + strings.Repeat("a", maxCRLDistributionPointLen+1)}
 			},
 			wantField: "crlDistributionPoints[0]",
+		},
+		{
+			name: "invalid crl distribution URL",
+			mutate: func(req *pb.SignRequest) {
+				req.CrlDistributionPoints = []string{"https://google.com", "google.com"}
+			},
+			wantField: "crlDistributionPoints[1]",
 		},
 	}
 
@@ -200,12 +208,17 @@ func TestValidateSignRequest_AllowsValidBoundaryRequest(t *testing.T) {
 	req.CaPrivateKey = strings.Repeat("A", maxCAPrivateKeyBytes)
 	req.CaCert = strings.Repeat("A", maxCACertBytes)
 	req.Subject = &subject
-	crlDistributionPoints := make([]string, maxCRLDistributionPoints)
-	for i := range crlDistributionPoints {
-		crlDistributionPoints[i] = strings.Repeat("A", maxCRLDistributionPointLen)
-	}
-	req.CrlDistributionPoints = crlDistributionPoints
 
+	crlDistributionPoints := make([]string, maxCRLDistributionPoints)
+
+	prefix := "https://example.com/"
+	url := prefix + strings.Repeat("A", maxCRLDistributionPointLen-len(prefix))
+
+	for i := range crlDistributionPoints {
+		crlDistributionPoints[i] = url
+	}
+
+	req.CrlDistributionPoints = crlDistributionPoints
 	assertNoError(t, validateSignRequest(req))
 }
 
