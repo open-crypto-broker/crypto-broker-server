@@ -9,6 +9,7 @@ import (
 	"encoding/asn1"
 	"encoding/pem"
 	"fmt"
+	"runtime"
 	"time"
 )
 
@@ -99,6 +100,22 @@ func ParseX509Cert(rawCert []byte) (*x509.Certificate, error) {
 	return x509.ParseCertificate(pemBlock.Bytes)
 }
 
+// ZeroBytes overwrites the contents of b with zeros.
+//
+// It is marked go:noinline and pins the slice with runtime.KeepAlive so the
+// compiler cannot eliminate the writes as a dead store when b is not read
+// afterwards. crypto/subtle exposes no public zeroing primitive, so this is the
+// established manual pattern. Use it to scrub transient buffers (e.g. decoded
+// PEM/DER) that held key material once they are no longer needed.
+//
+//go:noinline
+func ZeroBytes(b []byte) {
+	for i := range b {
+		b[i] = 0
+	}
+	runtime.KeepAlive(b)
+}
+
 // ParsePrivateKeyFromPEM parses a PEM encoded PKCS1 or PKCS8 private key
 // The function tries to parse the key first in PKCS1 format, then PKCS8, finally EC format.
 func ParsePrivateKeyFromPEM(key []byte) (any, error) {
@@ -109,6 +126,11 @@ func ParsePrivateKeyFromPEM(key []byte) (any, error) {
 	if block, _ = pem.Decode(key); block == nil {
 		return nil, fmt.Errorf("key must be PEM encoded")
 	}
+
+	// block.Bytes holds the raw DER private key. The x509 parsers copy the
+	// secret material they need into the returned key object, so the decoded
+	// DER buffer can be scrubbed once parsing has completed (on every path).
+	defer ZeroBytes(block.Bytes)
 
 	var parsedKey any
 	if parsedKey, err = x509.ParsePKCS1PrivateKey(block.Bytes); err != nil {

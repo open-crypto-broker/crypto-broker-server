@@ -147,7 +147,17 @@ func (procedure *Sign) parseRawSignRequest(req *protobuf.SignRequest) (signReque
 		return signRequest{}, ArgumentError("could not parse certificate request, err: %w", err)
 	}
 
-	caPrivateKey, err := c10y.ParsePrivateKeyFromPEM([]byte(req.GetCaPrivateKey()))
+	// Copy the PEM-encoded CA private key into a mutable buffer so it can be
+	// explicitly zeroed once parsing finishes. Go's GC does not scrub freed
+	// memory, so without this the key bytes could linger on the heap (core
+	// dumps, swap, process memory). Defer guarantees scrubbing on all paths.
+	// Note: this only clears this transient copy; the immutable protobuf string
+	// and the parsed key's big.Int material are out of reach here and are
+	// addressed by the upcoming key-management redesign.
+	rawCAPrivateKey := []byte(req.GetCaPrivateKey())
+	defer c10y.ZeroBytes(rawCAPrivateKey)
+
+	caPrivateKey, err := c10y.ParsePrivateKeyFromPEM(rawCAPrivateKey)
 	if err != nil {
 		return signRequest{}, ArgumentError("could not parse private key, err: %w", err)
 	}
