@@ -3,6 +3,12 @@
 The list of commits in this changelog is automatically generated in the release process.
 The commits follow the Conventional Commit specification.
 
+## [0.3.1] - 2026-06-08
+
+### 🚀 Features
+
+- Updated deps (#114)
+
 ## [0.3.0] - 2026-06-08
 
 ### 🚀 Features
