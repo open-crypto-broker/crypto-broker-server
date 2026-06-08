@@ -3,6 +3,58 @@
 The list of commits in this changelog is automatically generated in the release process.
 The commits follow the Conventional Commit specification.
 
+## [0.3.1] - 2026-06-08
+
+### 🚀 Features
+
+- Updated deps (#114)
+
+## [0.3.0] - 2026-06-08
+
+### 🚀 Features
+
+- Update golang version from 1.26.3 to 1.26.4 (#113)
+- Check if crlDistributionPoints are valid URLs (#112)
+- Added validation for ID and CorrlationID fields
+- [**breaking**] Updated proto reference which removed created_at
+- Added support for few environment variables related to logging in Taskfile, updated docs
+- Added pprof docs
+- Add license check (#105)
+- Enhance input validation tests for Hash and Sign requests (#106)
+- Implement input validation for gRPC requests (#95)
+- Linted code
+- Added pprof server for dev mode + PGO guideline
+- Add version sync check workflow (#103)
+- Updated README by splitting it into smaller files
+- Added ability to turn on/off fips140 enforcement
+- Added environment variable that allows to switch fips module version
+- Added disclaimer to benchmark-assert.sh script
+- Added calculated thresholds and marked 'Assert benchmark perfrmance' workflow step as required to pass
+- Added formula for thresholds
+- Add depependabot config (#92)
+
+### 🐛 Bug Fixes
+
+- Removed trailing space
+- Fixed linting issues
+- Fixed issues with *.md and golangci-lint
+- Extract FakeEndpoint and Benchmark endpoints to separate service (#98)
+- Fixed makrdown lint issues
+- Adde ceil to ns/op thresholds
+- Add Persist Credentials to workflows (#94)
+
+### 💼 Other
+
+- Bump go version from 1.26.2 to 1.26.3 (#99)
+
+### 🚜 Refactor
+
+- Adjust workflow files (#102)
+
+### ⚙️ Miscellaneous Tasks
+
+- Update grpc-health-probe (#100)
+
 ## [0.2.2] - 2026-04-24
 
 ### 🐛 Bug Fixes
