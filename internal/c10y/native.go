@@ -10,6 +10,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"strings"
@@ -130,37 +131,44 @@ func (service *LibraryNative) SignCertificate(input SignCertificateInput) ([]byt
 
 // HashSHA3_256 returns sha3-256 hash of provided bytes or non-nil error if any.
 func (service *LibraryNative) HashSHA3_256(dataToHash []byte) (Hash, error) {
-	return service.hashSHA3(sha3.New256(), dataToHash)
+	sum := sha3.Sum256(dataToHash)
+	return Hash(hex.EncodeToString(sum[:])), nil
 }
 
 // HashSHA3_384 returns sha3-384 hash of provided bytes or non-nil error if any.
 func (service *LibraryNative) HashSHA3_384(dataToHash []byte) (Hash, error) {
-	return service.hashSHA3(sha3.New384(), dataToHash)
+	sum := sha3.Sum384(dataToHash)
+	return Hash(hex.EncodeToString(sum[:])), nil
 }
 
 // HashSHA3_512 returns sha3-512 hash of provided bytes or non-nil error if any.
 func (service *LibraryNative) HashSHA3_512(dataToHash []byte) (Hash, error) {
-	return service.hashSHA3(sha3.New512(), dataToHash)
+	sum := sha3.Sum512(dataToHash)
+	return Hash(hex.EncodeToString(sum[:])), nil
 }
 
 // HashSHA_256 returns sha-256 hash of provided bytes or non-nil error if any.
 func (service *LibraryNative) HashSHA_256(dataToHash []byte) (Hash, error) {
-	return Hash(fmt.Sprintf("%x", sha256.Sum256(dataToHash))), nil
+	sum := sha256.Sum256(dataToHash)
+	return Hash(hex.EncodeToString(sum[:])), nil
 }
 
 // HashSHA_384 returns sha-384 hash of provided bytes or non-nil error if any.
 func (service *LibraryNative) HashSHA_384(dataToHash []byte) (Hash, error) {
-	return Hash(fmt.Sprintf("%x", sha512.Sum384(dataToHash))), nil
+	sum := sha512.Sum384(dataToHash)
+	return Hash(hex.EncodeToString(sum[:])), nil
 }
 
 // HashSHA_512 returns sha-512 hash of provided bytes or non-nil error if any.
 func (service *LibraryNative) HashSHA_512(dataToHash []byte) (Hash, error) {
-	return Hash(fmt.Sprintf("%x", sha512.Sum512(dataToHash))), nil
+	sum := sha512.Sum512(dataToHash)
+	return Hash(hex.EncodeToString(sum[:])), nil
 }
 
 // HashSHA_512_256 returns sha512/256 hash of provided bytes or non-nil error if any.
 func (service *LibraryNative) HashSHA_512_256(dataToHash []byte) (Hash, error) {
-	return Hash(fmt.Sprintf("%x", sha512.Sum512_256(dataToHash))), nil
+	sum := sha512.Sum512_256(dataToHash)
+	return Hash(hex.EncodeToString(sum[:])), nil
 }
 
 // HashShake_128 returns Shake128 hash of provided bytes or non-nil error if any.
@@ -175,7 +183,7 @@ func (service *LibraryNative) HashShake_128(size int, dataToHash []byte) (Hash, 
 		return Hash(""), fmt.Errorf("failed to read data from shake: %w", err)
 	}
 
-	return Hash(fmt.Sprintf("%x", output)), nil
+	return Hash(hex.EncodeToString(output)), nil
 }
 
 // HashShake_256 returns Shake256 hash of provided bytes or non-nil error if any.
@@ -190,16 +198,7 @@ func (service *LibraryNative) HashShake_256(size int, dataToHash []byte) (Hash, 
 		return Hash(""), fmt.Errorf("failed to read data from shake: %w", err)
 	}
 
-	return Hash(fmt.Sprintf("%x", output)), nil
-}
-
-// hashSHA3 returns SHA-3 hash of dataToHash
-func (service *LibraryNative) hashSHA3(sha3 *sha3.SHA3, dataToHash []byte) (Hash, error) {
-	if _, err := sha3.Write(dataToHash); err != nil {
-		return Hash(""), fmt.Errorf("failure absorbing more state into hash : %w", err)
-	}
-
-	return Hash(fmt.Sprintf("%x", sha3.Sum(nil))), nil
+	return Hash(hex.EncodeToString(output)), nil
 }
 
 // buildRawSubjectExactOrder parses a subject and returns a DER encoded RDNSequence preserving order and duplicates.
