@@ -50,8 +50,8 @@ For a general introduction, see the ["A native developer experience"](https://go
 
 FIPS mode in `crypto-broker-server` is controlled by two independent levers:
 
-- **Build time:** `GOFIPS140` determines which cryptographic module is linked into the binary.
-- **Runtime:** `GODEBUG` determines whether the FIPS module is merely enabled or strictly enforced.
+* **Build time:** `GOFIPS140` determines which cryptographic module is linked into the binary.
+* **Runtime:** `GODEBUG` determines whether the FIPS module is merely enabled or strictly enforced.
 
 The sections below describe how to configure both, depending on the development or deployment context.
 
@@ -77,7 +77,7 @@ crypto/md5: use of MD5 is not allowed in FIPS 140-only mode
 
 Without Taskfile, the build-time and runtime steps must be performed explicitly. The Taskfile variables map directly to the underlying Go mechanisms: `FIPS_MODE_MODULE_VERSION` → `GOFIPS140` at build time; `FIPS_GODEBUG_VALUE` → `GODEBUG` at runtime.
 
-**Step 1 — Build the binary with the FIPS module linked**
+##### Step 1 — Build the binary with the FIPS module linked
 
 Set `GOFIPS140` before running `go build` to instruct the Go toolchain to link the FIPS 140-3 validated cryptographic module:
 
@@ -96,7 +96,7 @@ To verify the binary was built with the FIPS module linked:
 go version -m bin/crypto-broker-server | grep fips
 ```
 
-**Step 2 — Start the server in FIPS strict mode**
+##### Step 2 — Start the server in FIPS strict mode
 
 Set `GODEBUG=fips140=only` when launching the binary to restrict the runtime to FIPS-compliant algorithms only:
 
@@ -110,7 +110,7 @@ Use `fips140=on` instead of `fips140=only` to activate the FIPS module while sti
 
 The build step above belongs in CI/CD and is performed once before deployment. The resulting binary or container image is then deployed with `GODEBUG` configured through the platform's runtime environment mechanism.
 
-**Cloud Foundry**
+##### Cloud Foundry
 
 Set `GODEBUG` in the `env` section of the application manifest. The `binary_buildpack` executes the pre-built binary directly and does not invoke `go build` during staging, so `GOFIPS140` is not required in the CF environment.
 
@@ -124,7 +124,7 @@ applications:
       GODEBUG: fips140=only
 ```
 
-**Kubernetes**
+##### Kubernetes
 
 Set `GODEBUG` in the container environment of the pod specification. The container image must have been built with `GOFIPS140` set at image build time.
 
