@@ -98,7 +98,7 @@ func (service *LibraryNative) SignCertificate(input SignCertificateInput) ([]byt
 	// RFC 5280: The keyIdentifier is composed of the 160-bit SHA-1 hash of the
 	// value of the BIT STRING subjectPublicKey (excluding the tag, length, and
 	// number of unused bits).
-	ski, err := service.computeSubjectKeyIdentifier(input.CSR.PublicKey)
+	ski, err := service.computeSubjectKeyIdentifier(input.CSR.RawSubjectPublicKeyInfo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute subject key identifier: %w", err)
 	}
@@ -220,16 +220,10 @@ func (service *LibraryNative) buildRawSubjectExactOrder(input, sep string) ([]by
 	return asn1.Marshal(rdns)
 }
 
-// computeSubjectKeyIdentifier computes the Subject Key Identifier (SKI) for a given public key.
+// computeSubjectKeyIdentifier computes the Subject Key Identifier (SKI) from SubjectPublicKeyInfo bytes.
 // According to RFC 5280 and OpenSSL's default behavior, the SKI is the SHA-1 hash of the
 // subjectPublicKey BIT STRING value (excluding the tag, length, and unused-bits octet).
-func (service *LibraryNative) computeSubjectKeyIdentifier(publicKey any) ([]byte, error) {
-	// Marshal the public key to PKIX format (SubjectPublicKeyInfo)
-	spkiDER, err := x509.MarshalPKIXPublicKey(publicKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal public key: %w", err)
-	}
-
+func (service *LibraryNative) computeSubjectKeyIdentifier(spkiDER []byte) ([]byte, error) {
 	// Parse the SPKI structure to get the subjectPublicKey BIT STRING
 	var spki struct {
 		Algorithm        pkix.AlgorithmIdentifier
