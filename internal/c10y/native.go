@@ -10,6 +10,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"strings"
@@ -97,7 +98,7 @@ func (service *LibraryNative) SignCertificate(input SignCertificateInput) ([]byt
 	// RFC 5280: The keyIdentifier is composed of the 160-bit SHA-1 hash of the
 	// value of the BIT STRING subjectPublicKey (excluding the tag, length, and
 	// number of unused bits).
-	ski, err := service.computeSubjectKeyIdentifier(input.CSR.PublicKey)
+	ski, err := service.computeSubjectKeyIdentifier(input.CSR.RawSubjectPublicKeyInfo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute subject key identifier: %w", err)
 	}
@@ -130,37 +131,44 @@ func (service *LibraryNative) SignCertificate(input SignCertificateInput) ([]byt
 
 // HashSHA3_256 returns sha3-256 hash of provided bytes or non-nil error if any.
 func (service *LibraryNative) HashSHA3_256(dataToHash []byte) (Hash, error) {
-	return service.hashSHA3(sha3.New256(), dataToHash)
+	sum := sha3.Sum256(dataToHash)
+	return Hash(hex.EncodeToString(sum[:])), nil
 }
 
 // HashSHA3_384 returns sha3-384 hash of provided bytes or non-nil error if any.
 func (service *LibraryNative) HashSHA3_384(dataToHash []byte) (Hash, error) {
-	return service.hashSHA3(sha3.New384(), dataToHash)
+	sum := sha3.Sum384(dataToHash)
+	return Hash(hex.EncodeToString(sum[:])), nil
 }
 
 // HashSHA3_512 returns sha3-512 hash of provided bytes or non-nil error if any.
 func (service *LibraryNative) HashSHA3_512(dataToHash []byte) (Hash, error) {
-	return service.hashSHA3(sha3.New512(), dataToHash)
+	sum := sha3.Sum512(dataToHash)
+	return Hash(hex.EncodeToString(sum[:])), nil
 }
 
 // HashSHA_256 returns sha-256 hash of provided bytes or non-nil error if any.
 func (service *LibraryNative) HashSHA_256(dataToHash []byte) (Hash, error) {
-	return Hash(fmt.Sprintf("%x", sha256.Sum256(dataToHash))), nil
+	sum := sha256.Sum256(dataToHash)
+	return Hash(hex.EncodeToString(sum[:])), nil
 }
 
 // HashSHA_384 returns sha-384 hash of provided bytes or non-nil error if any.
 func (service *LibraryNative) HashSHA_384(dataToHash []byte) (Hash, error) {
-	return Hash(fmt.Sprintf("%x", sha512.Sum384(dataToHash))), nil
+	sum := sha512.Sum384(dataToHash)
+	return Hash(hex.EncodeToString(sum[:])), nil
 }
 
 // HashSHA_512 returns sha-512 hash of provided bytes or non-nil error if any.
 func (service *LibraryNative) HashSHA_512(dataToHash []byte) (Hash, error) {
-	return Hash(fmt.Sprintf("%x", sha512.Sum512(dataToHash))), nil
+	sum := sha512.Sum512(dataToHash)
+	return Hash(hex.EncodeToString(sum[:])), nil
 }
 
 // HashSHA_512_256 returns sha512/256 hash of provided bytes or non-nil error if any.
 func (service *LibraryNative) HashSHA_512_256(dataToHash []byte) (Hash, error) {
-	return Hash(fmt.Sprintf("%x", sha512.Sum512_256(dataToHash))), nil
+	sum := sha512.Sum512_256(dataToHash)
+	return Hash(hex.EncodeToString(sum[:])), nil
 }
 
 // HashShake_128 returns Shake128 hash of provided bytes or non-nil error if any.
@@ -175,7 +183,7 @@ func (service *LibraryNative) HashShake_128(size int, dataToHash []byte) (Hash, 
 		return Hash(""), fmt.Errorf("failed to read data from shake: %w", err)
 	}
 
-	return Hash(fmt.Sprintf("%x", output)), nil
+	return Hash(hex.EncodeToString(output)), nil
 }
 
 // HashShake_256 returns Shake256 hash of provided bytes or non-nil error if any.
@@ -190,16 +198,7 @@ func (service *LibraryNative) HashShake_256(size int, dataToHash []byte) (Hash, 
 		return Hash(""), fmt.Errorf("failed to read data from shake: %w", err)
 	}
 
-	return Hash(fmt.Sprintf("%x", output)), nil
-}
-
-// hashSHA3 returns SHA-3 hash of dataToHash
-func (service *LibraryNative) hashSHA3(sha3 *sha3.SHA3, dataToHash []byte) (Hash, error) {
-	if _, err := sha3.Write(dataToHash); err != nil {
-		return Hash(""), fmt.Errorf("failure absorbing more state into hash : %w", err)
-	}
-
-	return Hash(fmt.Sprintf("%x", sha3.Sum(nil))), nil
+	return Hash(hex.EncodeToString(output)), nil
 }
 
 // buildRawSubjectExactOrder parses a subject and returns a DER encoded RDNSequence preserving order and duplicates.
@@ -221,16 +220,10 @@ func (service *LibraryNative) buildRawSubjectExactOrder(input, sep string) ([]by
 	return asn1.Marshal(rdns)
 }
 
-// computeSubjectKeyIdentifier computes the Subject Key Identifier (SKI) for a given public key.
+// computeSubjectKeyIdentifier computes the Subject Key Identifier (SKI) from SubjectPublicKeyInfo bytes.
 // According to RFC 5280 and OpenSSL's default behavior, the SKI is the SHA-1 hash of the
 // subjectPublicKey BIT STRING value (excluding the tag, length, and unused-bits octet).
-func (service *LibraryNative) computeSubjectKeyIdentifier(publicKey any) ([]byte, error) {
-	// Marshal the public key to PKIX format (SubjectPublicKeyInfo)
-	spkiDER, err := x509.MarshalPKIXPublicKey(publicKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal public key: %w", err)
-	}
-
+func (service *LibraryNative) computeSubjectKeyIdentifier(spkiDER []byte) ([]byte, error) {
 	// Parse the SPKI structure to get the subjectPublicKey BIT STRING
 	var spki struct {
 		Algorithm        pkix.AlgorithmIdentifier

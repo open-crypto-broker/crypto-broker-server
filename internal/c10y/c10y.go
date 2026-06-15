@@ -116,11 +116,9 @@ func ZeroBytes(b []byte) {
 	runtime.KeepAlive(b)
 }
 
-// ParsePrivateKeyFromPEM parses a PEM encoded PKCS1 or PKCS8 private key
-// The function tries to parse the key first in PKCS1 format, then PKCS8, finally EC format.
+// ParsePrivateKeyFromPEM parses a PEM-encoded private key.
+// It dispatches by PEM block type to avoid unnecessary parse attempts.
 func ParsePrivateKeyFromPEM(key []byte) (any, error) {
-	var err error
-
 	// Parse PEM block
 	var block *pem.Block
 	if block, _ = pem.Decode(key); block == nil {
@@ -132,16 +130,26 @@ func ParsePrivateKeyFromPEM(key []byte) (any, error) {
 	// DER buffer can be scrubbed once parsing has completed (on every path).
 	defer ZeroBytes(block.Bytes)
 
-	var parsedKey any
-	if parsedKey, err = x509.ParsePKCS1PrivateKey(block.Bytes); err != nil {
-		if parsedKey, err = x509.ParsePKCS8PrivateKey(block.Bytes); err != nil {
-			if parsedKey, err = x509.ParseECPrivateKey(block.Bytes); err != nil {
-				return nil, err
-			}
+	switch block.Type {
+	case "RSA PRIVATE KEY":
+		return x509.ParsePKCS1PrivateKey(block.Bytes)
+	case "EC PRIVATE KEY":
+		return x509.ParseECPrivateKey(block.Bytes)
+	case "PRIVATE KEY":
+		return x509.ParsePKCS8PrivateKey(block.Bytes)
+	default:
+		// Fallback for uncommon/mislabelled PEMs to preserve compatibility.
+		if parsedKey, err := x509.ParsePKCS1PrivateKey(block.Bytes); err == nil {
+			return parsedKey, nil
 		}
+		if parsedKey, err := x509.ParsePKCS8PrivateKey(block.Bytes); err == nil {
+			return parsedKey, nil
+		}
+		if parsedKey, err := x509.ParseECPrivateKey(block.Bytes); err == nil {
+			return parsedKey, nil
+		}
+		return nil, fmt.Errorf("unsupported private key PEM block type: %q", block.Type)
 	}
-
-	return parsedKey, nil
 }
 
 // MapKeyUsageToExtension maps x509.KeyUsage to pkix.Extension or returns non-nil error if any

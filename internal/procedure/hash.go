@@ -26,7 +26,7 @@ func (procedure *Hash) Execute(req *protobuf.HashRequest) (*protobuf.HashRespons
 
 	hashedBytes, err := procedure.hash(req.GetInput(), reqProfile)
 	if err != nil {
-		return nil, fmt.Errorf("error while hashing data: %s", err.Error())
+		return nil, fmt.Errorf("error while hashing data: %w", err)
 	}
 
 	return &protobuf.HashResponse{
