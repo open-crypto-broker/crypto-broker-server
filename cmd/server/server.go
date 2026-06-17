@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -158,6 +159,7 @@ func main() {
 		),
 		grpc.MaxRecvMsgSize(api.MaxGrpcRecvMsgSize),
 		grpc.MaxSendMsgSize(api.MaxGrpcSendMsgSize),
+		grpc.MaxConcurrentStreams(getMaxConcurrentStreams()),
 	)
 
 	// Register crypto broker service
@@ -229,4 +231,18 @@ func main() {
 
 		panic(err)
 	}
+}
+
+func getMaxConcurrentStreams() uint32 {
+	maxConcurrentStreams := uint32(1024)
+	val := os.Getenv(env.GRPC_MAX_CONCURRENT_STREAMS)
+
+	if val != "" {
+		custom, err := strconv.ParseUint(val, 10, 32)
+		if err == nil {
+			maxConcurrentStreams = uint32(custom)
+		}
+	}
+
+	return maxConcurrentStreams
 }

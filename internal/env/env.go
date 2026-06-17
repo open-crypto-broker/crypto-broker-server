@@ -86,4 +86,7 @@ const (
 	// PPROF_ADDR is optional TCP listen address for net/http/pprof (CPU, heap, etc.).
 	// When empty, the pprof HTTP endpoint is disabled. Use a loopback address (e.g. "127.0.0.1:6060") for local profiling and PGO.
 	PPROF_ADDR = "CRYPTO_BROKER_PPROF_ADDR"
+
+	// GRPC_MAX_CONCURRENT_STREAMS sets max number of concurrent streams for grpc server.
+	GRPC_MAX_CONCURRENT_STREAMS = "CRYPTO_BROKER_GRPC_MAX_CONCURRENT_STREAMS"
 )
