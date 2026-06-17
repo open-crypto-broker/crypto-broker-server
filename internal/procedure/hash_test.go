@@ -36,7 +36,7 @@ func TestHash_Execute(t *testing.T) {
 	if resp.GetHashAlgorithm() != "sha3-512" {
 		t.Fatalf("HashAlgorithm = %q, want %q", resp.GetHashAlgorithm(), "sha3-512")
 	}
-	if len(resp.GetHashValue()) != 128 { // sha3-512 is 64 bytes which is 128 hex chars
-		t.Fatalf("HashValue length = %d, want 128", len(resp.GetHashValue()))
+	if len(resp.GetHashValueHex()) != 128 { // sha3-512 is 64 bytes which is 128 hex chars
+		t.Fatalf("HashValueHex length = %d, want 128", len(resp.GetHashValueHex()))
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"runtime"
@@ -42,11 +43,16 @@ const (
 	ExtKeyUsageOCSPSigning     = "OCSPSigning"
 )
 
-// Hash is base 16 (hexadecimal), lower-case, two characters per byte string.
+// Hash holds the raw digest bytes produced by a hashing operation.
 //
-// For example SHA-512 produces a fixed-size output of 512 bits, which is equivalent to 64 bytes,
-// therefore Hash will be 128-character hexadecimal string.
-type Hash string
+// Use ToHEX() to obtain the base-16 (lower-case) string representation.
+// For example SHA-512 produces 64 bytes; ToHEX() returns a 128-character string.
+type Hash []byte
+
+// ToHEX returns the lower-case hexadecimal encoding of the digest.
+func (h Hash) ToHEX() string {
+	return hex.EncodeToString(h)
+}
 
 // SignAPIOpts represents all information required in certificate signing process provided from API call
 type SignAPIOpts struct {

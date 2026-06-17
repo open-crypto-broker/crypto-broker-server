@@ -84,7 +84,7 @@ func TestCryptoBrokerServer_Hash_MetricsEnabled_Success_RecordsMetricsBranch(t *
 	if err != nil {
 		t.Fatalf("expected success, got err: %v", err)
 	}
-	if resp == nil || resp.GetHashAlgorithm() == "" || resp.GetHashValue() == "" {
+	if resp == nil || resp.GetHashAlgorithm() == "" || resp.GetHashValue() == nil {
 		t.Fatalf("expected non-empty hash response")
 	}
 }
