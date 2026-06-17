@@ -91,7 +91,7 @@ func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRe
 
 	span.SetAttributes(
 		otel.AttributeCryptoHashAlgorithm.String(response.GetHashAlgorithm()),
-		otel.AttributeCryptoHashOutputSize.Int(len(response.GetHashValue())),
+		otel.AttributeCryptoHashOutputSize.Int(len(response.GetHashValueHex())/2+len(response.GetHashValueRaw())),
 	)
 	span.SetStatus(codes.Ok, "Hash operation completed successfully")
 

@@ -152,8 +152,8 @@ func TestCryptoBrokerServer_Hash_E2E(t *testing.T) {
 		}
 
 		expectedHash := "YmI5ZTJhMDIyMzdlNmY4YWRjYWVmOWZjMTRiODk4YjdjODBjZWRjMTE0MTEwNDcyY2RmOTI1MjMzNjIxYjcwNTk2M2M3NmU3YjExM2JlZDNjMjc4ZmYxMTY3MWE2ZDFjZGNiYTU0NWUwMDlmZjRjMGMwMjUzOTg5OTI0MTk5M2I="
-		if base64.StdEncoding.EncodeToString([]byte(resp.GetHashValue())) != expectedHash {
-			t.Errorf("Expected hash %s, got %s", expectedHash, base64.StdEncoding.EncodeToString([]byte(resp.GetHashValue())))
+		if base64.StdEncoding.EncodeToString([]byte(resp.GetHashValueHex())) != expectedHash {
+			t.Errorf("Expected hash %s, got %s", expectedHash, base64.StdEncoding.EncodeToString([]byte(resp.GetHashValueHex())))
 		}
 	})
 

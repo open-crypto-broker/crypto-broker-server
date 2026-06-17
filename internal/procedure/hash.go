@@ -29,11 +29,27 @@ func (procedure *Hash) Execute(req *protobuf.HashRequest) (*protobuf.HashRespons
 		return nil, fmt.Errorf("error while hashing data: %w", err)
 	}
 
-	return &protobuf.HashResponse{
-		HashValue:     string(hashedBytes),
+	resp := &protobuf.HashResponse{
 		HashAlgorithm: reqProfile.API.HashData.HashAlg.String(),
 		Metadata:      req.GetMetadata(),
-	}, nil
+	}
+
+	switch req.GetOutputFormat() {
+	case protobuf.HashOutputFormat_RAW:
+		resp.HashValue = &protobuf.HashResponse_HashValueRaw{
+			HashValueRaw: []byte(hashedBytes),
+		}
+	case protobuf.HashOutputFormat_HEX:
+		resp.HashValue = &protobuf.HashResponse_HashValueHex{
+			HashValueHex: hashedBytes.ToHEX(),
+		}
+	default:
+		resp.HashValue = &protobuf.HashResponse_HashValueHex{
+			HashValueHex: hashedBytes.ToHEX(),
+		}
+	}
+
+	return resp, nil
 }
 
 // hash hashes provided data according to profile rules
@@ -57,7 +73,7 @@ func (procedure *Hash) hash(data []byte, p profile.Profile) (c10y.Hash, error) {
 	case c10y.LibNative:
 		h = procedure.cryptographicEngineNative
 	default:
-		return "", ArgumentError("unknown '%s' cryptographic engine, available values: %v",
+		return nil, ArgumentError("unknown '%s' cryptographic engine, available values: %v",
 			p.Settings.CryptoLibrary, c10y.SupportedCryptographicLibraries)
 	}
 
@@ -85,11 +101,11 @@ func (procedure *Hash) hash(data []byte, p profile.Profile) (c10y.Hash, error) {
 	case c10y.SHAKE_256:
 		hash, err = h.HashShake_256(32, data)
 	default:
-		return "", ArgumentError("unknown '%s' algorithm value, available values: %v", p.API.HashData.HashAlg, c10y.HashDataAlgorithmsSupported)
+		return nil, ArgumentError("unknown '%s' algorithm value, available values: %v", p.API.HashData.HashAlg, c10y.HashDataAlgorithmsSupported)
 	}
 
 	if err != nil {
-		return "", fmt.Errorf("could not hash provided bytes, err: %w", err)
+		return nil, fmt.Errorf("could not hash provided bytes, err: %w", err)
 	}
 
 	return hash, nil

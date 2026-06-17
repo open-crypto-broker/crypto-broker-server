@@ -3,9 +3,18 @@ package c10y
 import (
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"encoding/hex"
 	"reflect"
 	"testing"
 )
+
+func mustHex(s string) Hash {
+	b, err := hex.DecodeString(s)
+	if err != nil {
+		panic("mustHex: invalid hex string: " + err.Error())
+	}
+	return Hash(b)
+}
 
 func TestLibraryNative_HashSHA3_256(t *testing.T) {
 	type args struct {
@@ -24,7 +33,7 @@ func TestLibraryNative_HashSHA3_256(t *testing.T) {
 			args: args{
 				dataToHash: []byte("Hello world"),
 			},
-			want:    Hash("369183d3786773cef4e56c7b849e7ef5f742867510b676d6b38f8e38a222d8a2"),
+			want:    mustHex("369183d3786773cef4e56c7b849e7ef5f742867510b676d6b38f8e38a222d8a2"),
 			wantErr: false,
 		},
 	}
@@ -36,7 +45,7 @@ func TestLibraryNative_HashSHA3_256(t *testing.T) {
 				t.Errorf("LibraryNative.HashSHA3_256() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("LibraryNative.HashSHA3_256() = %v, want %v", got, tt.want)
 			}
 		})
@@ -60,7 +69,7 @@ func TestLibraryNative_HashSHA3_384(t *testing.T) {
 			args: args{
 				dataToHash: []byte("Hello world"),
 			},
-			want:    Hash("ff3917192427ea1aa7f3ad47ac10152d179af30126c52835ee8dc7e6ea12aed91ad91b316e15c3b250469ef17a03e529"),
+			want:    mustHex("ff3917192427ea1aa7f3ad47ac10152d179af30126c52835ee8dc7e6ea12aed91ad91b316e15c3b250469ef17a03e529"),
 			wantErr: false,
 		},
 	}
@@ -72,7 +81,7 @@ func TestLibraryNative_HashSHA3_384(t *testing.T) {
 				t.Errorf("LibraryNative.HashSHA3_384() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("LibraryNative.HashSHA3_384() = %v, want %v", got, tt.want)
 			}
 		})
@@ -96,7 +105,7 @@ func TestLibraryNative_HashSHA3_512(t *testing.T) {
 			args: args{
 				dataToHash: []byte("Hello world"),
 			},
-			want:    Hash("e2e1c9e522efb2495a178434c8bb8f11000ca23f1fd679058b7d7e141f0cf3433f94fc427ec0b9bebb12f327a3240021053db6091196576d5e6d9bd8fac71c0c"),
+			want:    mustHex("e2e1c9e522efb2495a178434c8bb8f11000ca23f1fd679058b7d7e141f0cf3433f94fc427ec0b9bebb12f327a3240021053db6091196576d5e6d9bd8fac71c0c"),
 			wantErr: false,
 		},
 	}
@@ -108,7 +117,7 @@ func TestLibraryNative_HashSHA3_512(t *testing.T) {
 				t.Errorf("LibraryNative.HashSHA3_512() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("LibraryNative.HashSHA3_512() = %v, want %v", got, tt.want)
 			}
 		})
@@ -132,7 +141,7 @@ func TestLibraryNative_HashSHA_256(t *testing.T) {
 			args: args{
 				dataToHash: []byte("Hello world"),
 			},
-			want:    Hash("64ec88ca00b268e5ba1a35678a1b5316d212f4f366b2477232534a8aeca37f3c"),
+			want:    mustHex("64ec88ca00b268e5ba1a35678a1b5316d212f4f366b2477232534a8aeca37f3c"),
 			wantErr: false,
 		},
 	}
@@ -144,7 +153,7 @@ func TestLibraryNative_HashSHA_256(t *testing.T) {
 				t.Errorf("LibraryNative.HashSHA_256() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("LibraryNative.HashSHA_256() = %v, want %v", got, tt.want)
 			}
 		})
@@ -168,7 +177,7 @@ func TestLibraryNative_HashSHA_384(t *testing.T) {
 			args: args{
 				dataToHash: []byte("Hello world"),
 			},
-			want:    Hash("9203b0c4439fd1e6ae5878866337b7c532acd6d9260150c80318e8ab8c27ce330189f8df94fb890df1d298ff360627e1"),
+			want:    mustHex("9203b0c4439fd1e6ae5878866337b7c532acd6d9260150c80318e8ab8c27ce330189f8df94fb890df1d298ff360627e1"),
 			wantErr: false,
 		},
 	}
@@ -180,7 +189,7 @@ func TestLibraryNative_HashSHA_384(t *testing.T) {
 				t.Errorf("LibraryNative.HashSHA_384() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("LibraryNative.HashSHA_384() = %v, want %v", got, tt.want)
 			}
 		})
@@ -204,7 +213,7 @@ func TestLibraryNative_HashSHA_512(t *testing.T) {
 			args: args{
 				dataToHash: []byte("Hello world"),
 			},
-			want:    Hash("b7f783baed8297f0db917462184ff4f08e69c2d5e5f79a942600f9725f58ce1f29c18139bf80b06c0fff2bdd34738452ecf40c488c22a7e3d80cdf6f9c1c0d47"),
+			want:    mustHex("b7f783baed8297f0db917462184ff4f08e69c2d5e5f79a942600f9725f58ce1f29c18139bf80b06c0fff2bdd34738452ecf40c488c22a7e3d80cdf6f9c1c0d47"),
 			wantErr: false,
 		},
 	}
@@ -216,7 +225,7 @@ func TestLibraryNative_HashSHA_512(t *testing.T) {
 				t.Errorf("LibraryNative.HashSHA_512() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("LibraryNative.HashSHA_512() = %v, want %v", got, tt.want)
 			}
 		})
@@ -240,7 +249,7 @@ func TestLibraryNative_HashSHA_512_256(t *testing.T) {
 			args: args{
 				dataToHash: []byte("Hello world"),
 			},
-			want:    Hash("f7b55872d4aefe68143bd2ebd928b87f769e15362fcd5a1af8da184bbfcb5fa8"),
+			want:    mustHex("f7b55872d4aefe68143bd2ebd928b87f769e15362fcd5a1af8da184bbfcb5fa8"),
 			wantErr: false,
 		},
 	}
@@ -252,7 +261,7 @@ func TestLibraryNative_HashSHA_512_256(t *testing.T) {
 				t.Errorf("LibraryNative.HashSHA_512_256() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("LibraryNative.HashSHA_512_256() = %v, want %v", got, tt.want)
 			}
 		})
