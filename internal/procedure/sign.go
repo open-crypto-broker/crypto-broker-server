@@ -2,7 +2,6 @@ package procedure
 
 import (
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -50,10 +49,24 @@ func (procedure *Sign) Execute(req *protobuf.SignRequest) (*protobuf.SignRespons
 		return nil, fmt.Errorf("error while signing data: %w", err)
 	}
 
-	return &protobuf.SignResponse{
-		SignedCertificate: base64.StdEncoding.EncodeToString(clientCRTRaw),
-		Metadata:          req.GetMetadata(),
-	}, nil
+	resp := &protobuf.SignResponse{Metadata: req.GetMetadata()}
+	switch req.GetOutputFormat() {
+	case protobuf.SignOutputFormat_PEM:
+		block := &pem.Block{Type: "CERTIFICATE", Bytes: clientCRTRaw}
+		resp.SignedCertificate = &protobuf.SignResponse_Pem{
+			Pem: string(pem.EncodeToMemory(block)),
+		}
+	case protobuf.SignOutputFormat_DER:
+		resp.SignedCertificate = &protobuf.SignResponse_Der{
+			Der: clientCRTRaw,
+		}
+	default:
+		resp.SignedCertificate = &protobuf.SignResponse_Der{
+			Der: clientCRTRaw,
+		}
+	}
+
+	return resp, nil
 }
 
 // sign contains logic that signs CSR and returns signed certificate or non-nil error if any.

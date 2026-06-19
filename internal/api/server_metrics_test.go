@@ -139,7 +139,7 @@ func TestCryptoBrokerServer_Sign_MetricsEnabled_Success_RecordsMetricsBranch(t *
 	if err != nil {
 		t.Fatalf("expected success, got err: %v", err)
 	}
-	if resp == nil || resp.GetSignedCertificate() == "" {
+	if resp == nil || resp.GetSignedCertificate() == nil {
 		t.Fatalf("expected non-empty signed certificate")
 	}
 }

@@ -244,7 +244,7 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 			t.Fatalf("Sign failed: %s", err.Error())
 		}
 
-		if len(resp.GetSignedCertificate()) == 0 {
+		if len(resp.GetDer()) == 0 {
 			t.Errorf("Expected signed certificate, got empty response")
 		}
 	})

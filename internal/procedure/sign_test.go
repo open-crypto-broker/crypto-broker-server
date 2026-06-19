@@ -2,8 +2,8 @@ package procedure
 
 import (
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/pem"
+	"strings"
 	"testing"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
@@ -60,30 +60,58 @@ NrPbJOOC/7QNdsuxmDFGEapyZg==
 -----END CERTIFICATE REQUEST-----`
 
 	p := NewSign(c10y.NewLibraryNative())
-	resp, err := p.Execute(&protobuf.SignRequest{
-		Profile:      "Default",
-		Csr:          csrPEM,
-		CaPrivateKey: caPrivateKeyPEM,
-		CaCert:       caCertPEM,
-	})
-	if err != nil {
-		t.Fatalf("Execute() error: %v", err)
-	}
-	if resp.GetSignedCertificate() == "" {
-		t.Fatalf("expected non-empty SignedCertificate")
-	}
 
-	der, err := base64.StdEncoding.DecodeString(resp.GetSignedCertificate())
-	if err != nil {
-		t.Fatalf("failed to base64 decode SignedCertificate: %v", err)
-	}
-	cert, err := x509.ParseCertificate(der)
-	if err != nil {
-		t.Fatalf("failed to parse returned certificate DER: %v", err)
-	}
-	if cert == nil || len(cert.Raw) == 0 {
-		t.Fatalf("expected parsed certificate with raw bytes")
-	}
+	t.Run("DER output", func(t *testing.T) {
+		resp, err := p.Execute(&protobuf.SignRequest{
+			Profile:      "Default",
+			Csr:          csrPEM,
+			CaPrivateKey: caPrivateKeyPEM,
+			CaCert:       caCertPEM,
+			OutputFormat: protobuf.SignOutputFormat_DER,
+		})
+		if err != nil {
+			t.Fatalf("Execute() error: %v", err)
+		}
+		derBytes := resp.GetDer()
+		if len(derBytes) == 0 {
+			t.Fatalf("expected non-empty SignedCertificateDer")
+		}
+		cert, err := x509.ParseCertificate(derBytes)
+		if err != nil {
+			t.Fatalf("failed to parse returned certificate DER: %v", err)
+		}
+		if len(cert.Raw) == 0 {
+			t.Fatalf("expected parsed certificate with raw bytes")
+		}
+	})
+
+	t.Run("PEM output", func(t *testing.T) {
+		resp, err := p.Execute(&protobuf.SignRequest{
+			Profile:      "Default",
+			Csr:          csrPEM,
+			CaPrivateKey: caPrivateKeyPEM,
+			CaCert:       caCertPEM,
+			OutputFormat: protobuf.SignOutputFormat_PEM,
+		})
+		if err != nil {
+			t.Fatalf("Execute() error: %v", err)
+		}
+		pemStr := resp.GetPem()
+		if !strings.HasPrefix(pemStr, "-----BEGIN CERTIFICATE-----") {
+			t.Fatalf("expected PEM certificate, got: %s", pemStr)
+		}
+		block, _ := pem.Decode([]byte(pemStr))
+		if block == nil {
+			t.Fatalf("failed to PEM-decode SignedCertificatePem")
+		}
+		cert, err := x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			t.Fatalf("failed to parse certificate from PEM: %v", err)
+		}
+		if len(cert.Raw) == 0 {
+			t.Fatalf("expected parsed certificate with raw bytes")
+		}
+	})
 }
 
 func TestSign_parseRawSignRequest(t *testing.T) {
