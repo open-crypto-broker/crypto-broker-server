@@ -168,7 +168,7 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 		return nil, fmt.Errorf("something went wrong while signing certificate: %w", err)
 	}
 
-	span.SetAttributes(otel.AttributeCryptoSignedCertSize.Int(len(response.GetSignedCertificate())))
+	span.SetAttributes(otel.AttributeCryptoSignedCertSize.Int(len(response.GetDer()) + len(response.GetPem())))
 	span.SetStatus(codes.Ok, "Certificate signing completed successfully")
 
 	if server.metricsEnabled {
