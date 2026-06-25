@@ -1,7 +1,7 @@
 ## This Dockerfile builds the Crypto Broker Server
 
 ARG GO_VERSION=1.26
-ARG ALPINE_VERSION=3.23
+ARG ALPINE_VERSION=3.24
 ARG GRPC_HEALTH_PROBE_VERSION=v0.4.52
 
 ## Build

@@ -44,7 +44,7 @@ func validateMetadataIdentifier(field, value string, maxLen int) error {
 }
 
 func validateURL(rawURL string) bool {
-	// 1. Parse the string usiwhng the RFC-compliant standard parser
+	// 1. Parse the string using the RFC-compliant standard parser
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		return false
