@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/cache"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
@@ -24,11 +25,11 @@ import (
 func TestCryptoBrokerServer_MetricsEnabled_CollectSystemMetrics_NoPanic(t *testing.T) {
 	otel.SetMeterProvider(metricnoop.NewMeterProvider())
 
-	libraryNative := c10y.NewLibraryNative()
+	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	server := NewCryptoBrokerServer(
 		libraryNative,
 		procedure.NewHash(libraryNative),
-		procedure.NewSign(libraryNative),
+		procedure.NewSign(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig)),
 		true,
 	)
 
@@ -42,11 +43,11 @@ func TestCryptoBrokerServer_Hash_MetricsEnabled_ErrorOnInvalidProfile(t *testing
 		t.Fatalf("could not load profiles: %v", err)
 	}
 
-	libraryNative := c10y.NewLibraryNative()
+	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	server := NewCryptoBrokerServer(
 		libraryNative,
 		procedure.NewHash(libraryNative),
-		procedure.NewSign(libraryNative),
+		procedure.NewSign(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig)),
 		true,
 	)
 
@@ -69,11 +70,11 @@ func TestCryptoBrokerServer_Hash_MetricsEnabled_Success_RecordsMetricsBranch(t *
 		t.Fatalf("could not load profiles: %v", err)
 	}
 
-	libraryNative := c10y.NewLibraryNative()
+	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	server := NewCryptoBrokerServer(
 		libraryNative,
 		procedure.NewHash(libraryNative),
-		procedure.NewSign(libraryNative),
+		procedure.NewSign(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig)),
 		true,
 	)
 
@@ -96,11 +97,11 @@ func TestCryptoBrokerServer_Sign_MetricsEnabled_ErrorOnInvalidCSR(t *testing.T) 
 		t.Fatalf("could not load profiles: %v", err)
 	}
 
-	libraryNative := c10y.NewLibraryNative()
+	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	server := NewCryptoBrokerServer(
 		libraryNative,
 		procedure.NewHash(libraryNative),
-		procedure.NewSign(libraryNative),
+		procedure.NewSign(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig)),
 		true,
 	)
 
@@ -122,11 +123,11 @@ func TestCryptoBrokerServer_Sign_MetricsEnabled_Success_RecordsMetricsBranch(t *
 
 	caCertPEM, caKeyPEM, csrPEM := mustMakeTestCAAndCSR(t)
 
-	libraryNative := c10y.NewLibraryNative()
+	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	server := NewCryptoBrokerServer(
 		libraryNative,
 		procedure.NewHash(libraryNative),
-		procedure.NewSign(libraryNative),
+		procedure.NewSign(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig)),
 		true,
 	)
 

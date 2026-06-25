@@ -6,12 +6,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 )
 
 func TestNewSign(t *testing.T) {
-	p := NewSign(c10y.NewLibraryNative())
+	p := newTestSign()
 	if p == nil {
 		t.Fatalf("expected non-nil")
 	}
@@ -59,7 +58,7 @@ ALeIB2/wKr3HtLRsmlYYoUAJPkw2vAXj9kiBUwhGw2hFAiBP9PTPCcOIZN50n9C0
 NrPbJOOC/7QNdsuxmDFGEapyZg==
 -----END CERTIFICATE REQUEST-----`
 
-	p := NewSign(c10y.NewLibraryNative())
+	p := newTestSign()
 
 	t.Run("DER output", func(t *testing.T) {
 		resp, err := p.Execute(&protobuf.SignRequest{
@@ -153,7 +152,7 @@ DtjzHrdJ+nj4OUaRYwD4jjv8Z7gEiQ9GYM8hPsyvAXJbbMsiUo+lcsXNWa4a7ZmG
 YPEvJDRcZOaQELgCfS90jAPT45yefLkIsgEWq45bKA==
 -----END EC PRIVATE KEY-----`
 
-	proc := NewSign(c10y.NewLibraryNative())
+	proc := newTestSign()
 	input, err := proc.parseRawSignRequest(&protobuf.SignRequest{
 		Csr:          csrPEM,
 		CaCert:       caCertPEM,

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/cache"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 )
@@ -15,6 +16,7 @@ import (
 // Sign defines the procedure for signing a certificate
 type Sign struct {
 	cryptographicEngineNative *c10y.LibraryNative
+	caCertCache               cache.Cache[string, *x509.Certificate]
 }
 
 // signRequest represents the input for the sign method from the client
@@ -28,8 +30,8 @@ type signRequest struct {
 	CrlDistributionPoints []string
 }
 
-func NewSign(cryptographicEngineNative *c10y.LibraryNative) *Sign {
-	return &Sign{cryptographicEngineNative: cryptographicEngineNative}
+func NewSign(cryptographicEngineNative *c10y.LibraryNative, caCertCache cache.Cache[string, *x509.Certificate]) *Sign {
+	return &Sign{cryptographicEngineNative: cryptographicEngineNative, caCertCache: caCertCache}
 }
 
 // Execute executes the sign procedure
@@ -175,9 +177,19 @@ func (procedure *Sign) parseRawSignRequest(req *protobuf.SignRequest) (signReque
 		return signRequest{}, ArgumentError("could not parse private key, err: %w", err)
 	}
 
-	cert, err := c10y.ParseX509Cert([]byte(req.GetCaCert()))
-	if err != nil {
-		return signRequest{}, ArgumentError("could not parse x.509 CA cert from request, err: %w", err)
+	pemCACert := req.GetCaCert()
+	cert, ok := procedure.caCertCache.Get(pemCACert)
+	if !ok {
+		cert, err = c10y.ParseX509Cert([]byte(pemCACert))
+		if err != nil {
+			return signRequest{}, ArgumentError("could not parse x.509 CA cert from request, err: %w", err)
+		}
+
+		// TTL bound to the certificate's own validity: an expired CA cert must
+		// not linger in the cache. cost=1 -> one slot per cached cert.
+		if ttl := time.Until(cert.NotAfter); ttl > 0 {
+			procedure.caCertCache.SetWithTTL(pemCACert, cert, 1, ttl)
+		}
 	}
 
 	input := signRequest{

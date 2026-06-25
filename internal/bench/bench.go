@@ -12,6 +12,7 @@ import (
 	"github.com/open-crypto-broker/crypto-broker-server/internal/env"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/cache"
 )
 
 var bb = []byte(`ɥsɐɥ oʇ sɹǝʇɔɐɹɐɥɔ ʎɹɐɹʇᴉqɹɐ ǝɯoS
@@ -26,7 +27,7 @@ var bb = []byte(`ɥsɐɥ oʇ sɹǝʇɔɐɹɐɥɔ ʎɹɐɹʇᴉqɹɐ ǝɯoS
 
 // RunHashSHA3_256Benchmark runs SHA3-256 hash benchmark
 func RunHashSHA3_256Benchmark(b *testing.B) {
-	service := c10y.NewLibraryNative()
+	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	for b.Loop() {
 		_, err := service.HashSHA3_256(bb)
 		if err != nil {
@@ -37,7 +38,7 @@ func RunHashSHA3_256Benchmark(b *testing.B) {
 
 // RunHashSHA3_384Benchmark runs SHA3-384 hash benchmark
 func RunHashSHA3_384Benchmark(b *testing.B) {
-	service := c10y.NewLibraryNative()
+	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	for b.Loop() {
 		_, err := service.HashSHA3_384(bb)
 		if err != nil {
@@ -48,7 +49,7 @@ func RunHashSHA3_384Benchmark(b *testing.B) {
 
 // RunHashSHA3_512Benchmark runs SHA3-512 hash benchmark
 func RunHashSHA3_512Benchmark(b *testing.B) {
-	service := c10y.NewLibraryNative()
+	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	for b.Loop() {
 		_, err := service.HashSHA3_512(bb)
 		if err != nil {
@@ -59,7 +60,7 @@ func RunHashSHA3_512Benchmark(b *testing.B) {
 
 // RunHashSHA_256Benchmark runs SHA-256 hash benchmark
 func RunHashSHA_256Benchmark(b *testing.B) {
-	service := c10y.NewLibraryNative()
+	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	for b.Loop() {
 		_, err := service.HashSHA_256(bb)
 		if err != nil {
@@ -70,7 +71,7 @@ func RunHashSHA_256Benchmark(b *testing.B) {
 
 // RunHashSHA_384Benchmark runs SHA-384 hash benchmark
 func RunHashSHA_384Benchmark(b *testing.B) {
-	service := c10y.NewLibraryNative()
+	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	for b.Loop() {
 		_, err := service.HashSHA_384(bb)
 		if err != nil {
@@ -81,7 +82,7 @@ func RunHashSHA_384Benchmark(b *testing.B) {
 
 // RunHashSHA_512Benchmark runs SHA-512 hash benchmark
 func RunHashSHA_512Benchmark(b *testing.B) {
-	service := c10y.NewLibraryNative()
+	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	for b.Loop() {
 		_, err := service.HashSHA_512(bb)
 		if err != nil {
@@ -92,7 +93,7 @@ func RunHashSHA_512Benchmark(b *testing.B) {
 
 // RunHashSHA_512_256Benchmark runs SHA-512-256 hash benchmark
 func RunHashSHA_512_256Benchmark(b *testing.B) {
-	service := c10y.NewLibraryNative()
+	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	for b.Loop() {
 		_, err := service.HashSHA_512_256(bb)
 		if err != nil {
@@ -102,7 +103,7 @@ func RunHashSHA_512_256Benchmark(b *testing.B) {
 }
 
 func RunHashShake_128Benchmark(b *testing.B) {
-	service := c10y.NewLibraryNative()
+	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	for b.Loop() {
 		_, err := service.HashShake_128(32, bb)
 		if err != nil {
@@ -112,7 +113,7 @@ func RunHashShake_128Benchmark(b *testing.B) {
 }
 
 func RunHashShake_256Benchmark(b *testing.B) {
-	service := c10y.NewLibraryNative()
+	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	for b.Loop() {
 		_, err := service.HashShake_256(32, bb)
 		if err != nil {
@@ -213,7 +214,7 @@ NrPbJOOC/7QNdsuxmDFGEapyZg==
 		SignatureAlgorithm: x509.ECDSAWithSHA512,
 	}
 
-	service := c10y.NewLibraryNative()
+	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	for b.Loop() {
 		_, err := service.SignCertificate(input)
 		if err != nil {
@@ -298,7 +299,7 @@ xz4as/yt+3tVfrJa9Yaf3TjDqlTlncA8kJ3hhsRX5U/dwEJv2/ZMO7MWh12XUrQL
 		return fmt.Errorf("invalid certificate request signature: %w", err)
 	}
 
-	service := c10y.NewLibraryNative()
+	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	now := time.Now().UTC()
 	kus := []x509.KeyUsage{x509.KeyUsageDigitalSignature, x509.KeyUsageKeyEncipherment}
 	var finalKU x509.KeyUsage
@@ -338,7 +339,7 @@ func RunSignCertificateBenchmark(b *testing.B) error {
 		b.Fatalf("could not parse duration, err: %s", err.Error())
 	}
 
-	service := c10y.NewLibraryNative()
+	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 
 	// #nosec G703 -- trusted benchmark input
 	caCert, err := os.ReadFile(os.Getenv(env.BENCHMARK_SIGN_CERTIFICATE_CA_CERT))
@@ -481,7 +482,7 @@ NrPbJOOC/7QNdsuxmDFGEapyZg==
 		return fmt.Errorf("invalid certificate request signature: %w", err)
 	}
 
-	service := c10y.NewLibraryNative()
+	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	now := time.Now().UTC()
 	kus := []x509.KeyUsage{x509.KeyUsageDigitalSignature, x509.KeyUsageKeyEncipherment}
 	var finalKU x509.KeyUsage

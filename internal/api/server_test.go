@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/cache"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/interceptors"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
@@ -108,9 +109,9 @@ func bufDialer(context.Context, string) (net.Conn, error) {
 // TestCryptoBrokerServer_Hash_E2E tests the Hash method of the gRPC API.
 func TestCryptoBrokerServer_Hash_E2E(t *testing.T) {
 	// Mock dependencies
-	libraryNative := c10y.NewLibraryNative()
+	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	procedureHash := procedure.NewHash(libraryNative)
-	procedureSign := procedure.NewSign(libraryNative)
+	procedureSign := procedure.NewSign(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig))
 	metricsEnabled := false
 	grpcConnector := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, metricsEnabled)
 
@@ -173,9 +174,9 @@ func TestCryptoBrokerServer_Hash_E2E(t *testing.T) {
 // TestCryptoBrokerServer_Sign_E2E tests the Sign method of the gRPC API.
 func TestCryptoBrokerServer_Sign_E2E(t *testing.T) {
 	// Mock dependencies
-	libraryNative := c10y.NewLibraryNative()
+	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	procedureHash := procedure.NewHash(libraryNative)
-	procedureSign := procedure.NewSign(libraryNative)
+	procedureSign := procedure.NewSign(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig))
 	metricsEnabled := false
 	grpcConnector := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, metricsEnabled)
 
@@ -318,9 +319,9 @@ func toPointerUint64(value int64) *uint64 {
 }
 
 func TestNewCryptoBrokerServer(t *testing.T) {
-	libraryNative := c10y.NewLibraryNative()
+	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	procedureHash := procedure.NewHash(libraryNative)
-	procedureSign := procedure.NewSign(libraryNative)
+	procedureSign := procedure.NewSign(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig))
 
 	server := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, false)
 	if server == nil {
