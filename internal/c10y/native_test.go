@@ -6,7 +6,14 @@ import (
 	"encoding/hex"
 	"reflect"
 	"testing"
+
+	"github.com/open-crypto-broker/crypto-broker-server/internal/cache"
 )
+
+// newTestLibraryNative builds a LibraryNative backed by a default in-memory cache.
+func newTestLibraryNative() *LibraryNative {
+	return NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
+}
 
 func mustHex(s string) Hash {
 	b, err := hex.DecodeString(s)
@@ -29,7 +36,7 @@ func TestLibraryNative_HashSHA3_256(t *testing.T) {
 	}{
 		{
 			name:    "HashSHA3_256() correctly hashes with SHA3-256 hashing algorithm",
-			service: NewLibraryNative(),
+			service: newTestLibraryNative(),
 			args: args{
 				dataToHash: []byte("Hello world"),
 			},
@@ -65,7 +72,7 @@ func TestLibraryNative_HashSHA3_384(t *testing.T) {
 	}{
 		{
 			name:    "HashSHA3_384() correctly hashes with SHA3-384 hashing algorithm",
-			service: NewLibraryNative(),
+			service: newTestLibraryNative(),
 			args: args{
 				dataToHash: []byte("Hello world"),
 			},
@@ -101,7 +108,7 @@ func TestLibraryNative_HashSHA3_512(t *testing.T) {
 	}{
 		{
 			name:    "HashSHA3_512() correctly hashes with SHA3-512 hashing algorithm",
-			service: NewLibraryNative(),
+			service: newTestLibraryNative(),
 			args: args{
 				dataToHash: []byte("Hello world"),
 			},
@@ -137,7 +144,7 @@ func TestLibraryNative_HashSHA_256(t *testing.T) {
 	}{
 		{
 			name:    "HashSHA_256() correctly hashes with SHA-256 hashing algorithm",
-			service: NewLibraryNative(),
+			service: newTestLibraryNative(),
 			args: args{
 				dataToHash: []byte("Hello world"),
 			},
@@ -173,7 +180,7 @@ func TestLibraryNative_HashSHA_384(t *testing.T) {
 	}{
 		{
 			name:    "HashSHA_384() correctly hashes with SHA-384 hashing algorithm",
-			service: NewLibraryNative(),
+			service: newTestLibraryNative(),
 			args: args{
 				dataToHash: []byte("Hello world"),
 			},
@@ -209,7 +216,7 @@ func TestLibraryNative_HashSHA_512(t *testing.T) {
 	}{
 		{
 			name:    "HashSHA_512() correctly hashes with SHA-512 hashing algorithm",
-			service: NewLibraryNative(),
+			service: newTestLibraryNative(),
 			args: args{
 				dataToHash: []byte("Hello world"),
 			},
@@ -245,7 +252,7 @@ func TestLibraryNative_HashSHA_512_256(t *testing.T) {
 	}{
 		{
 			name:    "HashSHA_512_256() correctly hashes with SHA512-256 hashing algorithm",
-			service: NewLibraryNative(),
+			service: newTestLibraryNative(),
 			args: args{
 				dataToHash: []byte("Hello world"),
 			},
@@ -280,7 +287,7 @@ func TestLibraryNative_ParseRSAPrivateKeyFromPEM(t *testing.T) {
 	}{
 		{
 			name:    "ParseRSAPrivateKeyFromPEM() returns error given empty key",
-			service: NewLibraryNative(),
+			service: newTestLibraryNative(),
 			args: args{
 				key: []byte(``),
 			},
@@ -288,7 +295,7 @@ func TestLibraryNative_ParseRSAPrivateKeyFromPEM(t *testing.T) {
 		},
 		{
 			name:    "ParseRSAPrivateKeyFromPEM() succeeds parsing RSA private key #1",
-			service: NewLibraryNative(),
+			service: newTestLibraryNative(),
 			args: args{
 				key: []byte(`-----BEGIN RSA PRIVATE KEY-----
 MIIEpQIBAAKCAQEAxM8/6O8EqHjFWPV6sWeauYM+xNUrvZWuFjc/RLyhWE9WXAD/
@@ -323,7 +330,7 @@ kLCBYOHSXIZVDr/GFND1zYDbMky/HNWFo0RxhEZL7ihtvugnHhGuOno=
 		},
 		{
 			name:    "ParseRSAPrivateKeyFromPEM() succeeds parsing RSA private key #2",
-			service: NewLibraryNative(),
+			service: newTestLibraryNative(),
 			args: args{
 				key: []byte(`-----BEGIN PRIVATE KEY-----
 MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDEzz/o7wSoeMVY
@@ -428,7 +435,7 @@ func TestLibraryNative_composeAttributeTypeAndValue(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			service := NewLibraryNative()
+			service := newTestLibraryNative()
 			got, gotErr := service.composeAttributeTypeAndValue(tt.part)
 			if gotErr != nil {
 				if !tt.wantErr {
