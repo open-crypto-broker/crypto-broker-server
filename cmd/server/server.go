@@ -126,6 +126,11 @@ func main() {
 	}
 
 	rpcLogger.Debug("Directory for socket file exists", slog.String("path", baseDir))
+
+	if removeErr := os.Remove(defaultSocketPath); removeErr != nil && !os.IsNotExist(removeErr) {
+		rpcLogger.Warn("Failed to remove stale socket file", slog.String("path", defaultSocketPath), slog.String("error", removeErr.Error()))
+	}
+
 	rpcLogger.Debug("Attempting to listen on socket", slog.String("address", defaultSocketPath))
 
 	// Restrict unix socket permissions to owner during creation.
