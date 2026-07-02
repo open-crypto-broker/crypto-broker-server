@@ -60,7 +60,7 @@ func NewLibraryNative(subjectDERCache cache.Cache[string, []byte]) *LibraryNativ
 	return &LibraryNative{subjectDERCache: subjectDERCache}
 }
 
-// Sign certificate signs provided CSR using std go lib as crypto engine.
+// SignCertificate certificate signs provided CSR using std go lib as crypto engine.
 // As a result method returns signed certificate in DEF format or non-nil error if any.
 func (service *LibraryNative) SignCertificate(input SignCertificateInput) ([]byte, error) {
 	if err := input.CSR.CheckSignature(); err != nil {

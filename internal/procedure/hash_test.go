@@ -22,13 +22,13 @@ func newTestLibraryNative() *c10y.LibraryNative {
 	return c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 }
 
-// newTestSign builds a Sign procedure backed by default in-memory caches.
-func newTestSign() *Sign {
-	return NewSign(newTestLibraryNative(), cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig))
+// newTestSign builds a SignCertificate procedure backed by default in-memory caches.
+func newTestSign() *SignCertificate {
+	return NewSignCertificate(newTestLibraryNative(), cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig))
 }
 
 func TestNewHash(t *testing.T) {
-	p := NewHash(newTestLibraryNative())
+	p := NewHashData(newTestLibraryNative())
 	if p == nil {
 		t.Fatalf("expected non-nil")
 	}
@@ -37,8 +37,8 @@ func TestNewHash(t *testing.T) {
 func TestHash_Execute(t *testing.T) {
 	loadDefaultProfiles(t)
 
-	p := NewHash(newTestLibraryNative())
-	resp, err := p.Execute(&protobuf.HashRequest{
+	p := NewHashData(newTestLibraryNative())
+	resp, err := p.Execute(&protobuf.HashDataRequest{
 		Profile: "Default",
 		Input:   []byte("hello"),
 	})

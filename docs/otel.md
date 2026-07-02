@@ -46,7 +46,7 @@ export OTEL_EXPORTER_OTLP_ENDPOINT="http://otel-collector:4317"
 The server generates the following trace spans:
 
 * **gRPC Server Spans**: Automatic spans for each gRPC request (created by OTEL gRPC instrumentation)
-* **RPC Method Spans**: Custom spans for each RPC method (`Hash`, `Sign`, `Benchmark`) with operation-specific attributes
+* **RPC Method Spans**: Custom spans for each RPC method (`HashData`, `SignCertificate`, `Benchmark`) with operation-specific attributes
 * **Attributes Included**(full list in [attr.go](./internal/otel/attr.go)]):
     * `rpc.method`: The gRPC method name
     * `crypto.profile`: The cryptographic profile used
@@ -132,8 +132,8 @@ The server collects metrics at following levels:
 
 **Operation-Specific Metrics:**
 
-* `crypto_hash_operations_total{algorithm}` - Total hash operations by algorithm (SHA-256, SHA-384, SHA-512, SHA3, Shake)
-* `crypto_sign_operations_total{profile}` - Total certificate signing operations
+* `crypto_hash_data_operations_total{algorithm}` - Total hash data operations by algorithm (SHA-256, SHA-384, SHA-512, SHA3, Shake)
+* `crypto_sign_certificate_operations_total{profile}` - Total certificate signing operations
 * `crypto_operations_errors_total{rpc_method, error_type}` - Error counters by operation and error type
 * `crypto_operation_bytes_processed_total{rpc_method}` - Total bytes processed by operations
 

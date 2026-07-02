@@ -1,12 +1,12 @@
 package otel
 
 const (
-	StatusSuccess         = "success"
-	StatusError           = "error"
-	RPCMethodHash         = "Hash"
-	RPCMethodSign         = "Sign"
-	RPCMethodBenchmark    = "Benchmark"
-	RPCMethodFakeEndpoint = "FakeEndpoint"
+	StatusSuccess            = "success"
+	StatusError              = "error"
+	RPCMethodHashData        = "HashData"
+	RPCMethodSignCertificate = "SignCertificate"
+	RPCMethodBenchmark       = "Benchmark"
+	RPCMethodFakeEndpoint    = "FakeEndpoint"
 )
 
 // default values for OTEL configurations

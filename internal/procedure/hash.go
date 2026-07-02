@@ -8,43 +8,43 @@ import (
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 )
 
-// Hash defines the procedure for hashing data
-type Hash struct {
+// HashData defines the procedure for hashing data
+type HashData struct {
 	cryptographicEngineNative *c10y.LibraryNative
 }
 
-func NewHash(cryptographicEngineNative *c10y.LibraryNative) *Hash {
-	return &Hash{cryptographicEngineNative: cryptographicEngineNative}
+func NewHashData(cryptographicEngineNative *c10y.LibraryNative) *HashData {
+	return &HashData{cryptographicEngineNative: cryptographicEngineNative}
 }
 
-// Execute executes the hash procedure
-func (procedure *Hash) Execute(req *protobuf.HashRequest) (*protobuf.HashResponse, error) {
+// Execute executes the hash data procedure
+func (procedure *HashData) Execute(req *protobuf.HashDataRequest) (*protobuf.HashDataResponse, error) {
 	reqProfile, err := profile.Retrieve(req.GetProfile())
 	if err != nil {
 		return nil, ArgumentError("could not retrieve profile, err: %w", err)
 	}
 
-	hashedBytes, err := procedure.hash(req.GetInput(), reqProfile)
+	hashedBytes, err := procedure.hashData(req.GetInput(), reqProfile)
 	if err != nil {
 		return nil, fmt.Errorf("error while hashing data: %w", err)
 	}
 
-	resp := &protobuf.HashResponse{
+	resp := &protobuf.HashDataResponse{
 		HashAlgorithm: reqProfile.API.HashData.HashAlg.String(),
 		Metadata:      req.GetMetadata(),
 	}
 
 	switch req.GetOutputFormat() {
 	case protobuf.HashOutputFormat_RAW:
-		resp.HashValue = &protobuf.HashResponse_HashValueRaw{
+		resp.HashValue = &protobuf.HashDataResponse_HashValueRaw{
 			HashValueRaw: []byte(hashedBytes),
 		}
 	case protobuf.HashOutputFormat_HEX:
-		resp.HashValue = &protobuf.HashResponse_HashValueHex{
+		resp.HashValue = &protobuf.HashDataResponse_HashValueHex{
 			HashValueHex: hashedBytes.ToHEX(),
 		}
 	default:
-		resp.HashValue = &protobuf.HashResponse_HashValueHex{
+		resp.HashValue = &protobuf.HashDataResponse_HashValueHex{
 			HashValueHex: hashedBytes.ToHEX(),
 		}
 	}
@@ -52,8 +52,8 @@ func (procedure *Hash) Execute(req *protobuf.HashRequest) (*protobuf.HashRespons
 	return resp, nil
 }
 
-// hash hashes provided data according to profile rules
-func (procedure *Hash) hash(data []byte, p profile.Profile) (c10y.Hash, error) {
+// hashData hashes provided data according to profile rules
+func (procedure *HashData) hashData(data []byte, p profile.Profile) (c10y.Hash, error) {
 
 	// hasher defines abstraction over hashing library/engine.
 	type hasher interface {

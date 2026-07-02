@@ -46,29 +46,29 @@ func (procedure *Benchmark) Execute(req *protobuf.BenchmarkRequest) (*protobuf.B
 func (procedure *Benchmark) runAllBenchmarks() (benchmarkResults, error) {
 	results := make([]benchmarkResult, 0, 11)
 
-	results = append(results, procedure.runHashBenchmark("BenchmarkLibraryNative_HashSHA3_256", bench.RunHashSHA3_256Benchmark))
-	results = append(results, procedure.runHashBenchmark("BenchmarkLibraryNative_HashSHA3_384", bench.RunHashSHA3_384Benchmark))
-	results = append(results, procedure.runHashBenchmark("BenchmarkLibraryNative_HashSHA3_512", bench.RunHashSHA3_512Benchmark))
-	results = append(results, procedure.runHashBenchmark("BenchmarkLibraryNative_HashSHA_256", bench.RunHashSHA_256Benchmark))
-	results = append(results, procedure.runHashBenchmark("BenchmarkLibraryNative_HashSHA_384", bench.RunHashSHA_384Benchmark))
-	results = append(results, procedure.runHashBenchmark("BenchmarkLibraryNative_HashSHA_512", bench.RunHashSHA_512Benchmark))
-	results = append(results, procedure.runHashBenchmark("BenchmarkLibraryNative_HashSHA_512_256", bench.RunHashSHA_512_256Benchmark))
+	results = append(results, procedure.runHashDataBenchmark("BenchmarkLibraryNative_HashSHA3_256", bench.RunHashSHA3_256Benchmark))
+	results = append(results, procedure.runHashDataBenchmark("BenchmarkLibraryNative_HashSHA3_384", bench.RunHashSHA3_384Benchmark))
+	results = append(results, procedure.runHashDataBenchmark("BenchmarkLibraryNative_HashSHA3_512", bench.RunHashSHA3_512Benchmark))
+	results = append(results, procedure.runHashDataBenchmark("BenchmarkLibraryNative_HashSHA_256", bench.RunHashSHA_256Benchmark))
+	results = append(results, procedure.runHashDataBenchmark("BenchmarkLibraryNative_HashSHA_384", bench.RunHashSHA_384Benchmark))
+	results = append(results, procedure.runHashDataBenchmark("BenchmarkLibraryNative_HashSHA_512", bench.RunHashSHA_512Benchmark))
+	results = append(results, procedure.runHashDataBenchmark("BenchmarkLibraryNative_HashSHA_512_256", bench.RunHashSHA_512_256Benchmark))
 
-	signCertificateNISTSECP521R1RSA4096Result, err := procedure.runSignBenchmark(
+	signCertificateNISTSECP521R1RSA4096Result, err := procedure.runSignCertificateBenchmark(
 		"BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_RSA4096", bench.RunSignCertificate_CSR_SECP256R1_CA_RSA4096Benchmark)
 	if err != nil {
 		return benchmarkResults{Results: results}, err
 	}
 	results = append(results, signCertificateNISTSECP521R1RSA4096Result)
 
-	signCertificateNISTSECP521R1NISTSECP521R1Result, err := procedure.runSignBenchmark(
+	signCertificateNISTSECP521R1NISTSECP521R1Result, err := procedure.runSignCertificateBenchmark(
 		"BenchmarkLibraryNative_SignCertificate_CSR_SECP521R1_CA_SECP521R1", bench.RunSignCertificate_CSR_SECP521R1_CA_SECP521R1Benchmark)
 	if err != nil {
 		return benchmarkResults{Results: results}, err
 	}
 	results = append(results, signCertificateNISTSECP521R1NISTSECP521R1Result)
 
-	signCertificateNISTSECP256R1NISTSECP384R1Result, err := procedure.runSignBenchmark(
+	signCertificateNISTSECP256R1NISTSECP384R1Result, err := procedure.runSignCertificateBenchmark(
 		"BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_SECP384R1", bench.RunSignCertificate_CSR_SECP256R1_CA_SECP384R1Benchmark)
 	if err != nil {
 		return benchmarkResults{Results: results}, err
@@ -78,15 +78,15 @@ func (procedure *Benchmark) runAllBenchmarks() (benchmarkResults, error) {
 	return benchmarkResults{Results: results}, nil
 }
 
-// runHashBenchmark executes a hash benchmark and returns the result
-func (procedure *Benchmark) runHashBenchmark(name string, benchmarkFunc func(*testing.B)) benchmarkResult {
+// runHashDataBenchmark executes a hash data benchmark and returns the result
+func (procedure *Benchmark) runHashDataBenchmark(name string, benchmarkFunc func(*testing.B)) benchmarkResult {
 	result := testing.Benchmark(benchmarkFunc)
 	avgTime := result.NsPerOp()
 	return benchmarkResult{Name: name, AvgTime: avgTime}
 }
 
-// runSignBenchmark executes a certificate signing benchmark and returns the result
-func (procedure *Benchmark) runSignBenchmark(name string, benchmarkFunc func(*testing.B) error) (benchmarkResult, error) {
+// runSignCertificateBenchmark executes a certificate signing benchmark and returns the result
+func (procedure *Benchmark) runSignCertificateBenchmark(name string, benchmarkFunc func(*testing.B) error) (benchmarkResult, error) {
 	var benchErr error
 	result := testing.Benchmark(func(b *testing.B) {
 		if err := benchmarkFunc(b); err != nil {

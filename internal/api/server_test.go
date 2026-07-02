@@ -106,12 +106,12 @@ func bufDialer(context.Context, string) (net.Conn, error) {
 	return lis.Dial()
 }
 
-// TestCryptoBrokerServer_Hash_E2E tests the Hash method of the gRPC API.
-func TestCryptoBrokerServer_Hash_E2E(t *testing.T) {
+// TestCryptoBrokerServer_HashData_E2E tests the HashData method of the gRPC API.
+func TestCryptoBrokerServer_HashData_E2E(t *testing.T) {
 	// Mock dependencies
 	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
-	procedureHash := procedure.NewHash(libraryNative)
-	procedureSign := procedure.NewSign(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig))
+	procedureHash := procedure.NewHashData(libraryNative)
+	procedureSign := procedure.NewSignCertificate(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig))
 	metricsEnabled := false
 	grpcConnector := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, metricsEnabled)
 
@@ -141,15 +141,15 @@ func TestCryptoBrokerServer_Hash_E2E(t *testing.T) {
 		t.Fatalf("could not load profiles, err: %s", err)
 	}
 
-	t.Run("Hash - Valid Request", func(t *testing.T) {
-		req := &protobuf.HashRequest{
+	t.Run("Hash data - Valid Request", func(t *testing.T) {
+		req := &protobuf.HashDataRequest{
 			Profile: "Default",
 			Input:   []byte("test data"),
 		}
 
-		resp, err := client.Hash(ctx, req)
+		resp, err := client.HashData(ctx, req)
 		if err != nil {
-			t.Fatalf("Hash failed: %v", err)
+			t.Fatalf("Hash data failed: %v", err)
 		}
 
 		expectedHash := "YmI5ZTJhMDIyMzdlNmY4YWRjYWVmOWZjMTRiODk4YjdjODBjZWRjMTE0MTEwNDcyY2RmOTI1MjMzNjIxYjcwNTk2M2M3NmU3YjExM2JlZDNjMjc4ZmYxMTY3MWE2ZDFjZGNiYTU0NWUwMDlmZjRjMGMwMjUzOTg5OTI0MTk5M2I="
@@ -158,25 +158,25 @@ func TestCryptoBrokerServer_Hash_E2E(t *testing.T) {
 		}
 	})
 
-	t.Run("Hash - Invalid profile", func(t *testing.T) {
-		req := &protobuf.HashRequest{
+	t.Run("Hash data - Invalid profile", func(t *testing.T) {
+		req := &protobuf.HashDataRequest{
 			Profile: "Invalid",
 			Input:   []byte("test data"),
 		}
 
-		_, err := client.Hash(ctx, req)
+		_, err := client.HashData(ctx, req)
 		if status.Code(err) != codes.InvalidArgument {
 			t.Fatalf("Expected status code 3 (InvalidArgument), got %d", status.Code(err))
 		}
 	})
 }
 
-// TestCryptoBrokerServer_Sign_E2E tests the Sign method of the gRPC API.
-func TestCryptoBrokerServer_Sign_E2E(t *testing.T) {
+// TestCryptoBrokerServer_SignCertificate_E2E tests the SignCertificate method of the gRPC API.
+func TestCryptoBrokerServer_SignCertificate_E2E(t *testing.T) {
 	// Mock dependencies
 	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
-	procedureHash := procedure.NewHash(libraryNative)
-	procedureSign := procedure.NewSign(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig))
+	procedureHash := procedure.NewHashData(libraryNative)
+	procedureSign := procedure.NewSignCertificate(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig))
 	metricsEnabled := false
 	grpcConnector := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, metricsEnabled)
 
@@ -206,8 +206,8 @@ func TestCryptoBrokerServer_Sign_E2E(t *testing.T) {
 		t.Fatalf("could not load profiles, err: %s", err)
 	}
 
-	t.Run("Sign - Valid Request", func(t *testing.T) {
-		req := &protobuf.SignRequest{
+	t.Run("Sign Certificate- Valid Request", func(t *testing.T) {
+		req := &protobuf.SignCertificateRequest{
 			Profile: "Default",
 			Csr: `-----BEGIN CERTIFICATE REQUEST-----
 MIIBezCCAQACAQAwgYAxCzAJBgNVBAYTAkRFMRAwDgYDVQQIDAdCYXZhcmlhMRow
@@ -240,9 +240,9 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 			Id: "00001-2345689-abcdefg-1",
 		}
 
-		resp, err := client.Sign(ctx, req)
+		resp, err := client.SignCertificate(ctx, req)
 		if err != nil {
-			t.Fatalf("Sign failed: %s", err.Error())
+			t.Fatalf("Sign certificate failed: %s", err.Error())
 		}
 
 		if len(resp.GetDer()) == 0 {
@@ -250,19 +250,19 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 		}
 	})
 
-	t.Run("Sign - Invalid CSR", func(t *testing.T) {
-		req := &protobuf.SignRequest{
+	t.Run("Sign certificate - Invalid CSR", func(t *testing.T) {
+		req := &protobuf.SignCertificateRequest{
 			Profile: "Default",
 			Csr:     "invalid CSR",
 		}
 
-		_, err := client.Sign(ctx, req)
+		_, err := client.SignCertificate(ctx, req)
 		if err == nil {
 			t.Fatalf("Expected error for invalid CSR, got nil")
 		}
 	})
 
-	t.Run("Sign - Invalid CaCERT", func(t *testing.T) {
+	t.Run("Sign certificate - Invalid CaCERT", func(t *testing.T) {
 		privKey, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 		csrTemplate := &x509.CertificateRequest{
 			Subject: pkix.Name{CommonName: "Test CSR"},
@@ -270,13 +270,13 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 		csrBytes, _ := x509.CreateCertificateRequest(rand.Reader, csrTemplate, privKey)
 		csrPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrBytes})
 
-		req := &protobuf.SignRequest{
+		req := &protobuf.SignCertificateRequest{
 			Profile: "Default",
 			Csr:     string(csrPEM),
 			CaCert:  "not valid CaCERT",
 		}
 
-		_, err := client.Sign(ctx, req)
+		_, err := client.SignCertificate(ctx, req)
 		if err == nil {
 			t.Fatalf("Expected error for invalid CaCERT, got nil")
 		}
@@ -286,7 +286,7 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 		}
 	})
 
-	t.Run("Sign - Insecure public Key", func(t *testing.T) {
+	t.Run("Sign certificate- Insecure public Key", func(t *testing.T) {
 		// Sign the CSR with a too short key length
 		privKey, _ := ecdsa.GenerateKey(elliptic.P224(), rand.Reader)
 		csrTemplate := &x509.CertificateRequest{
@@ -295,14 +295,14 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 		csrBytes, _ := x509.CreateCertificateRequest(rand.Reader, csrTemplate, privKey)
 		csrPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrBytes})
 
-		req := &protobuf.SignRequest{
+		req := &protobuf.SignCertificateRequest{
 			Profile:      "Default",
 			Csr:          string(csrPEM),
 			CaCert:       caCert,
 			CaPrivateKey: caPrivKey,
 		}
 
-		_, err := client.Sign(ctx, req)
+		_, err := client.SignCertificate(ctx, req)
 		if err == nil || !strings.Contains(err.Error(), "expected public key to be at least") {
 			t.Fatalf("Expected error for insecure public key, got nil or unexpected error: %s", err)
 		}
@@ -320,8 +320,8 @@ func toPointerUint64(value int64) *uint64 {
 
 func TestNewCryptoBrokerServer(t *testing.T) {
 	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
-	procedureHash := procedure.NewHash(libraryNative)
-	procedureSign := procedure.NewSign(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig))
+	procedureHash := procedure.NewHashData(libraryNative)
+	procedureSign := procedure.NewSignCertificate(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig))
 
 	server := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, false)
 	if server == nil {

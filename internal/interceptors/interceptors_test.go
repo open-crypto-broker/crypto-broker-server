@@ -12,7 +12,7 @@ import (
 func TestUnaryCorrelationInterceptor(t *testing.T) {
 	interceptor := UnaryCorrelationInterceptor()
 
-	req := &protobuf.HashRequest{
+	req := &protobuf.HashDataRequest{
 		Metadata: &protobuf.Metadata{
 			TraceContext: &protobuf.TraceContext{
 				CorrelationId: "corr-123",
@@ -38,7 +38,7 @@ func TestCorrelationIDFromContext(t *testing.T) {
 }
 
 func TestCorrelationIDFromProtoRequest(t *testing.T) {
-	req := &protobuf.SignRequest{
+	req := &protobuf.SignCertificateRequest{
 		Metadata: &protobuf.Metadata{
 			TraceContext: &protobuf.TraceContext{
 				CorrelationId: "abc-correlation-id",
@@ -54,7 +54,7 @@ func TestCorrelationIDFromProtoRequest(t *testing.T) {
 
 func TestUnaryRemoteTraceInterceptor(t *testing.T) {
 	interceptor := UnaryRemoteTraceInterceptor()
-	req := &protobuf.HashRequest{
+	req := &protobuf.HashDataRequest{
 		Metadata: &protobuf.Metadata{
 			TraceContext: &protobuf.TraceContext{
 				TraceId: "0af7651916cd43dd8448eb211c80319c",
