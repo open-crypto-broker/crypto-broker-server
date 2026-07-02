@@ -182,3 +182,55 @@ export OTEL_METRICS_EXPORTER="otlphttp,console"
 export OTEL_METRICS_INTERVAL="15s"
 export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4318"
 ```
+
+# Dynatrace
+
+To successfully complete this guide, you will need:
+
+* [API token](https://docs.dynatrace.com/docs/dynatrace-api/basics/dynatrace-api-authentication)
+* [Base URL](https://docs.dynatrace.com/docs/shortlink/otel-getstarted-otlpexport#base-url)
+
+## Traces
+
+Our main method to send data to Dynatrace is to use the Dynatrace API directly over HTTPS:
+
+* [Dynatrace OTLP API Documentation](https://docs.dynatrace.com/docs/ingest-from/opentelemetry/otlp-api/ingest-traces)
+
+This method assumes that your application will directly send traces via HTTP(S) utilizing Dynatrace's native OTLP endpoint.
+
+To make this happen, you need to set the following environment variables:
+
+```env
+OTEL_TRACES_EXPORTER="otlphttp"
+OTEL_EXPORTER_OTLP_ENDPOINT="https://<YOUR-TENANT-HERE>.live.dynatrace.com/api/v2/otlp"
+OTEL_EXPORTER_OTLP_HEADERS="Authorization=Api-Token <YOUR-TOKEN-HERE>"
+OTEL_TRACES_SAMPLER="always_on"
+```
+
+Next, you need to run the server:
+
+```shell
+task run
+```
+
+And invoke a test command from the CLI:
+
+```shell
+task test-sign
+```
+
+## Logs
+
+To send logs to Dynatrace, you need to set the following environment variables:
+
+```env
+OTEL_LOGS_EXPORTER="otlphttp"
+OTEL_EXPORTER_OTLP_ENDPOINT="https://<YOUR-TENANT-HERE>.live.dynatrace.com/api/v2/otlp"
+OTEL_EXPORTER_OTLP_HEADERS="Authorization=Api-Token <YOUR-API-TOKEN-HERE>"
+```
+
+Next, run the server:
+
+```shell
+task run
+```
