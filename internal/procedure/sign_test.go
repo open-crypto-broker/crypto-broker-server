@@ -61,7 +61,7 @@ NrPbJOOC/7QNdsuxmDFGEapyZg==
 	p := newTestSign()
 
 	t.Run("DER output", func(t *testing.T) {
-		resp, err := p.Execute(&protobuf.SignRequest{
+		resp, err := p.Execute(&protobuf.SignCertificateRequest{
 			Profile:      "Default",
 			Csr:          csrPEM,
 			CaPrivateKey: caPrivateKeyPEM,
@@ -85,7 +85,7 @@ NrPbJOOC/7QNdsuxmDFGEapyZg==
 	})
 
 	t.Run("PEM output", func(t *testing.T) {
-		resp, err := p.Execute(&protobuf.SignRequest{
+		resp, err := p.Execute(&protobuf.SignCertificateRequest{
 			Profile:      "Default",
 			Csr:          csrPEM,
 			CaPrivateKey: caPrivateKeyPEM,
@@ -153,7 +153,7 @@ YPEvJDRcZOaQELgCfS90jAPT45yefLkIsgEWq45bKA==
 -----END EC PRIVATE KEY-----`
 
 	proc := newTestSign()
-	input, err := proc.parseRawSignRequest(&protobuf.SignRequest{
+	input, err := proc.parseRawSignRequest(&protobuf.SignCertificateRequest{
 		Csr:          csrPEM,
 		CaCert:       caCertPEM,
 		CaPrivateKey: caPrivateKeyPEM,

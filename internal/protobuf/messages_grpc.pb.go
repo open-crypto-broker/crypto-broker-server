@@ -17,8 +17,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CryptoGrpcClient interface {
-	Hash(ctx context.Context, in *HashRequest, opts ...grpc.CallOption) (*HashResponse, error)
-	Sign(ctx context.Context, in *SignRequest, opts ...grpc.CallOption) (*SignResponse, error)
+	HashData(ctx context.Context, in *HashDataRequest, opts ...grpc.CallOption) (*HashDataResponse, error)
+	SignCertificate(ctx context.Context, in *SignCertificateRequest, opts ...grpc.CallOption) (*SignCertificateResponse, error)
 }
 
 type cryptoGrpcClient struct {
@@ -29,18 +29,18 @@ func NewCryptoGrpcClient(cc grpc.ClientConnInterface) CryptoGrpcClient {
 	return &cryptoGrpcClient{cc}
 }
 
-func (c *cryptoGrpcClient) Hash(ctx context.Context, in *HashRequest, opts ...grpc.CallOption) (*HashResponse, error) {
-	out := new(HashResponse)
-	err := c.cc.Invoke(ctx, "/CryptoBroker.CryptoGrpc/Hash", in, out, opts...)
+func (c *cryptoGrpcClient) HashData(ctx context.Context, in *HashDataRequest, opts ...grpc.CallOption) (*HashDataResponse, error) {
+	out := new(HashDataResponse)
+	err := c.cc.Invoke(ctx, "/CryptoBroker.CryptoGrpc/HashData", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *cryptoGrpcClient) Sign(ctx context.Context, in *SignRequest, opts ...grpc.CallOption) (*SignResponse, error) {
-	out := new(SignResponse)
-	err := c.cc.Invoke(ctx, "/CryptoBroker.CryptoGrpc/Sign", in, out, opts...)
+func (c *cryptoGrpcClient) SignCertificate(ctx context.Context, in *SignCertificateRequest, opts ...grpc.CallOption) (*SignCertificateResponse, error) {
+	out := new(SignCertificateResponse)
+	err := c.cc.Invoke(ctx, "/CryptoBroker.CryptoGrpc/SignCertificate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,8 +51,8 @@ func (c *cryptoGrpcClient) Sign(ctx context.Context, in *SignRequest, opts ...gr
 // All implementations must embed UnimplementedCryptoGrpcServer
 // for forward compatibility
 type CryptoGrpcServer interface {
-	Hash(context.Context, *HashRequest) (*HashResponse, error)
-	Sign(context.Context, *SignRequest) (*SignResponse, error)
+	HashData(context.Context, *HashDataRequest) (*HashDataResponse, error)
+	SignCertificate(context.Context, *SignCertificateRequest) (*SignCertificateResponse, error)
 	mustEmbedUnimplementedCryptoGrpcServer()
 }
 
@@ -60,11 +60,11 @@ type CryptoGrpcServer interface {
 type UnimplementedCryptoGrpcServer struct {
 }
 
-func (UnimplementedCryptoGrpcServer) Hash(context.Context, *HashRequest) (*HashResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Hash not implemented")
+func (UnimplementedCryptoGrpcServer) HashData(context.Context, *HashDataRequest) (*HashDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HashData not implemented")
 }
-func (UnimplementedCryptoGrpcServer) Sign(context.Context, *SignRequest) (*SignResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Sign not implemented")
+func (UnimplementedCryptoGrpcServer) SignCertificate(context.Context, *SignCertificateRequest) (*SignCertificateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SignCertificate not implemented")
 }
 func (UnimplementedCryptoGrpcServer) mustEmbedUnimplementedCryptoGrpcServer() {}
 
@@ -79,38 +79,38 @@ func RegisterCryptoGrpcServer(s *grpc.Server, srv CryptoGrpcServer) {
 	s.RegisterService(&_CryptoGrpc_serviceDesc, srv)
 }
 
-func _CryptoGrpc_Hash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HashRequest)
+func _CryptoGrpc_HashData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HashDataRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CryptoGrpcServer).Hash(ctx, in)
+		return srv.(CryptoGrpcServer).HashData(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/CryptoBroker.CryptoGrpc/Hash",
+		FullMethod: "/CryptoBroker.CryptoGrpc/HashData",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CryptoGrpcServer).Hash(ctx, req.(*HashRequest))
+		return srv.(CryptoGrpcServer).HashData(ctx, req.(*HashDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CryptoGrpc_Sign_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SignRequest)
+func _CryptoGrpc_SignCertificate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SignCertificateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CryptoGrpcServer).Sign(ctx, in)
+		return srv.(CryptoGrpcServer).SignCertificate(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/CryptoBroker.CryptoGrpc/Sign",
+		FullMethod: "/CryptoBroker.CryptoGrpc/SignCertificate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CryptoGrpcServer).Sign(ctx, req.(*SignRequest))
+		return srv.(CryptoGrpcServer).SignCertificate(ctx, req.(*SignCertificateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -120,12 +120,12 @@ var _CryptoGrpc_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*CryptoGrpcServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Hash",
-			Handler:    _CryptoGrpc_Hash_Handler,
+			MethodName: "HashData",
+			Handler:    _CryptoGrpc_HashData_Handler,
 		},
 		{
-			MethodName: "Sign",
-			Handler:    _CryptoGrpc_Sign_Handler,
+			MethodName: "SignCertificate",
+			Handler:    _CryptoGrpc_SignCertificate_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

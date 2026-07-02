@@ -11,9 +11,9 @@ var (
 	RequestDuration metric.Float64Histogram
 
 	// Cryptographic operation metrics
-	HashOperationsTotal   metric.Int64Counter
-	SignOperationsTotal   metric.Int64Counter
-	OperationsErrorsTotal metric.Int64Counter
+	HashDataOperationsTotal        metric.Int64Counter
+	SignCertificateOperationsTotal metric.Int64Counter
+	OperationsErrorsTotal          metric.Int64Counter
 
 	// Performance metrics
 	OperationBytesProcessed metric.Int64Counter
@@ -44,17 +44,17 @@ func InitializeInstruments(meter metric.Meter) error {
 	}
 
 	// Cryptographic operation metrics
-	HashOperationsTotal, err = meter.Int64Counter(
-		"crypto_hash_operations_total",
-		metric.WithDescription("Total number of hash operations by algorithm"),
+	HashDataOperationsTotal, err = meter.Int64Counter(
+		"crypto_hash_data_operations_total",
+		metric.WithDescription("Total number of hash data operations by algorithm"),
 		metric.WithUnit("1"),
 	)
 	if err != nil {
 		return err
 	}
 
-	SignOperationsTotal, err = meter.Int64Counter(
-		"crypto_sign_operations_total",
+	SignCertificateOperationsTotal, err = meter.Int64Counter(
+		"crypto_sign_certificate_operations_total",
 		metric.WithDescription("Total number of certificate signing operations"),
 		metric.WithUnit("1"),
 	)

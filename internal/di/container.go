@@ -66,8 +66,8 @@ func NewContainerWithTracing(ctx context.Context, profiles string, tracingEnable
 		panic(err)
 	}
 
-	procedureHash := procedure.NewHash(c10yNative)
-	procedureSign := procedure.NewSign(c10yNative, caCertCache)
+	procedureHash := procedure.NewHashData(c10yNative)
+	procedureSign := procedure.NewSignCertificate(c10yNative, caCertCache)
 
 	// Check if metrics are enabled (not nil)
 	metricsEnabled := meterProvider != nil
