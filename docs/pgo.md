@@ -18,12 +18,12 @@ This document describes how [PGO](https://go.dev/doc/pgo) was implemented in `cr
 
 To provide ability of ingesting profiling data, `"net/http/pprof"` server was added to `crypto-broker-server` binary. It can be only turned on in dev mode:
 
-- can be set via `APP_ENV="dev"` in `Taskfile`,
+- `.env` (loaded by Taskfile): `APP_ENV=dev`
 - `CRYPTO_BROKER_APP_ENV=dev` in shell for direct access by server (when not using Taskfile).
 
 Having that, user need to provide server address and port through:
 
-- `PPROF_ADDR=127.0.0.1:6060` in `Taskfile`,
+- `.env` (loaded by Taskfile): `PPROF_ADDR=127.0.0.1:6060`
 - `CRYPTO_BROKER_PPROF_ADDR=127.0.0.1:6060` in shell for direct access by server (when not using Taskfile).
 
 When successfully turned on, following bootstrap phase logs will be displayed:
