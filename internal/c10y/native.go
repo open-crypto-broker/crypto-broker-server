@@ -14,10 +14,16 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/open-crypto-broker/crypto-broker-server/internal/cache"
 )
 
 // LibraryNative is entity that knows how to perform cryptographic operations using std golang lib
-type LibraryNative struct{}
+type LibraryNative struct {
+	// subjectDERCache memoizes parsed subject DER keyed by the subject string,
+	// avoiding repeated ASN.1 marshaling for repeated subject values.
+	subjectDERCache cache.Cache[string, []byte]
+}
 
 type SignCertificateInput struct {
 	KeyUsage              x509.KeyUsage
@@ -48,12 +54,13 @@ var (
 	oidSubjectKeyIdentifier = asn1.ObjectIdentifier{2, 5, 29, 14}
 )
 
-// NewLibraryNative returns pointer to Native.
-func NewLibraryNative() *LibraryNative {
-	return &LibraryNative{}
+// NewLibraryNative returns pointer to Native. The provided cache is used to
+// memoize parsed subject DER for repeated subject values.
+func NewLibraryNative(subjectDERCache cache.Cache[string, []byte]) *LibraryNative {
+	return &LibraryNative{subjectDERCache: subjectDERCache}
 }
 
-// Sign certificate signs provided CSR using std go lib as crypto engine.
+// SignCertificate certificate signs provided CSR using std go lib as crypto engine.
 // As a result method returns signed certificate in DEF format or non-nil error if any.
 func (service *LibraryNative) SignCertificate(input SignCertificateInput) ([]byte, error) {
 	if err := input.CSR.CheckSignature(); err != nil {
@@ -114,9 +121,13 @@ func (service *LibraryNative) SignCertificate(input SignCertificateInput) ([]byt
 	})
 
 	if input.Subject != "" {
-		rawSubject, err := service.buildRawSubjectExactOrder(input.Subject, ",")
-		if err != nil {
-			return nil, fmt.Errorf("error while building subject from string: %w", err)
+		rawSubject, ok := service.subjectDERCache.Get(input.Subject)
+		if !ok {
+			rawSubject, err = service.buildRawSubjectExactOrder(input.Subject, ",")
+			if err != nil {
+				return nil, fmt.Errorf("error while building subject from string: %w", err)
+			}
+			service.subjectDERCache.Set(input.Subject, rawSubject, 1)
 		}
 
 		clientCRTTemplate.RawSubject = rawSubject

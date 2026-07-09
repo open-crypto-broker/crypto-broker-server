@@ -16,15 +16,15 @@ func TestValidateRequests_RejectNil(t *testing.T) {
 		validate func() error
 	}{
 		{
-			name: "hash",
+			name: "hash data",
 			validate: func() error {
-				return validateHashRequest(nil)
+				return validateHashDataRequest(nil)
 			},
 		},
 		{
-			name: "sign",
+			name: "sign certificate",
 			validate: func() error {
-				return validateSignRequest(nil)
+				return validateSignCertificateRequest(nil)
 			},
 		},
 	}
@@ -39,37 +39,37 @@ func TestValidateRequests_RejectNil(t *testing.T) {
 func TestValidateHashRequest(t *testing.T) {
 	tests := []struct {
 		name      string
-		req       *pb.HashRequest
+		req       *pb.HashDataRequest
 		wantField string
 	}{
 		{
 			name: "allows empty input",
-			req:  &pb.HashRequest{Profile: "Default", Input: nil},
+			req:  &pb.HashDataRequest{Profile: "Default", Input: nil},
 		},
 		{
 			name: "allows unknown profile name",
-			req:  &pb.HashRequest{Profile: "DoesNotExist", Input: []byte("x")},
+			req:  &pb.HashDataRequest{Profile: "DoesNotExist", Input: []byte("x")},
 		},
 		{
 			name:      "rejects missing profile",
-			req:       &pb.HashRequest{Input: []byte("x")},
+			req:       &pb.HashDataRequest{Input: []byte("x")},
 			wantField: "profile",
 		},
 		{
 			name:      "rejects oversized profile",
-			req:       &pb.HashRequest{Profile: strings.Repeat("A", profile.MaxNameLen+1)},
+			req:       &pb.HashDataRequest{Profile: strings.Repeat("A", profile.MaxNameLen+1)},
 			wantField: "profile",
 		},
 		{
 			name:      "rejects oversized input",
-			req:       &pb.HashRequest{Profile: "Default", Input: make([]byte, maxHashInputBytes+1)},
+			req:       &pb.HashDataRequest{Profile: "Default", Input: make([]byte, maxHashInputBytes+1)},
 			wantField: "input",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateHashRequest(tt.req)
+			err := validateHashDataRequest(tt.req)
 			if tt.wantField == "" {
 				assertNoError(t, err)
 				return
@@ -82,33 +82,33 @@ func TestValidateHashRequest(t *testing.T) {
 func TestValidateSignRequest_RejectsRequiredFields(t *testing.T) {
 	tests := []struct {
 		name      string
-		mutate    func(*pb.SignRequest)
+		mutate    func(*pb.SignCertificateRequest)
 		wantField string
 	}{
 		{
 			name: "profile",
-			mutate: func(req *pb.SignRequest) {
+			mutate: func(req *pb.SignCertificateRequest) {
 				req.Profile = ""
 			},
 			wantField: "profile",
 		},
 		{
 			name: "csr",
-			mutate: func(req *pb.SignRequest) {
+			mutate: func(req *pb.SignCertificateRequest) {
 				req.Csr = ""
 			},
 			wantField: "csr",
 		},
 		{
 			name: "ca private key",
-			mutate: func(req *pb.SignRequest) {
+			mutate: func(req *pb.SignCertificateRequest) {
 				req.CaPrivateKey = ""
 			},
 			wantField: "caPrivateKey",
 		},
 		{
 			name: "ca cert",
-			mutate: func(req *pb.SignRequest) {
+			mutate: func(req *pb.SignCertificateRequest) {
 				req.CaCert = ""
 			},
 			wantField: "caCert",
@@ -120,7 +120,7 @@ func TestValidateSignRequest_RejectsRequiredFields(t *testing.T) {
 			req := validSignRequest()
 			tt.mutate(req)
 
-			assertInvalidArgument(t, validateSignRequest(req), tt.wantField)
+			assertInvalidArgument(t, validateSignCertificateRequest(req), tt.wantField)
 		})
 	}
 }
@@ -128,54 +128,54 @@ func TestValidateSignRequest_RejectsRequiredFields(t *testing.T) {
 func TestValidateSignRequest_RejectsSizeLimits(t *testing.T) {
 	tests := []struct {
 		name      string
-		mutate    func(*pb.SignRequest)
+		mutate    func(*pb.SignCertificateRequest)
 		wantField string
 	}{
 		{
 			name: "profile",
-			mutate: func(req *pb.SignRequest) {
+			mutate: func(req *pb.SignCertificateRequest) {
 				req.Profile = strings.Repeat("A", profile.MaxNameLen+1)
 			},
 			wantField: "profile",
 		},
 		{
 			name: "csr",
-			mutate: func(req *pb.SignRequest) {
+			mutate: func(req *pb.SignCertificateRequest) {
 				req.Csr = strings.Repeat("A", maxCSRBytes+1)
 			},
 			wantField: "csr",
 		},
 		{
 			name: "ca private key",
-			mutate: func(req *pb.SignRequest) {
+			mutate: func(req *pb.SignCertificateRequest) {
 				req.CaPrivateKey = strings.Repeat("A", maxCAPrivateKeyBytes+1)
 			},
 			wantField: "caPrivateKey",
 		},
 		{
 			name: "ca cert",
-			mutate: func(req *pb.SignRequest) {
+			mutate: func(req *pb.SignCertificateRequest) {
 				req.CaCert = strings.Repeat("A", maxCACertBytes+1)
 			},
 			wantField: "caCert",
 		},
 		{
 			name: "subject",
-			mutate: func(req *pb.SignRequest) {
+			mutate: func(req *pb.SignCertificateRequest) {
 				req.Subject = stringPtr(strings.Repeat("A", maxSubjectLen+1))
 			},
 			wantField: "subject",
 		},
 		{
 			name: "too many crl distribution points",
-			mutate: func(req *pb.SignRequest) {
+			mutate: func(req *pb.SignCertificateRequest) {
 				req.CrlDistributionPoints = make([]string, maxCRLDistributionPoints+1)
 			},
 			wantField: "crlDistributionPoints",
 		},
 		{
 			name: "oversized crl distribution point",
-			mutate: func(req *pb.SignRequest) {
+			mutate: func(req *pb.SignCertificateRequest) {
 				prefix := "https://example.com/"
 				req.CrlDistributionPoints = []string{prefix + strings.Repeat("a", maxCRLDistributionPointLen+1)}
 			},
@@ -183,7 +183,7 @@ func TestValidateSignRequest_RejectsSizeLimits(t *testing.T) {
 		},
 		{
 			name: "invalid crl distribution URL",
-			mutate: func(req *pb.SignRequest) {
+			mutate: func(req *pb.SignCertificateRequest) {
 				req.CrlDistributionPoints = []string{"https://google.com", "google.com"}
 			},
 			wantField: "crlDistributionPoints[1]",
@@ -195,7 +195,7 @@ func TestValidateSignRequest_RejectsSizeLimits(t *testing.T) {
 			req := validSignRequest()
 			tt.mutate(req)
 
-			assertInvalidArgument(t, validateSignRequest(req), tt.wantField)
+			assertInvalidArgument(t, validateSignCertificateRequest(req), tt.wantField)
 		})
 	}
 }
@@ -219,7 +219,7 @@ func TestValidateSignRequest_AllowsValidBoundaryRequest(t *testing.T) {
 	}
 
 	req.CrlDistributionPoints = crlDistributionPoints
-	assertNoError(t, validateSignRequest(req))
+	assertNoError(t, validateSignCertificateRequest(req))
 }
 
 func TestValidateMetadata(t *testing.T) {
@@ -313,8 +313,8 @@ func TestValidateMetadata(t *testing.T) {
 	}
 }
 
-func validSignRequest() *pb.SignRequest {
-	return &pb.SignRequest{
+func validSignRequest() *pb.SignCertificateRequest {
+	return &pb.SignCertificateRequest{
 		Profile:      "Default",
 		Csr:          "csr",
 		CaPrivateKey: "key",

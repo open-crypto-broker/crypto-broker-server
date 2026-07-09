@@ -20,17 +20,22 @@ import (
 // CryptoBrokerServer defines crypto broker's server
 type CryptoBrokerServer struct {
 	protobuf.CryptoGrpcServer
-	procedureHash  *procedure.Hash
-	procedureSign  *procedure.Sign
-	meter          metric.Meter
-	metricsEnabled bool
+	procedureHashData        *procedure.HashData
+	procedureSignCertificate *procedure.SignCertificate
+	meter                    metric.Meter
+	metricsEnabled           bool
 }
 
-func NewCryptoBrokerServer(c10yNative *c10y.LibraryNative, procedureHash *procedure.Hash, procedureSign *procedure.Sign, metricsEnabled bool) *CryptoBrokerServer {
+func NewCryptoBrokerServer(
+	c10yNative *c10y.LibraryNative,
+	procedureHashData *procedure.HashData,
+	procedureSignCertificate *procedure.SignCertificate,
+	metricsEnabled bool,
+) *CryptoBrokerServer {
 	server := &CryptoBrokerServer{
-		procedureHash:  procedureHash,
-		procedureSign:  procedureSign,
-		metricsEnabled: metricsEnabled,
+		procedureHashData:        procedureHashData,
+		procedureSignCertificate: procedureSignCertificate,
+		metricsEnabled:           metricsEnabled,
 	}
 
 	if metricsEnabled {
@@ -44,28 +49,28 @@ func NewCryptoBrokerServer(c10yNative *c10y.LibraryNative, procedureHash *proced
 	return server
 }
 
-// Hash contains data hashing logic
-func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRequest) (*protobuf.HashResponse, error) {
+// HashData contains data hashing logic
+func (server *CryptoBrokerServer) HashData(ctx context.Context, req *protobuf.HashDataRequest) (*protobuf.HashDataResponse, error) {
 	var start time.Time
 	if server.metricsEnabled {
 		start = time.Now()
 	}
 
-	if err := validateHashRequest(req); err != nil {
+	if err := validateHashDataRequest(req); err != nil {
 		return nil, fmt.Errorf("something went wrong while hashing data: %w", err)
 	}
 
 	tracer := otel.GetGlobalTracer()
-	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.Hash",
+	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.HashDataProcedure",
 		trace.WithAttributes(
-			otel.AttributeRpcMethod.String(otel.RPCMethodHash),
+			otel.AttributeRpcMethod.String(otel.RPCMethodHashData),
 			otel.AttributeCryptoProfile.String(req.GetProfile()),
 			otel.AttributeCryptoInputSize.Int(len(req.GetInput())),
 			otel.AttributeCorrelationId.String(interceptors.CorrelationIDFromProtoRequest(req)),
 		))
 	defer span.End()
 
-	response, err := server.procedureHash.Execute(req)
+	response, err := server.procedureHashData.Execute(req)
 
 	if err != nil {
 		span.RecordError(err)
@@ -75,12 +80,12 @@ func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRe
 			duration := time.Since(start).Seconds()
 			// Record error metrics
 			otel.OperationsErrorsTotal.Add(ctx, 1, metric.WithAttributes(
-				attribute.String("rpc_method", otel.RPCMethodHash),
+				attribute.String("rpc_method", otel.RPCMethodHashData),
 				attribute.String("error_type", "hash_error"),
 			))
 
 			otel.RequestDuration.Record(ctx, duration, metric.WithAttributes(
-				attribute.String("rpc_method", otel.RPCMethodHash),
+				attribute.String("rpc_method", otel.RPCMethodHashData),
 				attribute.String("profile", req.GetProfile()),
 				attribute.String("status", otel.StatusError),
 			))
@@ -93,49 +98,49 @@ func (server *CryptoBrokerServer) Hash(ctx context.Context, req *protobuf.HashRe
 		otel.AttributeCryptoHashAlgorithm.String(response.GetHashAlgorithm()),
 		otel.AttributeCryptoHashOutputSize.Int(len(response.GetHashValueHex())/2+len(response.GetHashValueRaw())),
 	)
-	span.SetStatus(codes.Ok, "Hash operation completed successfully")
+	span.SetStatus(codes.Ok, "HashData operation completed successfully")
 
 	if server.metricsEnabled {
 		duration := time.Since(start).Seconds()
 		otel.RequestsTotal.Add(ctx, 1, metric.WithAttributes(
-			attribute.String("rpc_method", otel.RPCMethodHash),
+			attribute.String("rpc_method", otel.RPCMethodHashData),
 			attribute.String("profile", req.GetProfile()),
 			attribute.String("status", otel.StatusSuccess),
 		))
 
 		otel.RequestDuration.Record(ctx, duration, metric.WithAttributes(
-			attribute.String("rpc_method", otel.RPCMethodHash),
+			attribute.String("rpc_method", otel.RPCMethodHashData),
 			attribute.String("profile", req.GetProfile()),
 			attribute.String("status", otel.StatusSuccess),
 		))
 
-		otel.HashOperationsTotal.Add(ctx, 1, metric.WithAttributes(
+		otel.HashDataOperationsTotal.Add(ctx, 1, metric.WithAttributes(
 			attribute.String("algorithm", response.GetHashAlgorithm()),
 		))
 
 		otel.OperationBytesProcessed.Add(ctx, int64(len(req.GetInput())), metric.WithAttributes(
-			attribute.String("rpc_method", otel.RPCMethodHash),
+			attribute.String("rpc_method", otel.RPCMethodHashData),
 		))
 	}
 
 	return response, nil
 }
 
-// Sign contains certificate signing logic
-func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRequest) (*protobuf.SignResponse, error) {
+// SignCertificate contains certificate signing logic
+func (server *CryptoBrokerServer) SignCertificate(ctx context.Context, req *protobuf.SignCertificateRequest) (*protobuf.SignCertificateResponse, error) {
 	var start time.Time
 	if server.metricsEnabled {
 		start = time.Now()
 	}
 
-	if err := validateSignRequest(req); err != nil {
+	if err := validateSignCertificateRequest(req); err != nil {
 		return nil, fmt.Errorf("something went wrong while signing certificate: %w", err)
 	}
 
 	tracer := otel.GetGlobalTracer()
-	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.Sign",
+	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.SignCertificateProcedure",
 		trace.WithAttributes(
-			otel.AttributeRpcMethod.String(otel.RPCMethodSign),
+			otel.AttributeRpcMethod.String(otel.RPCMethodSignCertificate),
 			otel.AttributeCryptoProfile.String(req.GetProfile()),
 			otel.AttributeCryptoCsrSize.Int(len(req.GetCsr())),
 			otel.AttributeCryptoCaCertSize.Int(len(req.GetCaCert())),
@@ -144,7 +149,7 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 		))
 	defer span.End()
 
-	response, err := server.procedureSign.Execute(req)
+	response, err := server.procedureSignCertificate.Execute(req)
 
 	if err != nil {
 		span.RecordError(err)
@@ -154,12 +159,12 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 			duration := time.Since(start).Seconds()
 			// Record error metrics
 			otel.OperationsErrorsTotal.Add(ctx, 1, metric.WithAttributes(
-				attribute.String("rpc_method", otel.RPCMethodSign),
+				attribute.String("rpc_method", otel.RPCMethodSignCertificate),
 				attribute.String("error_type", "sign_error"),
 			))
 
 			otel.RequestDuration.Record(ctx, duration, metric.WithAttributes(
-				attribute.String("rpc_method", otel.RPCMethodSign),
+				attribute.String("rpc_method", otel.RPCMethodSignCertificate),
 				attribute.String("profile", req.GetProfile()),
 				attribute.String("status", otel.StatusError),
 			))
@@ -175,23 +180,23 @@ func (server *CryptoBrokerServer) Sign(ctx context.Context, req *protobuf.SignRe
 		duration := time.Since(start).Seconds()
 		// Record success metrics
 		otel.RequestsTotal.Add(ctx, 1, metric.WithAttributes(
-			attribute.String("rpc_method", otel.RPCMethodSign),
+			attribute.String("rpc_method", otel.RPCMethodSignCertificate),
 			attribute.String("profile", req.GetProfile()),
 			attribute.String("status", otel.StatusSuccess),
 		))
 
 		otel.RequestDuration.Record(ctx, duration, metric.WithAttributes(
-			attribute.String("rpc_method", otel.RPCMethodSign),
+			attribute.String("rpc_method", otel.RPCMethodSignCertificate),
 			attribute.String("profile", req.GetProfile()),
 			attribute.String("status", otel.StatusSuccess),
 		))
 
-		otel.SignOperationsTotal.Add(ctx, 1, metric.WithAttributes(
+		otel.SignCertificateOperationsTotal.Add(ctx, 1, metric.WithAttributes(
 			attribute.String("profile", req.GetProfile()),
 		))
 
 		otel.OperationBytesProcessed.Add(ctx, int64(len(req.GetCsr())+len(req.GetCaCert())+len(req.GetCaPrivateKey())), metric.WithAttributes(
-			attribute.String("rpc_method", otel.RPCMethodSign),
+			attribute.String("rpc_method", otel.RPCMethodSignCertificate),
 		))
 	}
 

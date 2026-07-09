@@ -8,17 +8,19 @@ import (
 	"time"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/cache"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 )
 
-// Sign defines the procedure for signing a certificate
-type Sign struct {
+// SignCertificate defines the procedure for signing a certificate
+type SignCertificate struct {
 	cryptographicEngineNative *c10y.LibraryNative
+	caCertCache               cache.Cache[string, *x509.Certificate]
 }
 
-// signRequest represents the input for the sign method from the client
-type signRequest struct {
+// signCertificateRequest represents the input for the sign certificate method from the client
+type signCertificateRequest struct {
 	csr                   *x509.CertificateRequest
 	caPrivateKey          any
 	caCert                *x509.Certificate
@@ -28,12 +30,12 @@ type signRequest struct {
 	CrlDistributionPoints []string
 }
 
-func NewSign(cryptographicEngineNative *c10y.LibraryNative) *Sign {
-	return &Sign{cryptographicEngineNative: cryptographicEngineNative}
+func NewSignCertificate(cryptographicEngineNative *c10y.LibraryNative, caCertCache cache.Cache[string, *x509.Certificate]) *SignCertificate {
+	return &SignCertificate{cryptographicEngineNative: cryptographicEngineNative, caCertCache: caCertCache}
 }
 
-// Execute executes the sign procedure
-func (procedure *Sign) Execute(req *protobuf.SignRequest) (*protobuf.SignResponse, error) {
+// Execute executes the sign certificate procedure
+func (procedure *SignCertificate) Execute(req *protobuf.SignCertificateRequest) (*protobuf.SignCertificateResponse, error) {
 	reqProfile, err := profile.Retrieve(req.GetProfile())
 	if err != nil {
 		return nil, ArgumentError("could not retrieve profile, err: %w", err)
@@ -44,24 +46,24 @@ func (procedure *Sign) Execute(req *protobuf.SignRequest) (*protobuf.SignRespons
 		return nil, ArgumentError("error parsing request data: %w", err)
 	}
 
-	clientCRTRaw, err := procedure.sign(input, reqProfile)
+	clientCRTRaw, err := procedure.signCertificate(input, reqProfile)
 	if err != nil {
 		return nil, fmt.Errorf("error while signing data: %w", err)
 	}
 
-	resp := &protobuf.SignResponse{Metadata: req.GetMetadata()}
+	resp := &protobuf.SignCertificateResponse{Metadata: req.GetMetadata()}
 	switch req.GetOutputFormat() {
 	case protobuf.SignOutputFormat_PEM:
 		block := &pem.Block{Type: "CERTIFICATE", Bytes: clientCRTRaw}
-		resp.SignedCertificate = &protobuf.SignResponse_Pem{
+		resp.SignedCertificate = &protobuf.SignCertificateResponse_Pem{
 			Pem: string(pem.EncodeToMemory(block)),
 		}
 	case protobuf.SignOutputFormat_DER:
-		resp.SignedCertificate = &protobuf.SignResponse_Der{
+		resp.SignedCertificate = &protobuf.SignCertificateResponse_Der{
 			Der: clientCRTRaw,
 		}
 	default:
-		resp.SignedCertificate = &protobuf.SignResponse_Der{
+		resp.SignedCertificate = &protobuf.SignCertificateResponse_Der{
 			Der: clientCRTRaw,
 		}
 	}
@@ -69,8 +71,8 @@ func (procedure *Sign) Execute(req *protobuf.SignRequest) (*protobuf.SignRespons
 	return resp, nil
 }
 
-// sign contains logic that signs CSR and returns signed certificate or non-nil error if any.
-func (procedure *Sign) sign(req signRequest, p profile.Profile) (certDER []byte, err error) {
+// signCertificate contains logic that signs CSR and returns signed certificate or non-nil error if any.
+func (procedure *SignCertificate) signCertificate(req signCertificateRequest, p profile.Profile) (certDER []byte, err error) {
 	type signer interface {
 		SignCertificate(c10y.SignCertificateInput) ([]byte, error)
 	}
@@ -149,15 +151,15 @@ func (procedure *Sign) sign(req signRequest, p profile.Profile) (certDER []byte,
 }
 
 // parseRawSignRequest parses the request and returns the signClientInput
-func (procedure *Sign) parseRawSignRequest(req *protobuf.SignRequest) (signRequest, error) {
+func (procedure *SignCertificate) parseRawSignRequest(req *protobuf.SignCertificateRequest) (signCertificateRequest, error) {
 	block, _ := pem.Decode([]byte(req.GetCsr()))
 	if block == nil {
-		return signRequest{}, ArgumentError("could not decode CSR as PEM file")
+		return signCertificateRequest{}, ArgumentError("could not decode CSR as PEM file")
 	}
 
 	csr, err := x509.ParseCertificateRequest(block.Bytes)
 	if err != nil {
-		return signRequest{}, ArgumentError("could not parse certificate request, err: %w", err)
+		return signCertificateRequest{}, ArgumentError("could not parse certificate request, err: %w", err)
 	}
 
 	// Copy the PEM-encoded CA private key into a mutable buffer so it can be
@@ -172,15 +174,25 @@ func (procedure *Sign) parseRawSignRequest(req *protobuf.SignRequest) (signReque
 
 	caPrivateKey, err := c10y.ParsePrivateKeyFromPEM(rawCAPrivateKey)
 	if err != nil {
-		return signRequest{}, ArgumentError("could not parse private key, err: %w", err)
+		return signCertificateRequest{}, ArgumentError("could not parse private key, err: %w", err)
 	}
 
-	cert, err := c10y.ParseX509Cert([]byte(req.GetCaCert()))
-	if err != nil {
-		return signRequest{}, ArgumentError("could not parse x.509 CA cert from request, err: %w", err)
+	pemCACert := req.GetCaCert()
+	cert, ok := procedure.caCertCache.Get(pemCACert)
+	if !ok {
+		cert, err = c10y.ParseX509Cert([]byte(pemCACert))
+		if err != nil {
+			return signCertificateRequest{}, ArgumentError("could not parse x.509 CA cert from request, err: %w", err)
+		}
+
+		// TTL bound to the certificate's own validity: an expired CA cert must
+		// not linger in the cache. cost=1 -> one slot per cached cert.
+		if ttl := time.Until(cert.NotAfter); ttl > 0 {
+			procedure.caCertCache.SetWithTTL(pemCACert, cert, 1, ttl)
+		}
 	}
 
-	input := signRequest{
+	input := signCertificateRequest{
 		csr:                   csr,
 		caPrivateKey:          caPrivateKey,
 		caCert:                cert,

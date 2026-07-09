@@ -44,9 +44,9 @@ func ContextWithRemoteTraceFromProtoRequest(ctx context.Context, req any) contex
 
 func traceContextFromRequest(req any) *pb.TraceContext {
 	switch r := req.(type) {
-	case *pb.HashRequest:
+	case *pb.HashDataRequest:
 		return traceContextFromMetadata(r.GetMetadata())
-	case *pb.SignRequest:
+	case *pb.SignCertificateRequest:
 		return traceContextFromMetadata(r.GetMetadata())
 	case *pb.BenchmarkRequest:
 		return traceContextFromMetadata(r.GetMetadata())

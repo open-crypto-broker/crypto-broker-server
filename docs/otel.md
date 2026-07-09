@@ -46,7 +46,7 @@ export OTEL_EXPORTER_OTLP_ENDPOINT="http://otel-collector:4317"
 The server generates the following trace spans:
 
 * **gRPC Server Spans**: Automatic spans for each gRPC request (created by OTEL gRPC instrumentation)
-* **RPC Method Spans**: Custom spans for each RPC method (`Hash`, `Sign`, `Benchmark`) with operation-specific attributes
+* **RPC Method Spans**: Custom spans for each RPC method (`HashData`, `SignCertificate`, `Benchmark`) with operation-specific attributes
 * **Attributes Included**(full list in [attr.go](./internal/otel/attr.go)]):
     * `rpc.method`: The gRPC method name
     * `crypto.profile`: The cryptographic profile used
@@ -132,8 +132,8 @@ The server collects metrics at following levels:
 
 **Operation-Specific Metrics:**
 
-* `crypto_hash_operations_total{algorithm}` - Total hash operations by algorithm (SHA-256, SHA-384, SHA-512, SHA3, Shake)
-* `crypto_sign_operations_total{profile}` - Total certificate signing operations
+* `crypto_hash_data_operations_total{algorithm}` - Total hash data operations by algorithm (SHA-256, SHA-384, SHA-512, SHA3, Shake)
+* `crypto_sign_certificate_operations_total{profile}` - Total certificate signing operations
 * `crypto_operations_errors_total{rpc_method, error_type}` - Error counters by operation and error type
 * `crypto_operation_bytes_processed_total{rpc_method}` - Total bytes processed by operations
 
@@ -181,4 +181,56 @@ export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4318"
 export OTEL_METRICS_EXPORTER="otlphttp,console"
 export OTEL_METRICS_INTERVAL="15s"
 export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4318"
+```
+
+# Dynatrace
+
+To successfully complete this guide, you will need:
+
+* [API token](https://docs.dynatrace.com/docs/dynatrace-api/basics/dynatrace-api-authentication)
+* [Base URL](https://docs.dynatrace.com/docs/shortlink/otel-getstarted-otlpexport#base-url)
+
+## Traces
+
+Our main method to send data to Dynatrace is to use the Dynatrace API directly over HTTPS:
+
+* [Dynatrace OTLP API Documentation](https://docs.dynatrace.com/docs/ingest-from/opentelemetry/otlp-api/ingest-traces)
+
+This method assumes that your application will directly send traces via HTTP(S) utilizing Dynatrace's native OTLP endpoint.
+
+To make this happen, you need to set the following environment variables:
+
+```env
+OTEL_TRACES_EXPORTER="otlphttp"
+OTEL_EXPORTER_OTLP_ENDPOINT="https://<YOUR-TENANT-HERE>.live.dynatrace.com/api/v2/otlp"
+OTEL_EXPORTER_OTLP_HEADERS="Authorization=Api-Token <YOUR-TOKEN-HERE>"
+OTEL_TRACES_SAMPLER="always_on"
+```
+
+Next, you need to run the server:
+
+```shell
+task run
+```
+
+And invoke a test command from the CLI:
+
+```shell
+task test-sign
+```
+
+## Logs
+
+To send logs to Dynatrace, you need to set the following environment variables:
+
+```env
+OTEL_LOGS_EXPORTER="otlphttp"
+OTEL_EXPORTER_OTLP_ENDPOINT="https://<YOUR-TENANT-HERE>.live.dynatrace.com/api/v2/otlp"
+OTEL_EXPORTER_OTLP_HEADERS="Authorization=Api-Token <YOUR-API-TOKEN-HERE>"
+```
+
+Next, run the server:
+
+```shell
+task run
 ```

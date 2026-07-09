@@ -102,7 +102,7 @@ func validateMetadata(m *pb.Metadata) error {
 	return validateMetadataIdentifier("metadata.traceContext.correlationId", tc.GetCorrelationId(), maxCorrelationIdLen)
 }
 
-func validateHashRequest(req *pb.HashRequest) error {
+func validateHashDataRequest(req *pb.HashDataRequest) error {
 	if req == nil {
 		return invalidArg("request", "required")
 	}
@@ -116,7 +116,7 @@ func validateHashRequest(req *pb.HashRequest) error {
 	return validateMetadata(req.GetMetadata())
 }
 
-func validateSignRequest(req *pb.SignRequest) error {
+func validateSignCertificateRequest(req *pb.SignCertificateRequest) error {
 	if req == nil {
 		return invalidArg("request", "required")
 	}

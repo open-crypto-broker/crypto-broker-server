@@ -88,7 +88,7 @@ Positive diff = more time in that function after your change.
 
 ```bash
 go tool pprof -top cpu.pprof          # hottest functions
-go tool pprof -list=Hash cpu.pprof    # source lines for symbol Hash
+go tool pprof -list=HashData cpu.pprof    # source lines for symbol HashData
 go tool pprof -text -nodecount=20 cpu.pprof
 ```
 

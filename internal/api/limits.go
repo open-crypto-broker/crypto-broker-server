@@ -9,10 +9,10 @@ const (
 	MaxGrpcRecvMsgSize = 2 << 20 // 2 MiB
 	MaxGrpcSendMsgSize = 1 << 20 // 1 MiB
 
-	// Hash
+	// Hash Data
 	maxHashInputBytes = 1 << 20 // 1 MiB
 
-	// Sign (PEM strings)
+	// SignCertificate (PEM strings)
 	maxCSRBytes          = 64 << 10 // 64 KiB
 	maxCAPrivateKeyBytes = 64 << 10 // 64 KiB
 	maxCACertBytes       = 64 << 10 // 64 KiB

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/cache"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
@@ -24,33 +25,33 @@ import (
 func TestCryptoBrokerServer_MetricsEnabled_CollectSystemMetrics_NoPanic(t *testing.T) {
 	otel.SetMeterProvider(metricnoop.NewMeterProvider())
 
-	libraryNative := c10y.NewLibraryNative()
+	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	server := NewCryptoBrokerServer(
 		libraryNative,
-		procedure.NewHash(libraryNative),
-		procedure.NewSign(libraryNative),
+		procedure.NewHashData(libraryNative),
+		procedure.NewSignCertificate(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig)),
 		true,
 	)
 
 	server.collectSystemMetrics()
 }
 
-func TestCryptoBrokerServer_Hash_MetricsEnabled_ErrorOnInvalidProfile(t *testing.T) {
+func TestCryptoBrokerServer_HashData_MetricsEnabled_ErrorOnInvalidProfile(t *testing.T) {
 	otel.SetMeterProvider(metricnoop.NewMeterProvider())
 
 	if err := profile.LoadProfiles("Profiles.yaml"); err != nil {
 		t.Fatalf("could not load profiles: %v", err)
 	}
 
-	libraryNative := c10y.NewLibraryNative()
+	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	server := NewCryptoBrokerServer(
 		libraryNative,
-		procedure.NewHash(libraryNative),
-		procedure.NewSign(libraryNative),
+		procedure.NewHashData(libraryNative),
+		procedure.NewSignCertificate(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig)),
 		true,
 	)
 
-	_, err := server.Hash(context.Background(), &protobuf.HashRequest{
+	_, err := server.HashData(context.Background(), &protobuf.HashDataRequest{
 		Profile: "ThisProfileDoesNotExist",
 		Input:   []byte("test data"),
 	})
@@ -62,22 +63,22 @@ func TestCryptoBrokerServer_Hash_MetricsEnabled_ErrorOnInvalidProfile(t *testing
 	}
 }
 
-func TestCryptoBrokerServer_Hash_MetricsEnabled_Success_RecordsMetricsBranch(t *testing.T) {
+func TestCryptoBrokerServer_HashData_MetricsEnabled_Success_RecordsMetricsBranch(t *testing.T) {
 	otel.SetMeterProvider(metricnoop.NewMeterProvider())
 
 	if err := profile.LoadProfiles("Profiles.yaml"); err != nil {
 		t.Fatalf("could not load profiles: %v", err)
 	}
 
-	libraryNative := c10y.NewLibraryNative()
+	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	server := NewCryptoBrokerServer(
 		libraryNative,
-		procedure.NewHash(libraryNative),
-		procedure.NewSign(libraryNative),
+		procedure.NewHashData(libraryNative),
+		procedure.NewSignCertificate(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig)),
 		true,
 	)
 
-	resp, err := server.Hash(context.Background(), &protobuf.HashRequest{
+	resp, err := server.HashData(context.Background(), &protobuf.HashDataRequest{
 		Profile: "Default",
 		Input:   []byte("test data"),
 	})
@@ -85,26 +86,26 @@ func TestCryptoBrokerServer_Hash_MetricsEnabled_Success_RecordsMetricsBranch(t *
 		t.Fatalf("expected success, got err: %v", err)
 	}
 	if resp == nil || resp.GetHashAlgorithm() == "" || resp.GetHashValue() == nil {
-		t.Fatalf("expected non-empty hash response")
+		t.Fatalf("expected non-empty hash data response")
 	}
 }
 
-func TestCryptoBrokerServer_Sign_MetricsEnabled_ErrorOnInvalidCSR(t *testing.T) {
+func TestCryptoBrokerServer_SignCertificate_MetricsEnabled_ErrorOnInvalidCSR(t *testing.T) {
 	otel.SetMeterProvider(metricnoop.NewMeterProvider())
 
 	if err := profile.LoadProfiles("Profiles.yaml"); err != nil {
 		t.Fatalf("could not load profiles: %v", err)
 	}
 
-	libraryNative := c10y.NewLibraryNative()
+	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	server := NewCryptoBrokerServer(
 		libraryNative,
-		procedure.NewHash(libraryNative),
-		procedure.NewSign(libraryNative),
+		procedure.NewHashData(libraryNative),
+		procedure.NewSignCertificate(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig)),
 		true,
 	)
 
-	_, err := server.Sign(context.Background(), &protobuf.SignRequest{
+	_, err := server.SignCertificate(context.Background(), &protobuf.SignCertificateRequest{
 		Profile: "Default",
 		Csr:     "invalid CSR",
 	})
@@ -113,7 +114,7 @@ func TestCryptoBrokerServer_Sign_MetricsEnabled_ErrorOnInvalidCSR(t *testing.T) 
 	}
 }
 
-func TestCryptoBrokerServer_Sign_MetricsEnabled_Success_RecordsMetricsBranch(t *testing.T) {
+func TestCryptoBrokerServer_SignCertificate_MetricsEnabled_Success_RecordsMetricsBranch(t *testing.T) {
 	otel.SetMeterProvider(metricnoop.NewMeterProvider())
 
 	if err := profile.LoadProfiles("Profiles.yaml"); err != nil {
@@ -122,15 +123,15 @@ func TestCryptoBrokerServer_Sign_MetricsEnabled_Success_RecordsMetricsBranch(t *
 
 	caCertPEM, caKeyPEM, csrPEM := mustMakeTestCAAndCSR(t)
 
-	libraryNative := c10y.NewLibraryNative()
+	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	server := NewCryptoBrokerServer(
 		libraryNative,
-		procedure.NewHash(libraryNative),
-		procedure.NewSign(libraryNative),
+		procedure.NewHashData(libraryNative),
+		procedure.NewSignCertificate(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig)),
 		true,
 	)
 
-	resp, err := server.Sign(context.Background(), &protobuf.SignRequest{
+	resp, err := server.SignCertificate(context.Background(), &protobuf.SignCertificateRequest{
 		Profile:      "Default",
 		Csr:          csrPEM,
 		CaCert:       caCertPEM,

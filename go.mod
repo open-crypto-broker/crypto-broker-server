@@ -3,6 +3,7 @@ module github.com/open-crypto-broker/crypto-broker-server
 go 1.26.4
 
 require (
+	github.com/dgraph-io/ristretto/v2 v2.4.0
 	github.com/goccy/go-yaml v1.19.2
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
 	go.opentelemetry.io/contrib/bridges/otelslog v0.19.0
@@ -29,6 +30,7 @@ require (
 require (
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect

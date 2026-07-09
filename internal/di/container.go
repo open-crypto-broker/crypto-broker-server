@@ -2,9 +2,11 @@ package di
 
 import (
 	"context"
+	"crypto/x509"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/api"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/cache"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/otel"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
@@ -27,14 +29,31 @@ func NewContainer(ctx context.Context, profiles string) *Container {
 // tracingEnabled controls whether OpenTelemetry tracing is initialized.
 // It panics in case of error.
 func NewContainerWithTracing(ctx context.Context, profiles string, tracingEnabled bool) *Container {
-	c10yNative := c10y.NewLibraryNative()
-	if err := profile.LoadProfiles(profiles); err != nil {
+	subjectDERCache, err := cache.NewRistretto[[]byte](cache.RistrettoConfig{
+		NumCounters: 40_000, // ~10x of ~4000 distinct subjects
+		MaxCost:     4_000,
+		BufferItems: 64,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	caCertCache, err := cache.NewRistretto[*x509.Certificate](cache.RistrettoConfig{
+		NumCounters: 10_000, // ~10x of ~1000 CA certs
+		MaxCost:     1_000,
+		BufferItems: 64,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	c10yNative := c10y.NewLibraryNative(subjectDERCache)
+	if err = profile.LoadProfiles(profiles); err != nil {
 		panic(err)
 	}
 
 	var tracerProvider *otel.TracerProvider
 	if tracingEnabled {
-		var err error
 		tracerProvider, err = otel.NewTracerProvider(ctx)
 		if err != nil {
 			panic(err)
@@ -47,8 +66,8 @@ func NewContainerWithTracing(ctx context.Context, profiles string, tracingEnable
 		panic(err)
 	}
 
-	procedureHash := procedure.NewHash(c10yNative)
-	procedureSign := procedure.NewSign(c10yNative)
+	procedureHash := procedure.NewHashData(c10yNative)
+	procedureSign := procedure.NewSignCertificate(c10yNative, caCertCache)
 
 	// Check if metrics are enabled (not nil)
 	metricsEnabled := meterProvider != nil
