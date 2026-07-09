@@ -11,12 +11,12 @@
 | `CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_CSR` | No | - | Full OS path to CSR file used in benchmark tests for signing certificates | Any valid file path |
 | `OTEL_SERVICE_NAME` | No | `crypto-broker-server` | Service name for OpenTelemetry traces | Any string |
 | `OTEL_SERVICE_VERSION` | No | `unknown service version` | Service version for OpenTelemetry traces | Any string |
-| `OTEL_TRACES_EXPORTER` | No | `console` | OpenTelemetry trace exporter(s) to use | `otlp`, `console`, or comma-separated list like `console,otlp` |
+| `OTEL_TRACES_EXPORTER` | No | `console` | OpenTelemetry trace exporter(s) to use | `otlphttp`, `otlpgrpc`, `console`, or comma-separated combinations like `console,otlphttp`; any unrecognized value disables tracing |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | No | - | OTLP endpoint for traces (gRPC format "host:port" or HTTP URL format `"https://host:port/path"`) | Valid endpoint URL (only used when OTLP exporter is enabled) |
 | `OTEL_TRACES_SAMPLER` | No | `always_on` | Sampling strategy for traces | `always_on`, `always_off`, `traceidratio`, `parentbased_always_on`, `parentbased_always_off`, `parentbased_traceidratio` |
 | `OTEL_TRACES_SAMPLER_ARG` | No | - | Sampling ratio (0.0-1.0) when using ratio-based samplers | Float between 0.0 and 1.0 |
 | `OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION` | No | - | Authorization header for OTLP HTTP exporter (e.g., for Dynatrace: "Api-Token YOUR_API_TOKEN") | Valid authorization header string |
-| `OTEL_LOGS_EXPORTER` | No | `console` | OpenTelemetry log exporter(s) to use | `console`, `otlphttp`, `otlpgrpc`, or comma-separated combinations like `otlphttp,console` |
+| `OTEL_LOGS_EXPORTER` | No | `console` | OpenTelemetry log exporter(s) to use | `console`, `otlp` (auto-detects HTTP/gRPC from endpoint URL format), `otlphttp`, `otlpgrpc`, or comma-separated combinations like `otlphttp,console` |
 | `OTEL_METRICS_EXPORTER` | No | `console` | OpenTelemetry metrics exporter(s) to use | `none`, `console`, `otlphttp`, `otlpgrpc`, or comma-separated combinations like `otlphttp,console` |
 | `OTEL_METRICS_INTERVAL` | No | `30s` | Metrics collection interval | Duration strings like `30s`, `1m`, `5m` |
-| `CRYPTO_BROKER_PPROF_ADDR` | No | - | When set, enables `net/http/pprof` on this TCP address (e.g. for CPU profiles / PGO). Prefer loopback only | e.g. `127.0.0.1:6060` |
+| `CRYPTO_BROKER_PPROF_ADDR` | No | - | When set, enables `net/http/pprof` on this TCP address (e.g. for CPU profiles / PGO). Prefer loopback only. **Requires `CRYPTO_BROKER_APP_ENV=dev`** — has no effect in `prod` mode | e.g. `127.0.0.1:6060` |

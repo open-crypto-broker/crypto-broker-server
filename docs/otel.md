@@ -10,9 +10,9 @@ The Crypto Broker Server includes OpenTelemetry (OTEL) tracing support for distr
 
 The `OTEL_TRACES_EXPORTER` variable supports several values:
 
-* **`otlpgrpc`** (default): Export traces to an OTLP-compatible collector via gRPC
-* **`otlphttp`** (default): Export traces to an OTLP-compatible collector via HTTP(s)
-* **`console`**: Export traces to stdout/stderr in human-readable format (useful for development)
+* **`console`** (default): Export traces to stdout/stderr in human-readable format (useful for development)
+* **`otlpgrpc`**: Export traces to an OTLP-compatible collector via gRPC
+* **`otlphttp`**: Export traces to an OTLP-compatible collector via HTTP(s)
 * **Comma-separated**: `console,otlpgrpc`
 
 #### OTEL Setup Examples
@@ -203,7 +203,7 @@ To make this happen, you need to set the following environment variables:
 ```env
 OTEL_TRACES_EXPORTER="otlphttp"
 OTEL_EXPORTER_OTLP_ENDPOINT="https://<YOUR-TENANT-HERE>.live.dynatrace.com/api/v2/otlp"
-OTEL_EXPORTER_OTLP_HEADERS="Authorization=Api-Token <YOUR-TOKEN-HERE>"
+OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION="Api-Token <YOUR-TOKEN-HERE>"
 OTEL_TRACES_SAMPLER="always_on"
 ```
 
@@ -226,7 +226,7 @@ To send logs to Dynatrace, you need to set the following environment variables:
 ```env
 OTEL_LOGS_EXPORTER="otlphttp"
 OTEL_EXPORTER_OTLP_ENDPOINT="https://<YOUR-TENANT-HERE>.live.dynatrace.com/api/v2/otlp"
-OTEL_EXPORTER_OTLP_HEADERS="Authorization=Api-Token <YOUR-API-TOKEN-HERE>"
+OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION="Api-Token <YOUR-API-TOKEN-HERE>"
 ```
 
 Next, run the server:
