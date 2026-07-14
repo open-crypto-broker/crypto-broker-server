@@ -30,6 +30,8 @@ func TestCryptoBrokerServer_MetricsEnabled_CollectSystemMetrics_NoPanic(t *testi
 		libraryNative,
 		procedure.NewHashData(libraryNative),
 		procedure.NewSignCertificate(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig)),
+		procedure.NewEncryptData(),
+		procedure.NewDecryptData(),
 		true,
 	)
 
@@ -48,6 +50,8 @@ func TestCryptoBrokerServer_HashData_MetricsEnabled_ErrorOnInvalidProfile(t *tes
 		libraryNative,
 		procedure.NewHashData(libraryNative),
 		procedure.NewSignCertificate(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig)),
+		procedure.NewEncryptData(),
+		procedure.NewDecryptData(),
 		true,
 	)
 
@@ -75,6 +79,8 @@ func TestCryptoBrokerServer_HashData_MetricsEnabled_Success_RecordsMetricsBranch
 		libraryNative,
 		procedure.NewHashData(libraryNative),
 		procedure.NewSignCertificate(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig)),
+		procedure.NewEncryptData(),
+		procedure.NewDecryptData(),
 		true,
 	)
 
@@ -102,6 +108,8 @@ func TestCryptoBrokerServer_SignCertificate_MetricsEnabled_ErrorOnInvalidCSR(t *
 		libraryNative,
 		procedure.NewHashData(libraryNative),
 		procedure.NewSignCertificate(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig)),
+		procedure.NewEncryptData(),
+		procedure.NewDecryptData(),
 		true,
 	)
 
@@ -128,6 +136,8 @@ func TestCryptoBrokerServer_SignCertificate_MetricsEnabled_Success_RecordsMetric
 		libraryNative,
 		procedure.NewHashData(libraryNative),
 		procedure.NewSignCertificate(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig)),
+		procedure.NewEncryptData(),
+		procedure.NewDecryptData(),
 		true,
 	)
 

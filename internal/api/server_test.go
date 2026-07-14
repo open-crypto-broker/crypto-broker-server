@@ -112,8 +112,10 @@ func TestCryptoBrokerServer_HashData_E2E(t *testing.T) {
 	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	procedureHash := procedure.NewHashData(libraryNative)
 	procedureSign := procedure.NewSignCertificate(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig))
+	procedureEncrypt := procedure.NewEncryptData()
+	procedureDecrypt := procedure.NewDecryptData()
 	metricsEnabled := false
-	grpcConnector := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, metricsEnabled)
+	grpcConnector := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, procedureEncrypt, procedureDecrypt, metricsEnabled)
 
 	// Start a mock gRPC server
 	lis = bufconn.Listen(bufSize)
@@ -177,8 +179,10 @@ func TestCryptoBrokerServer_SignCertificate_E2E(t *testing.T) {
 	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	procedureHash := procedure.NewHashData(libraryNative)
 	procedureSign := procedure.NewSignCertificate(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig))
+	procedureEncrypt := procedure.NewEncryptData()
+	procedureDecrypt := procedure.NewDecryptData()
 	metricsEnabled := false
-	grpcConnector := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, metricsEnabled)
+	grpcConnector := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, procedureEncrypt, procedureDecrypt, metricsEnabled)
 
 	// Start a mock gRPC server
 	lis = bufconn.Listen(bufSize)
@@ -322,8 +326,11 @@ func TestNewCryptoBrokerServer(t *testing.T) {
 	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	procedureHash := procedure.NewHashData(libraryNative)
 	procedureSign := procedure.NewSignCertificate(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig))
+	procedureEncrypt := procedure.NewEncryptData()
+	procedureDecrypt := procedure.NewDecryptData()
+	metricsEnabled := false
 
-	server := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, false)
+	server := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, procedureEncrypt, procedureDecrypt, metricsEnabled)
 	if server == nil {
 		t.Fatalf("expected non-nil server")
 	}

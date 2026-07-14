@@ -22,6 +22,8 @@ type CryptoBrokerServer struct {
 	protobuf.CryptoGrpcServer
 	procedureHashData        *procedure.HashData
 	procedureSignCertificate *procedure.SignCertificate
+	procedureEncryptData       *procedure.EncryptData
+	procedureDecryptData       *procedure.DecryptData
 	meter                    metric.Meter
 	metricsEnabled           bool
 }
@@ -30,11 +32,15 @@ func NewCryptoBrokerServer(
 	c10yNative *c10y.LibraryNative,
 	procedureHashData *procedure.HashData,
 	procedureSignCertificate *procedure.SignCertificate,
+	procedureEncryptData *procedure.EncryptData,
+	procedureDecryptData *procedure.DecryptData,
 	metricsEnabled bool,
 ) *CryptoBrokerServer {
 	server := &CryptoBrokerServer{
 		procedureHashData:        procedureHashData,
 		procedureSignCertificate: procedureSignCertificate,
+		procedureEncryptData:       procedureEncryptData,
+		procedureDecryptData:       procedureDecryptData,
 		metricsEnabled:           metricsEnabled,
 	}
 
@@ -201,6 +207,16 @@ func (server *CryptoBrokerServer) SignCertificate(ctx context.Context, req *prot
 	}
 
 	return response, nil
+}
+
+func (server *CryptoBrokerServer) EncryptData(ctx context.Context, req *protobuf.EncryptDataRequest) (*protobuf.EncryptDataResponse, error) {
+	// Implementation goes here
+	return server.procedureEncryptData.Execute(req)
+}
+
+func (server *CryptoBrokerServer) DecryptData(ctx context.Context, req *protobuf.DecryptDataRequest) (*protobuf.DecryptDataResponse, error) {
+	// Implementation goes here
+	return server.procedureDecryptData.Execute(req)
 }
 
 // collectSystemMetrics sets up asynchronous metric callbacks for system metrics
