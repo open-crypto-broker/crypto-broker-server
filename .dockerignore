@@ -1,0 +1,27 @@
+# Version control & CI
+.git
+.gitignore
+.gitmodules
+.githooks/
+.github/
+
+# Local env & tooling caches
+.env
+.env.example
+.task/
+.golangci.yml
+Taskfile.yaml
+
+# Build outputs & benchmark artefacts (rebuilt inside the image)
+bin/
+benchmark-results.json
+
+# Docs & licensing (not needed to build the binary)
+*.md
+docs/
+LICENSE
+LICENSES/
+REUSE.toml
+
+# The Dockerfile itself lives in docker/
+docker/
