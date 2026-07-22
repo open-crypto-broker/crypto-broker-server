@@ -38,7 +38,7 @@ For background, see the official documentation:
 | `GOFIPS140` value | Frozen | Minimum Go version | CMVP status |
 | ----------------- | ------ | ------------------ | ----------- |
 | `v1.0.0` | Early 2025 | Go 1.24 | ✅ Certified — CMVP [#5247](https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/5247) (vendor Geomys LLC, issued 27 April 2026), CAVP [A6650](https://csrc.nist.gov/projects/cryptographic-algorithm-validation-program/details?product=19371) (first validated 6 March 2025) |
-| `v1.26.0` | Early 2026 | Go 1.26 | ⏳ Implementation Under Test — no CAVP or CMVP certificate yet |
+| `v1.26.0` | Early 2026 | Go 1.26 | ⏳ In Review (as of July 2026) — no CMVP certificate yet, CAVP [A8028](https://csrc.nist.gov/projects/cryptographic-algorithm-validation-program/details?validation=40638)  (first validated 18 February 2026) |
 
 > **Note:** CMVP #5244 (BoringCrypto, vendor Google LLC) is the previous, deprecated mechanism and should not be used for new deployments. The current certified module is `v1.0.0` under CMVP #5247, maintained by Geomys LLC (Filippo Valsorda).
 
