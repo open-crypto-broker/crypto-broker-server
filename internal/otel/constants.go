@@ -5,6 +5,8 @@ const (
 	StatusError              = "error"
 	RPCMethodHashData        = "HashData"
 	RPCMethodSignCertificate = "SignCertificate"
+	RPCMethodEncryptData     = "EncryptData"
+	RPCMethodDecryptData     = "DecryptData"
 	RPCMethodBenchmark       = "Benchmark"
 	RPCMethodFakeEndpoint    = "FakeEndpoint"
 )

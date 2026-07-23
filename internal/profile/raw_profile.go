@@ -30,6 +30,7 @@ type rawProfileAPI struct {
 	SignCertificate rawProfileAPISignCertificate `yaml:"SignCertificate"`
 	HashData        rawProfileAPIHashData        `yaml:"HashData"`
 	SignData        rawProfileAPISignData        `yaml:"SignData"`
+	EncryptData     rawProfileAPIEncryptData     `yaml:"EncryptData"`
 }
 
 type rawProfileAPIHashData struct {
@@ -38,6 +39,11 @@ type rawProfileAPIHashData struct {
 
 type rawProfileAPISignData struct {
 	SignAlg string `yaml:"SignAlg"`
+}
+
+type rawProfileAPIEncryptData struct {
+	EncryptAlg string `yaml:"EncryptAlg"`
+	KeySize    int    `yaml:"KeySize"`
 }
 
 type rawProfileAPISignCertificate struct {
@@ -86,6 +92,13 @@ func (p rawProfile) mapToProfile() (Profile, error) {
 	if !reflect.DeepEqual(p.API.SignData, rawProfileAPISignData{}) {
 		api.SignData = ProfileAPISignData{
 			SignAlg: c10y.NewAlgorithm(p.API.SignData.SignAlg),
+		}
+	}
+
+	if !reflect.DeepEqual(p.API.EncryptData, rawProfileAPIEncryptData{}) {
+		api.EncryptData = ProfileAPIEncryptData{
+			EncryptAlg: c10y.NewAlgorithm(p.API.EncryptData.EncryptAlg),
+			KeySize:    p.API.EncryptData.KeySize,
 		}
 	}
 
@@ -199,7 +212,7 @@ func (settings rawProfileSettings) validate() error {
 }
 
 func (api rawProfileAPI) validate() error {
-	if reflect.DeepEqual(api.SignData, rawProfileAPISignData{}) && reflect.DeepEqual(api.HashData, rawProfileAPIHashData{}) && reflect.DeepEqual(api.SignCertificate, rawProfileAPISignCertificate{}) {
+	if reflect.DeepEqual(api.SignData, rawProfileAPISignData{}) && reflect.DeepEqual(api.HashData, rawProfileAPIHashData{}) && reflect.DeepEqual(api.SignCertificate, rawProfileAPISignCertificate{}) && reflect.DeepEqual(api.EncryptData, rawProfileAPIEncryptData{}) {
 		return errors.New("profile should contain at least one API")
 	}
 
@@ -216,6 +229,10 @@ func (api rawProfileAPI) validate() error {
 		err = errors.Join(err, api.SignCertificate.validate())
 	}
 
+	if !reflect.DeepEqual(api.EncryptData, rawProfileAPIEncryptData{}) {
+		err = errors.Join(err, api.EncryptData.validate())
+	}
+
 	return err
 }
 
@@ -228,6 +245,20 @@ func (dataHashing rawProfileAPIHashData) validate() error {
 	if !alg.IsSupported(c10y.HashData) {
 		return fmt.Errorf("unsupported algorithm: %s for operation %s, available algorithms: %v",
 			alg, c10y.HashData, c10y.HashDataAlgorithmsSupported)
+	}
+
+	return nil
+}
+
+func (encryption rawProfileAPIEncryptData) validate() error {
+	alg := c10y.NewAlgorithm(encryption.EncryptAlg)
+	if !alg.IsSupported(c10y.EncryptDataEncryption) {
+		return fmt.Errorf("unsupported algorithm: %s for operation %s, available algorithms: %v",
+			alg, c10y.EncryptDataEncryption, c10y.EncryptDataEncryptionAlgorithmsSupported)
+	}
+
+	if !slices.Contains([]int{128, 192, 256}, encryption.KeySize) {
+		return fmt.Errorf("unsupported AES-GCM key size: %d, available key sizes: [128 192 256]", encryption.KeySize)
 	}
 
 	return nil

@@ -169,3 +169,70 @@ func validateSignCertificateRequest(req *pb.SignCertificateRequest) error {
 
 	return validateMetadata(req.GetMetadata())
 }
+
+func validateEncryptDataRequest(req *pb.EncryptDataRequest) error {
+	if req == nil {
+		return invalidArg("request", "required")
+	}
+	if err := validateProfileName(req.GetProfile()); err != nil {
+		return err
+	}
+	if err := validateKeySource(req.GetKeySource()); err != nil {
+		return err
+	}
+	if err := checkMaxLen("plaintext", len(req.GetPlaintext()), maxEncryptionDataBytes); err != nil {
+		return err
+	}
+
+	metadata := req.GetEncryptMetadata()
+	if metadata == nil {
+		return invalidArg("encryptMetadata", "required")
+	}
+	if err := checkMaxLen("encryptMetadata.nonce", len(metadata.GetNonce()), maxEncryptionNonceBytes); err != nil {
+		return err
+	}
+	if err := checkMaxLen("encryptMetadata.aad", len(metadata.GetAad()), maxEncryptionAADBytes); err != nil {
+		return err
+	}
+	return validateMetadata(req.GetMetadata())
+}
+
+func validateDecryptDataRequest(req *pb.DecryptDataRequest) error {
+	if req == nil {
+		return invalidArg("request", "required")
+	}
+	if err := validateProfileName(req.GetProfile()); err != nil {
+		return err
+	}
+	if err := validateKeySource(req.GetKeySource()); err != nil {
+		return err
+	}
+	if err := checkMaxLen("ciphertext", len(req.GetCiphertext()), maxEncryptionDataBytes); err != nil {
+		return err
+	}
+
+	metadata := req.GetDecryptMetadata()
+	if metadata == nil {
+		return invalidArg("decryptMetadata", "required")
+	}
+	if err := checkMaxLen("decryptMetadata.nonce", len(metadata.GetNonce()), maxEncryptionNonceBytes); err != nil {
+		return err
+	}
+	if err := checkMaxLen("decryptMetadata.aad", len(metadata.GetAad()), maxEncryptionAADBytes); err != nil {
+		return err
+	}
+	if err := checkMaxLen("decryptMetadata.tag", len(metadata.GetTag()), maxEncryptionTagBytes); err != nil {
+		return err
+	}
+	return validateMetadata(req.GetMetadata())
+}
+
+func validateKeySource(keySource *pb.KeySource) error {
+	if keySource == nil || keySource.GetSource() == nil {
+		return invalidArg("keySource", "required")
+	}
+	if rawKey := keySource.GetRawKey(); rawKey != nil {
+		return checkMaxLen("keySource.rawKey", len(rawKey), maxEncryptionKeyBytes)
+	}
+	return nil
+}

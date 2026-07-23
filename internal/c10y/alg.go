@@ -23,6 +23,7 @@ const (
 	SHAKE_256   Algorithm = "shake-256"
 	ECDSA       Algorithm = "ecdsa"
 	RSA         Algorithm = "rsa"
+	AES_GCM     Algorithm = "aes-gcm"
 )
 
 // Here are listed all operations that are part of various APIs
@@ -39,6 +40,9 @@ const (
 
 	// SignCertificateSKIHashing represents hashing used to generate certificate Subject Key Identifiers.
 	SignCertificateSKIHashing Operation = "signCertificateSKIHashing"
+
+	// EncryptDataEncryption represents encryption performed in EncryptData API.
+	EncryptDataEncryption Operation = "encryptDataEncryption"
 )
 
 // HashDataAlgorithmsSupported predefined list of supported hashing algorithms by c10y pkg
@@ -55,6 +59,9 @@ var SignCertificateSigningAlgorithmsSupported = []Algorithm{
 var SignCertificateHashingAlgorithmsSupported = []Algorithm{
 	SHA_256, SHA_384, SHA_512,
 }
+
+// EncryptDataEncryptionAlgorithmsSupported lists encryption algorithms supported by EncryptData API.
+var EncryptDataEncryptionAlgorithmsSupported = []Algorithm{AES_GCM}
 
 // SignCertificateSKIHashingAlgorithmsSupported lists algorithms that can generate 160-bit Subject Key Identifiers.
 var SignCertificateSKIHashingAlgorithmsSupported = []Algorithm{
@@ -86,6 +93,8 @@ func (alg Algorithm) IsSupported(operation Operation) bool {
 		return slices.Contains(SignCertificateSKIHashingAlgorithmsSupported, alg)
 	case HashData:
 		return slices.Contains(HashDataAlgorithmsSupported, alg)
+	case EncryptDataEncryption:
+		return slices.Contains(EncryptDataEncryptionAlgorithmsSupported, alg)
 	default:
 		return false
 	}

@@ -22,8 +22,8 @@ type CryptoBrokerServer struct {
 	protobuf.CryptoGrpcServer
 	procedureHashData        *procedure.HashData
 	procedureSignCertificate *procedure.SignCertificate
-	procedureEncryptData       *procedure.EncryptData
-	procedureDecryptData       *procedure.DecryptData
+	procedureEncryptData     *procedure.EncryptData
+	procedureDecryptData     *procedure.DecryptData
 	meter                    metric.Meter
 	metricsEnabled           bool
 }
@@ -39,8 +39,8 @@ func NewCryptoBrokerServer(
 	server := &CryptoBrokerServer{
 		procedureHashData:        procedureHashData,
 		procedureSignCertificate: procedureSignCertificate,
-		procedureEncryptData:       procedureEncryptData,
-		procedureDecryptData:       procedureDecryptData,
+		procedureEncryptData:     procedureEncryptData,
+		procedureDecryptData:     procedureDecryptData,
 		metricsEnabled:           metricsEnabled,
 	}
 
@@ -210,13 +210,106 @@ func (server *CryptoBrokerServer) SignCertificate(ctx context.Context, req *prot
 }
 
 func (server *CryptoBrokerServer) EncryptData(ctx context.Context, req *protobuf.EncryptDataRequest) (*protobuf.EncryptDataResponse, error) {
-	// Implementation goes here
-	return server.procedureEncryptData.Execute(req)
+	var start time.Time
+	if server.metricsEnabled {
+		start = time.Now()
+	}
+	if err := validateEncryptDataRequest(req); err != nil {
+		return nil, fmt.Errorf("something went wrong while encrypting data: %w", err)
+	}
+
+	tracer := otel.GetGlobalTracer()
+	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.EncryptDataProcedure",
+		trace.WithAttributes(
+			otel.AttributeRpcMethod.String(otel.RPCMethodEncryptData),
+			otel.AttributeCryptoProfile.String(req.GetProfile()),
+			otel.AttributeCryptoInputSize.Int(len(req.GetPlaintext())),
+			otel.AttributeCorrelationId.String(interceptors.CorrelationIDFromProtoRequest(req)),
+		))
+	defer span.End()
+
+	response, err := server.procedureEncryptData.Execute(req)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		server.recordEncryptionMetrics(ctx, start, req.GetProfile(), otel.RPCMethodEncryptData, "encrypt_error", len(req.GetPlaintext()), false)
+		return nil, fmt.Errorf("something went wrong while encrypting data: %w", err)
+	}
+
+	span.SetAttributes(otel.AttributeCryptoCiphertextSize.Int(len(response.GetCiphertext())))
+	span.SetStatus(codes.Ok, "EncryptData operation completed successfully")
+	server.recordEncryptionMetrics(ctx, start, req.GetProfile(), otel.RPCMethodEncryptData, "", len(req.GetPlaintext()), true)
+	if server.metricsEnabled {
+		otel.EncryptDataOperationsTotal.Add(ctx, 1)
+	}
+	return response, nil
 }
 
 func (server *CryptoBrokerServer) DecryptData(ctx context.Context, req *protobuf.DecryptDataRequest) (*protobuf.DecryptDataResponse, error) {
-	// Implementation goes here
-	return server.procedureDecryptData.Execute(req)
+	var start time.Time
+	if server.metricsEnabled {
+		start = time.Now()
+	}
+	if err := validateDecryptDataRequest(req); err != nil {
+		return nil, fmt.Errorf("something went wrong while decrypting data: %w", err)
+	}
+
+	tracer := otel.GetGlobalTracer()
+	ctx, span := tracer.Start(ctx, "CryptoBrokerServer.DecryptDataProcedure",
+		trace.WithAttributes(
+			otel.AttributeRpcMethod.String(otel.RPCMethodDecryptData),
+			otel.AttributeCryptoProfile.String(req.GetProfile()),
+			otel.AttributeCryptoCiphertextSize.Int(len(req.GetCiphertext())),
+			otel.AttributeCorrelationId.String(interceptors.CorrelationIDFromProtoRequest(req)),
+		))
+	defer span.End()
+
+	response, err := server.procedureDecryptData.Execute(req)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		server.recordEncryptionMetrics(ctx, start, req.GetProfile(), otel.RPCMethodDecryptData, "decrypt_error", len(req.GetCiphertext()), false)
+		return nil, fmt.Errorf("something went wrong while decrypting data: %w", err)
+	}
+
+	span.SetAttributes(otel.AttributeCryptoInputSize.Int(len(response.GetPlaintext())))
+	span.SetStatus(codes.Ok, "DecryptData operation completed successfully")
+	server.recordEncryptionMetrics(ctx, start, req.GetProfile(), otel.RPCMethodDecryptData, "", len(req.GetCiphertext()), true)
+	if server.metricsEnabled {
+		otel.DecryptDataOperationsTotal.Add(ctx, 1)
+	}
+	return response, nil
+}
+
+func (server *CryptoBrokerServer) recordEncryptionMetrics(ctx context.Context, start time.Time, profileName, rpcMethod, errorType string, dataSize int, success bool) {
+	if !server.metricsEnabled {
+		return
+	}
+
+	statusValue := otel.StatusSuccess
+	if !success {
+		statusValue = otel.StatusError
+		otel.OperationsErrorsTotal.Add(ctx, 1, metric.WithAttributes(
+			attribute.String("rpc_method", rpcMethod),
+			attribute.String("error_type", errorType),
+		))
+	}
+
+	otel.RequestsTotal.Add(ctx, 1, metric.WithAttributes(
+		attribute.String("rpc_method", rpcMethod),
+		attribute.String("profile", profileName),
+		attribute.String("status", statusValue),
+	))
+	otel.RequestDuration.Record(ctx, time.Since(start).Seconds(), metric.WithAttributes(
+		attribute.String("rpc_method", rpcMethod),
+		attribute.String("profile", profileName),
+		attribute.String("status", statusValue),
+	))
+	if success {
+		otel.OperationBytesProcessed.Add(ctx, int64(dataSize), metric.WithAttributes(
+			attribute.String("rpc_method", rpcMethod),
+		))
+	}
 }
 
 // collectSystemMetrics sets up asynchronous metric callbacks for system metrics

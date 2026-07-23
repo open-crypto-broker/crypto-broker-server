@@ -7,6 +7,9 @@
   API:
     HashData:
       HashAlg: sha3-512
+    EncryptData:
+      EncryptAlg: aes-gcm
+      KeySize: 256
     SignCertificate:
       SignAlg: ecdsa
       HashAlg: sha-512

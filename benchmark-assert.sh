@@ -135,6 +135,12 @@ threshold_allocs_per_op_BenchmarkLibraryNative_HashShake_128=$(ceil "$(awk 'BEGI
 threshold_ns_per_op_BenchmarkLibraryNative_HashShake_256=$(ceil "$(awk 'BEGIN {print 1943 * (1 + 0.25)}')")
 threshold_allocs_per_op_BenchmarkLibraryNative_HashShake_256=$(ceil "$(awk 'BEGIN {print 3 * (1 + 0.1)}')")
 
+threshold_ns_per_op_BenchmarkLibraryNative_EncryptData=$(ceil "$(awk 'BEGIN {print 1124 * (1 + 0.25)}')")
+threshold_allocs_per_op_BenchmarkLibraryNative_EncryptData=$(ceil "$(awk 'BEGIN {print 3 * (1 + 0.1)}')")
+
+threshold_ns_per_op_BenchmarkLibraryNative_DecryptData=$(ceil "$(awk 'BEGIN {print 1693 * (1 + 0.25)}')")
+threshold_allocs_per_op_BenchmarkLibraryNative_DecryptData=$(ceil "$(awk 'BEGIN {print 4 * (1 + 0.1)}')")
+
 threshold_ns_per_op_BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_RSA4096=$(ceil "$(awk 'BEGIN {print 3981588 * (1 + 0.4)}')")
 threshold_allocs_per_op_BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_RSA4096=$(ceil "$(awk 'BEGIN {print 427 * (1 + 0.1)}')")
 
@@ -154,6 +160,8 @@ run_benchmark_assertion "BenchmarkLibraryNative_HashSHA_512" $threshold_ns_per_o
 run_benchmark_assertion "BenchmarkLibraryNative_HashSHA_512_256" $threshold_ns_per_op_BenchmarkLibraryNative_HashSHA_512_256 $threshold_allocs_per_op_BenchmarkLibraryNative_HashSHA_512_256
 run_benchmark_assertion "BenchmarkLibraryNative_HashShake_128" $threshold_ns_per_op_BenchmarkLibraryNative_HashShake_128 $threshold_allocs_per_op_BenchmarkLibraryNative_HashShake_128
 run_benchmark_assertion "BenchmarkLibraryNative_HashShake_256" $threshold_ns_per_op_BenchmarkLibraryNative_HashShake_256 $threshold_allocs_per_op_BenchmarkLibraryNative_HashShake_256
+run_benchmark_assertion "BenchmarkLibraryNative_EncryptData" $threshold_ns_per_op_BenchmarkLibraryNative_EncryptData $threshold_allocs_per_op_BenchmarkLibraryNative_EncryptData
+run_benchmark_assertion "BenchmarkLibraryNative_DecryptData" $threshold_ns_per_op_BenchmarkLibraryNative_DecryptData $threshold_allocs_per_op_BenchmarkLibraryNative_DecryptData
 run_benchmark_assertion "BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_RSA4096" $threshold_ns_per_op_BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_RSA4096 $threshold_allocs_per_op_BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_RSA4096
 run_benchmark_assertion "BenchmarkLibraryNative_SignCertificate_CSR_SECP521R1_CA_SECP521R1" $threshold_ns_per_op_BenchmarkLibraryNative_SignCertificate_CSR_SECP521R1_CA_SECP521R1 $threshold_allocs_per_op_BenchmarkLibraryNative_SignCertificate_CSR_SECP521R1_CA_SECP521R1
 run_benchmark_assertion "BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_SECP384R1" $threshold_ns_per_op_BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_SECP384R1 $threshold_allocs_per_op_BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_SECP384R1

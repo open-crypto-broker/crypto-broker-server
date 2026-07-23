@@ -25,6 +25,11 @@ var bb = []byte(`ɥsɐɥ oʇ sɹǝʇɔɐɹɐɥɔ ʎɹɐɹʇᴉqɹɐ ǝɯoS
 ║╚═╗╚╝╣║╝║╝═╩╔╩║
 ╚══╩══╩══╩═════╝`)
 
+var (
+	benchmarkEncryptionKey = []byte("0123456789abcdef0123456789abcdef")
+	benchmarkEncryptionAAD = []byte("benchmark-aad")
+)
+
 // RunHashSHA3_256Benchmark runs SHA3-256 hash benchmark
 func RunHashSHA3_256Benchmark(b *testing.B) {
 	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
@@ -116,6 +121,53 @@ func RunHashShake_256Benchmark(b *testing.B) {
 	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	for b.Loop() {
 		_, err := service.HashShake_256(32, bb)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+// RunEncryptDataBenchmark runs an AES-256-GCM encryption benchmark.
+func RunEncryptDataBenchmark(b *testing.B) {
+	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
+	nonce := make([]byte, c10y.AESGCMNonceSize)
+
+	for b.Loop() {
+		nonce[len(nonce)-1]++
+		_, err := service.EncryptData(c10y.EncryptDataInput{
+			Key:       benchmarkEncryptionKey,
+			Nonce:     nonce,
+			Plaintext: bb,
+			AAD:       benchmarkEncryptionAAD,
+		})
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+// RunDecryptDataBenchmark runs an AES-256-GCM decryption benchmark.
+func RunDecryptDataBenchmark(b *testing.B) {
+	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
+	nonce := make([]byte, c10y.AESGCMNonceSize)
+	encrypted, err := service.EncryptData(c10y.EncryptDataInput{
+		Key:       benchmarkEncryptionKey,
+		Nonce:     nonce,
+		Plaintext: bb,
+		AAD:       benchmarkEncryptionAAD,
+	})
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	for b.Loop() {
+		_, err := service.DecryptData(c10y.DecryptDataInput{
+			Key:        benchmarkEncryptionKey,
+			Nonce:      nonce,
+			Ciphertext: encrypted.Ciphertext,
+			AAD:        benchmarkEncryptionAAD,
+			Tag:        encrypted.Tag,
+		})
 		if err != nil {
 			b.Fatal(err)
 		}

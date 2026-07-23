@@ -73,6 +73,10 @@ func TestRetrieve(t *testing.T) {
 				API: ProfileAPI{
 					HashData: ProfileAPIHashData{HashAlg: "sha3-512"},
 					SignData: ProfileAPISignData{SignAlg: ""},
+					EncryptData: ProfileAPIEncryptData{
+						EncryptAlg: c10y.AES_GCM,
+						KeySize:    256,
+					},
 					SignCertificate: ProfileAPISignCertificate{
 						SignatureAlgorithm: 12,
 						SignAlg:            "ecdsa",

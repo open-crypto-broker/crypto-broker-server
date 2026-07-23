@@ -23,6 +23,7 @@ type ProfileAPI struct {
 	SignCertificate ProfileAPISignCertificate
 	HashData        ProfileAPIHashData
 	SignData        ProfileAPISignData
+	EncryptData     ProfileAPIEncryptData
 }
 
 type ProfileAPIHashData struct {
@@ -31,6 +32,11 @@ type ProfileAPIHashData struct {
 
 type ProfileAPISignData struct {
 	SignAlg c10y.Algorithm
+}
+
+type ProfileAPIEncryptData struct {
+	EncryptAlg c10y.Algorithm
+	KeySize    int
 }
 
 type ProfileAPISignCertificate struct {
