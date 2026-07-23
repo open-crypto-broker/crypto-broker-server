@@ -1,6 +1,7 @@
 package procedure
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -29,5 +30,20 @@ func TestBenchmark_Execute(t *testing.T) {
 	}
 	if !strings.Contains(resp.GetBenchmarkResults(), `"results"`) {
 		t.Fatalf("expected JSON results to contain \"results\" key, got: %s", resp.GetBenchmarkResults())
+	}
+
+	var results benchmarkResults
+	if err := json.Unmarshal([]byte(resp.GetBenchmarkResults()), &results); err != nil {
+		t.Fatalf("could not decode benchmark results: %v", err)
+	}
+
+	benchmarkNames := make(map[string]struct{}, len(results.Results))
+	for _, result := range results.Results {
+		benchmarkNames[result.Name] = struct{}{}
+	}
+	for _, name := range []string{"BenchmarkLibraryNative_EncryptData", "BenchmarkLibraryNative_DecryptData"} {
+		if _, found := benchmarkNames[name]; !found {
+			t.Fatalf("expected benchmark result %q, got %#v", name, results.Results)
+		}
 	}
 }

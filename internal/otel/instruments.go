@@ -13,6 +13,8 @@ var (
 	// Cryptographic operation metrics
 	HashDataOperationsTotal        metric.Int64Counter
 	SignCertificateOperationsTotal metric.Int64Counter
+	EncryptDataOperationsTotal     metric.Int64Counter
+	DecryptDataOperationsTotal     metric.Int64Counter
 	OperationsErrorsTotal          metric.Int64Counter
 
 	// Performance metrics
@@ -56,6 +58,23 @@ func InitializeInstruments(meter metric.Meter) error {
 	SignCertificateOperationsTotal, err = meter.Int64Counter(
 		"crypto_sign_certificate_operations_total",
 		metric.WithDescription("Total number of certificate signing operations"),
+		metric.WithUnit("1"),
+	)
+	if err != nil {
+		return err
+	}
+	EncryptDataOperationsTotal, err = meter.Int64Counter(
+		"crypto_encrypt_data_operations_total",
+		metric.WithDescription("Total number of data encryption operations"),
+		metric.WithUnit("1"),
+	)
+	if err != nil {
+		return err
+	}
+
+	DecryptDataOperationsTotal, err = meter.Int64Counter(
+		"crypto_decrypt_data_operations_total",
+		metric.WithDescription("Total number of data decryption operations"),
 		metric.WithUnit("1"),
 	)
 	if err != nil {

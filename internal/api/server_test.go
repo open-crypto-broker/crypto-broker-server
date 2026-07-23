@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -112,8 +113,8 @@ func TestCryptoBrokerServer_HashData_E2E(t *testing.T) {
 	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	procedureHash := procedure.NewHashData(libraryNative)
 	procedureSign := procedure.NewSignCertificate(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig))
-	procedureEncrypt := procedure.NewEncryptData()
-	procedureDecrypt := procedure.NewDecryptData()
+	procedureEncrypt := procedure.NewEncryptData(libraryNative)
+	procedureDecrypt := procedure.NewDecryptData(libraryNative)
 	metricsEnabled := false
 	grpcConnector := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, procedureEncrypt, procedureDecrypt, metricsEnabled)
 
@@ -173,14 +174,113 @@ func TestCryptoBrokerServer_HashData_E2E(t *testing.T) {
 	})
 }
 
+func TestCryptoBrokerServer_EncryptDecryptData_E2E(t *testing.T) {
+	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
+	server := NewCryptoBrokerServer(
+		libraryNative,
+		procedure.NewHashData(libraryNative),
+		procedure.NewSignCertificate(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig)),
+		procedure.NewEncryptData(libraryNative),
+		procedure.NewDecryptData(libraryNative),
+		false,
+	)
+
+	lis = bufconn.Listen(bufSize)
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
+		interceptors.UnaryRemoteTraceInterceptor(),
+		interceptors.UnaryCorrelationInterceptor(),
+	))
+	protobuf.RegisterCryptoGrpcServer(grpcServer, server)
+	go func() {
+		if err := grpcServer.Serve(lis); err != nil {
+			slog.Error("Server exited with error", slog.String("error", err.Error()))
+		}
+	}()
+	defer grpcServer.Stop()
+
+	conn, err := grpc.NewClient(
+		fmt.Sprintf("passthrough://%s", lis.Addr().String()),
+		grpc.WithContextDialer(bufDialer),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		t.Fatalf("Failed to dial bufnet: %v", err)
+	}
+	defer conn.Close()
+	if err = profile.LoadProfiles("Profiles.yaml"); err != nil {
+		t.Fatalf("could not load profiles, err: %s", err)
+	}
+
+	client := protobuf.NewCryptoGrpcClient(conn)
+	key := bytes.Repeat([]byte{0x42}, 32)
+	nonce := bytes.Repeat([]byte{0x24}, 12)
+	plaintext := []byte("confidential payload")
+	metadata := &protobuf.Metadata{Id: "encrypt-request"}
+	keySource := &protobuf.KeySource{Source: &protobuf.KeySource_RawKey{RawKey: key}}
+
+	encrypted, err := client.EncryptData(context.Background(), &protobuf.EncryptDataRequest{
+		Profile:   "Default",
+		KeySource: keySource,
+		Plaintext: plaintext,
+		EncryptMetadata: &protobuf.EncryptMetadata{
+			Nonce: nonce,
+			Aad:   []byte("context"),
+		},
+		Metadata: metadata,
+	})
+	if err != nil {
+		t.Fatalf("EncryptData() error: %v", err)
+	}
+	if bytes.Equal(encrypted.GetCiphertext(), plaintext) || len(encrypted.GetCipherMetadata().GetTag()) != 16 {
+		t.Fatalf("unexpected encryption response: %#v", encrypted)
+	}
+	if encrypted.GetMetadata().GetId() != metadata.GetId() {
+		t.Fatalf("Metadata.Id = %q, want %q", encrypted.GetMetadata().GetId(), metadata.GetId())
+	}
+
+	decrypted, err := client.DecryptData(context.Background(), &protobuf.DecryptDataRequest{
+		Profile:    "Default",
+		KeySource:  keySource,
+		Ciphertext: encrypted.GetCiphertext(),
+		DecryptMetadata: &protobuf.DecryptMetadata{
+			Nonce: encrypted.GetCipherMetadata().GetNonce(),
+			Aad:   encrypted.GetCipherMetadata().GetAad(),
+			Tag:   encrypted.GetCipherMetadata().GetTag(),
+		},
+		Metadata: metadata,
+	})
+	if err != nil {
+		t.Fatalf("DecryptData() error: %v", err)
+	}
+	if !bytes.Equal(decrypted.GetPlaintext(), plaintext) {
+		t.Fatalf("Plaintext = %q, want %q", decrypted.GetPlaintext(), plaintext)
+	}
+
+	tamperedTag := append([]byte(nil), encrypted.GetCipherMetadata().GetTag()...)
+	tamperedTag[0] ^= 1
+	_, err = client.DecryptData(context.Background(), &protobuf.DecryptDataRequest{
+		Profile:    "Default",
+		KeySource:  keySource,
+		Ciphertext: encrypted.GetCiphertext(),
+		DecryptMetadata: &protobuf.DecryptMetadata{
+			Nonce: encrypted.GetCipherMetadata().GetNonce(),
+			Aad:   encrypted.GetCipherMetadata().GetAad(),
+			Tag:   tamperedTag,
+		},
+	})
+	if status.Code(err) != codes.InvalidArgument {
+		t.Fatalf("tampered tag status = %v, want %v (error: %v)", status.Code(err), codes.InvalidArgument, err)
+	}
+}
+
 // TestCryptoBrokerServer_SignCertificate_E2E tests the SignCertificate method of the gRPC API.
 func TestCryptoBrokerServer_SignCertificate_E2E(t *testing.T) {
 	// Mock dependencies
 	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	procedureHash := procedure.NewHashData(libraryNative)
 	procedureSign := procedure.NewSignCertificate(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig))
-	procedureEncrypt := procedure.NewEncryptData()
-	procedureDecrypt := procedure.NewDecryptData()
+	procedureEncrypt := procedure.NewEncryptData(libraryNative)
+	procedureDecrypt := procedure.NewDecryptData(libraryNative)
 	metricsEnabled := false
 	grpcConnector := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, procedureEncrypt, procedureDecrypt, metricsEnabled)
 
@@ -326,8 +426,8 @@ func TestNewCryptoBrokerServer(t *testing.T) {
 	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	procedureHash := procedure.NewHashData(libraryNative)
 	procedureSign := procedure.NewSignCertificate(libraryNative, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig))
-	procedureEncrypt := procedure.NewEncryptData()
-	procedureDecrypt := procedure.NewDecryptData()
+	procedureEncrypt := procedure.NewEncryptData(libraryNative)
+	procedureDecrypt := procedure.NewDecryptData(libraryNative)
 	metricsEnabled := false
 
 	server := NewCryptoBrokerServer(libraryNative, procedureHash, procedureSign, procedureEncrypt, procedureDecrypt, metricsEnabled)

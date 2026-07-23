@@ -222,6 +222,52 @@ func TestValidateSignRequest_AllowsValidBoundaryRequest(t *testing.T) {
 	assertNoError(t, validateSignCertificateRequest(req))
 }
 
+func TestValidateEncryptionRequests(t *testing.T) {
+	validKeySource := &pb.KeySource{Source: &pb.KeySource_RawKey{RawKey: make([]byte, 32)}}
+	validNonce := make([]byte, 12)
+
+	t.Run("accepts valid encrypt request", func(t *testing.T) {
+		assertNoError(t, validateEncryptDataRequest(&pb.EncryptDataRequest{
+			Profile:         "Default",
+			KeySource:       validKeySource,
+			EncryptMetadata: &pb.EncryptMetadata{Nonce: validNonce},
+		}))
+	})
+
+	t.Run("rejects missing key source", func(t *testing.T) {
+		assertInvalidArgument(t, validateEncryptDataRequest(&pb.EncryptDataRequest{
+			Profile:         "Default",
+			EncryptMetadata: &pb.EncryptMetadata{Nonce: validNonce},
+		}), "keySource")
+	})
+
+	t.Run("rejects missing encrypt metadata", func(t *testing.T) {
+		assertInvalidArgument(t, validateEncryptDataRequest(&pb.EncryptDataRequest{
+			Profile:   "Default",
+			KeySource: validKeySource,
+		}), "encryptMetadata")
+	})
+
+	t.Run("rejects oversized ciphertext", func(t *testing.T) {
+		assertInvalidArgument(t, validateDecryptDataRequest(&pb.DecryptDataRequest{
+			Profile:    "Default",
+			KeySource:  validKeySource,
+			Ciphertext: make([]byte, maxEncryptionDataBytes+1),
+			DecryptMetadata: &pb.DecryptMetadata{
+				Nonce: validNonce,
+				Tag:   make([]byte, 16),
+			},
+		}), "ciphertext")
+	})
+
+	t.Run("rejects missing decrypt metadata", func(t *testing.T) {
+		assertInvalidArgument(t, validateDecryptDataRequest(&pb.DecryptDataRequest{
+			Profile:   "Default",
+			KeySource: validKeySource,
+		}), "decryptMetadata")
+	})
+}
+
 func TestValidateMetadata(t *testing.T) {
 	tests := []struct {
 		name      string

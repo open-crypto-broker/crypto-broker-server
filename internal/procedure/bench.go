@@ -44,7 +44,7 @@ func (procedure *Benchmark) Execute(req *protobuf.BenchmarkRequest) (*protobuf.B
 
 // runAllBenchmarks executes all cryptographic benchmarks and returns the results
 func (procedure *Benchmark) runAllBenchmarks() (benchmarkResults, error) {
-	results := make([]benchmarkResult, 0, 11)
+	results := make([]benchmarkResult, 0, 13)
 
 	results = append(results, procedure.runHashDataBenchmark("BenchmarkLibraryNative_HashSHA3_256", bench.RunHashSHA3_256Benchmark))
 	results = append(results, procedure.runHashDataBenchmark("BenchmarkLibraryNative_HashSHA3_384", bench.RunHashSHA3_384Benchmark))
@@ -53,6 +53,8 @@ func (procedure *Benchmark) runAllBenchmarks() (benchmarkResults, error) {
 	results = append(results, procedure.runHashDataBenchmark("BenchmarkLibraryNative_HashSHA_384", bench.RunHashSHA_384Benchmark))
 	results = append(results, procedure.runHashDataBenchmark("BenchmarkLibraryNative_HashSHA_512", bench.RunHashSHA_512Benchmark))
 	results = append(results, procedure.runHashDataBenchmark("BenchmarkLibraryNative_HashSHA_512_256", bench.RunHashSHA_512_256Benchmark))
+	results = append(results, procedure.runHashDataBenchmark("BenchmarkLibraryNative_EncryptData", bench.RunEncryptDataBenchmark))
+	results = append(results, procedure.runHashDataBenchmark("BenchmarkLibraryNative_DecryptData", bench.RunDecryptDataBenchmark))
 
 	signCertificateNISTSECP521R1RSA4096Result, err := procedure.runSignCertificateBenchmark(
 		"BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_RSA4096", bench.RunSignCertificate_CSR_SECP256R1_CA_RSA4096Benchmark)

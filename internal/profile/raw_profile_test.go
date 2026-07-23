@@ -80,6 +80,88 @@ func TestRawProfileAPIHashData_validate(t *testing.T) {
 	}
 }
 
+func TestRawProfileAPIEncryptData_validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		in      rawProfileAPIEncryptData
+		wantErr bool
+	}{
+		{
+			name: "accepts AES-GCM with 128-bit key",
+			in: rawProfileAPIEncryptData{
+				EncryptAlg: "AES-GCM",
+				KeySize:    128,
+			},
+		},
+		{
+			name: "accepts AES-GCM with 192-bit key",
+			in: rawProfileAPIEncryptData{
+				EncryptAlg: "aes-gcm",
+				KeySize:    192,
+			},
+		},
+		{
+			name: "accepts AES-GCM with 256-bit key",
+			in: rawProfileAPIEncryptData{
+				EncryptAlg: "aes-gcm",
+				KeySize:    256,
+			},
+		},
+		{
+			name: "rejects unsupported algorithm",
+			in: rawProfileAPIEncryptData{
+				EncryptAlg: "aes-cbc",
+				KeySize:    128,
+			},
+			wantErr: true,
+		},
+		{
+			name: "rejects unsupported key size",
+			in: rawProfileAPIEncryptData{
+				EncryptAlg: "aes-gcm",
+				KeySize:    64,
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.in.validate()
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestRawProfile_mapToProfile_mapsEncryptDataFields(t *testing.T) {
+	rp := rawProfile{
+		Name: "EncryptionProfile",
+		Settings: rawProfileSettings{
+			CryptoLibrary: "native",
+		},
+		API: rawProfileAPI{
+			EncryptData: rawProfileAPIEncryptData{
+				EncryptAlg: "AES-GCM",
+				KeySize:    256,
+			},
+		},
+	}
+
+	got, err := rp.mapToProfile()
+	if err != nil {
+		t.Fatalf("mapToProfile() unexpected error: %v", err)
+	}
+
+	if got.API.EncryptData.EncryptAlg != c10y.AES_GCM {
+		t.Fatalf("EncryptAlg = %q, want %q", got.API.EncryptData.EncryptAlg, c10y.AES_GCM)
+	}
+	if got.API.EncryptData.KeySize != 256 {
+		t.Fatalf("KeySize = %d, want 256", got.API.EncryptData.KeySize)
+	}
+}
+
 func TestRawProfileAPISignCertificateValidity_validate(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -325,6 +407,46 @@ func TestRawProfile_mapToProfile_mapsSignCertificateFields(t *testing.T) {
 	if got.API.SignCertificate.KeyConstraints.Issuer[c10y.ECDSA].MinKeySize != 256 ||
 		got.API.SignCertificate.KeyConstraints.Issuer[c10y.ECDSA].MaxKeySize != 521 {
 		t.Fatalf("Issuer key constraints not mapped correctly: %#v", got.API.SignCertificate.KeyConstraints.Issuer[c10y.ECDSA])
+	}
+}
+
+func TestRawProfileAPIEncryptData_validateAndMap(t *testing.T) {
+	tests := []struct {
+		name    string
+		in      rawProfileAPIEncryptData
+		wantErr bool
+	}{
+		{name: "accepts AES-128-GCM", in: rawProfileAPIEncryptData{EncryptAlg: "AES-GCM", KeySize: 128}},
+		{name: "accepts AES-192-GCM", in: rawProfileAPIEncryptData{EncryptAlg: "aes-gcm", KeySize: 192}},
+		{name: "accepts AES-256-GCM", in: rawProfileAPIEncryptData{EncryptAlg: "aes-gcm", KeySize: 256}},
+		{name: "rejects unsupported algorithm", in: rawProfileAPIEncryptData{EncryptAlg: "aes-cbc", KeySize: 128}, wantErr: true},
+		{name: "rejects unsupported key size", in: rawProfileAPIEncryptData{EncryptAlg: "aes-gcm", KeySize: 160}, wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.in.validate()
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+
+	raw := rawProfile{
+		Name:     "EncryptionProfile",
+		Settings: rawProfileSettings{CryptoLibrary: "native"},
+		API: rawProfileAPI{EncryptData: rawProfileAPIEncryptData{
+			EncryptAlg: "AES-GCM",
+			KeySize:    256,
+		}},
+	}
+
+	got, err := raw.mapToProfile()
+	if err != nil {
+		t.Fatalf("mapToProfile() error: %v", err)
+	}
+	if got.API.EncryptData.EncryptAlg != c10y.AES_GCM || got.API.EncryptData.KeySize != 256 {
+		t.Fatalf("EncryptData = %#v, want AES-GCM/256", got.API.EncryptData)
 	}
 }
 

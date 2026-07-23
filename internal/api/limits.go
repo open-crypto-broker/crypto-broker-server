@@ -12,6 +12,13 @@ const (
 	// Hash Data
 	maxHashInputBytes = 1 << 20 // 1 MiB
 
+	// EncryptData / DecryptData
+	maxEncryptionDataBytes  = 1 << 20  // 1 MiB
+	maxEncryptionAADBytes   = 64 << 10 // 64 KiB
+	maxEncryptionKeyBytes   = 32
+	maxEncryptionNonceBytes = 32
+	maxEncryptionTagBytes   = 32
+
 	// SignCertificate (PEM strings)
 	maxCSRBytes          = 64 << 10 // 64 KiB
 	maxCAPrivateKeyBytes = 64 << 10 // 64 KiB

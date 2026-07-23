@@ -13,5 +13,6 @@ var (
 	AttributeCryptoCsrSize              = attribute.Key("crypto.csr_size")
 	AttributeCryptoCaCertSize           = attribute.Key("crypto.ca_cert_size")
 	AttributeCryptoCaKeySize            = attribute.Key("crypto.ca_key_size")
+	AttributeCryptoCiphertextSize       = attribute.Key("crypto.ciphertext_size")
 	AttributeCorrelationId              = attribute.Key("correlation_id")
 )

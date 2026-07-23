@@ -42,6 +42,14 @@ func BenchmarkLibraryNative_HashShake_256(b *testing.B) {
 	RunHashShake_256Benchmark(b)
 }
 
+func BenchmarkLibraryNative_EncryptData(b *testing.B) {
+	RunEncryptDataBenchmark(b)
+}
+
+func BenchmarkLibraryNative_DecryptData(b *testing.B) {
+	RunDecryptDataBenchmark(b)
+}
+
 func BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_RSA4096(b *testing.B) {
 	err := RunSignCertificate_CSR_SECP256R1_CA_RSA4096Benchmark(b)
 	if err != nil {

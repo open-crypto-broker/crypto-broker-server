@@ -59,6 +59,12 @@ func TestAlgorithm_IsSupported(t *testing.T) {
 			operation: c10y.SignCertificateHashing,
 			want:      false,
 		},
+		{
+			name:      "Algorithm_IsSupported() returns true given algorithm: AES_GCM, operation: EncryptDataEncryption",
+			algorithm: c10y.AES_GCM.String(),
+			operation: c10y.EncryptDataEncryption,
+			want:      true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
