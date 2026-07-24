@@ -3,6 +3,41 @@
 The list of commits in this changelog is automatically generated in the release process.
 The commits follow the Conventional Commit specification.
 
+## [0.4.0] - 2026-07-24
+
+### 🚀 Features
+
+- Upgrade go version to 1.26.5 (#136)
+- Improve Dockerfile for multi-arch builds (#134)
+- Updated stale informations about env variables
+- [**breaking**] Renamed sign and hash to signCertificate and hashData
+- Add dynatrace documentation to docs (#128)
+- Removed stale socket file before startup
+- Implemented caching for CA cert & subject
+- Adjusted code to new proto
+- Updated proto reference and regenrated stubs
+- [**breaking**] Updated hash procedure by adding two types of response - hex or raw
+- Enable user to set max concurrent streams (default set to 1024) (#116)
+- Enchanced code
+- Added a dead-store-resistant zeroing helper, zero the decoded DER buffer in ParsePrivateKeyFromPEM, Zero the transistent PEM copy in parseRawSignRequest
+
+### 🐛 Bug Fixes
+
+- Updated reg-exp for running benchmarks
+- FiX typo in validation URL (#123)
+- Limit create-github-app-token permissions (#120)
+- Fixed findings for hash
+
+### 📚 Documentation
+
+- Update CAVP status for Go Crypto v1.26.0v (#135)
+- Improve FIPS documentation (#117)
+
+### ⚙️ Miscellaneous Tasks
+
+- Update gRPC health probe (#133)
+- Update Alpine in Dockerfile (#125)
+
 ## [0.3.2] - 2026-06-08
 
 ### 🐛 Bug Fixes
