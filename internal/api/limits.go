@@ -5,24 +5,27 @@ package api
 //
 // These values are internal implementation details and can be tuned later.
 const (
+	KB = 1024
+	MB = 1024 * KB
+
 	// gRPC transport-level limits (bytes)
-	MaxGrpcRecvMsgSize = 2 << 20 // 2 MiB
-	MaxGrpcSendMsgSize = 1 << 20 // 1 MiB
+	MaxGrpcRecvMsgSize = 2 * MB
+	MaxGrpcSendMsgSize = 1 * MB
 
 	// Hash Data
-	maxHashInputBytes = 1 << 20 // 1 MiB
+	maxHashInputBytes = 1 * MB
 
 	// EncryptData / DecryptData
-	maxEncryptionDataBytes  = 1 << 20  // 1 MiB
-	maxEncryptionAADBytes   = 64 << 10 // 64 KiB
+	maxEncryptionDataBytes  = 1 * MB
+	maxEncryptionAADBytes   = 64 * KB
 	maxEncryptionKeyBytes   = 32
 	maxEncryptionNonceBytes = 32
 	maxEncryptionTagBytes   = 32
 
 	// SignCertificate (PEM strings)
-	maxCSRBytes          = 64 << 10 // 64 KiB
-	maxCAPrivateKeyBytes = 64 << 10 // 64 KiB
-	maxCACertBytes       = 64 << 10 // 64 KiB
+	maxCSRBytes          = 64 * KB
+	maxCAPrivateKeyBytes = 64 * KB
+	maxCACertBytes       = 64 * KB
 	maxSubjectLen        = 1024
 
 	maxCRLDistributionPoints   = 16
