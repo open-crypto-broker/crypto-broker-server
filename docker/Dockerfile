@@ -25,6 +25,12 @@ RUN  go mod download
 
 COPY . .
 
+# Normalise the profile permissions so they are world-readable and the directory
+# is world-traversable. Git does not track the read bit, so a fresh clone can end
+# up with group-restricted files; this guarantees the non-root runtime user
+# (uid 1000, see USER below) can read them after they are copied into the image.
+RUN chmod -R a+rX example-profiles
+
 # -trimpath makes the build reproducible (no local paths baked in); -s -w drop
 # the symbol table and debug info to shrink the binary.
 RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} \
