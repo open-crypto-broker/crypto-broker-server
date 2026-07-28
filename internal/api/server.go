@@ -67,7 +67,7 @@ func (server *CryptoBrokerServer) HashData(ctx context.Context, req *protobuf.Ha
 			otel.AttributeCryptoProfile.String(req.GetProfile()),
 			otel.AttributeCryptoInputSize.Int(len(req.GetInput())),
 			otel.AttributeCorrelationId.String(interceptors.CorrelationIDFromProtoRequest(req)),
-		))
+		), trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
 
 	response, err := server.procedureHashData.Execute(req)
@@ -146,7 +146,7 @@ func (server *CryptoBrokerServer) SignCertificate(ctx context.Context, req *prot
 			otel.AttributeCryptoCaCertSize.Int(len(req.GetCaCert())),
 			otel.AttributeCryptoCaKeySize.Int(len(req.GetCaPrivateKey())),
 			otel.AttributeCorrelationId.String(interceptors.CorrelationIDFromProtoRequest(req)),
-		))
+		), trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
 
 	response, err := server.procedureSignCertificate.Execute(req)
