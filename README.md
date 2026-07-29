@@ -15,6 +15,26 @@ At the moment, two methods of deployment are supported:
 
 Documentation on how to deploy the server on these methods can be found on the [deployment repository](https://github.com/open-crypto-broker/crypto-broker-deployment)
 
+### Running as a container (non-root)
+
+The Docker image runs as a **non-root** user (uid/gid `1000` by default) to satisfy hardened cluster policies (Kubernetes `restricted` Pod Security, OpenShift SCCs) and the Platform Mesh operator, which injects the server as a sidecar and assigns uid `1000` (the owner of the shared Unix socket). Because of this, there are a few things to know when running the image yourself:
+
+* **Shared socket directory** – The server binds its Unix socket in `/tmp/open-crypto-broker`. The image ships this directory owned by the runtime uid. When you mount a **fresh named volume** at `/tmp` (the recommended setup so clients can reach the socket), Docker seeds it from the image and preserves that ownership, so the server can create and remove the socket.
+  * If you mount a **host directory** (bind mount) instead, Docker does **not** apply the image ownership — you must `chown` it to the runtime uid (e.g. `chown 1000:1000 /path/on/host`) or the server fails with `bind: permission denied`.
+  * A **pre-existing named volume** created by an older, root-based image keeps its root ownership (Docker only seeds *empty* volumes). Remove it once (`docker volume rm <name>` or `docker compose down -v`) so a fresh, correctly-owned volume is created.
+* **Clients must run as the same uid** – The socket is created with mode `0600` (owner-only), so any client connecting over it must run as the **same uid** as the server. The provided Go and JS clients already default to uid `1000`.
+* **Profiles must be readable** – `Profiles.yaml` is copied into the image world-readable so the non-root user can load it. If you supply your own profiles via a mount, make sure they are readable by the runtime uid.
+
+#### Changing the uid
+
+If your environment mandates a different uid, rebuild with the `APP_UID` / `APP_GID` build args (this drives both the socket-directory ownership and the `USER` directive):
+
+```bash
+docker build -f docker/Dockerfile --build-arg APP_UID=1500 --build-arg APP_GID=1500 -t crypto-broker-server .
+```
+
+Rebuild the client images with the **same** `APP_UID` so they can still connect to the socket. Overriding the uid only at runtime (e.g. `docker run --user`) without rebuilding will break socket access, because the baked-in directory ownership no longer matches; in Kubernetes, align it via the pod `securityContext` (`runAsUser`/`fsGroup`) instead.
+
 ### Environment Variables
 
 The Crypto Broker Server supports several environment variables for configuration. [Please read environment variables table](./docs/envs.md) to understand them in detail.
