@@ -205,6 +205,7 @@ OTEL_TRACES_EXPORTER="otlphttp"
 OTEL_EXPORTER_OTLP_ENDPOINT="https://<YOUR-TENANT-HERE>.live.dynatrace.com/api/v2/otlp"
 OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION="Api-Token <YOUR-TOKEN-HERE>"
 OTEL_TRACES_SAMPLER="always_on"
+OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=delta # Make counters and histograms compatible with Dynatrace's ingestion requirements
 ```
 
 Next, you need to run the server:
@@ -227,6 +228,7 @@ To send logs to Dynatrace, you need to set the following environment variables:
 OTEL_LOGS_EXPORTER="otlphttp"
 OTEL_EXPORTER_OTLP_ENDPOINT="https://<YOUR-TENANT-HERE>.live.dynatrace.com/api/v2/otlp"
 OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION="Api-Token <YOUR-API-TOKEN-HERE>"
+OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=delta # Make counters and histograms compatible with Dynatrace's ingestion requirements
 ```
 
 Next, run the server:

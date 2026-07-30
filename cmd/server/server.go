@@ -27,7 +27,7 @@ import (
 	"github.com/open-crypto-broker/crypto-broker-server/internal/otel"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
 	pb "github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
-
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health"
@@ -165,6 +165,7 @@ func main() {
 		grpc.MaxRecvMsgSize(api.MaxGrpcRecvMsgSize),
 		grpc.MaxSendMsgSize(api.MaxGrpcSendMsgSize),
 		grpc.MaxConcurrentStreams(getMaxConcurrentStreams()),
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 	)
 
 	// Register crypto broker service
