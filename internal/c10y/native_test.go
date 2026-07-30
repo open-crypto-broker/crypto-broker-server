@@ -23,6 +23,48 @@ func mustHex(s string) Hash {
 	return Hash(b)
 }
 
+func TestLibraryNative_computeSubjectKeyIdentifier(t *testing.T) {
+	spkiDER, err := asn1.Marshal(struct {
+		Algorithm        pkix.AlgorithmIdentifier
+		SubjectPublicKey asn1.BitString
+	}{
+		Algorithm:        pkix.AlgorithmIdentifier{Algorithm: asn1.ObjectIdentifier{1, 2, 3}},
+		SubjectPublicKey: asn1.BitString{Bytes: []byte("subject-public-key"), BitLength: len("subject-public-key") * 8},
+	})
+	if err != nil {
+		t.Fatalf("failed to marshal test SPKI: %v", err)
+	}
+
+	tests := []struct {
+		name      string
+		algorithm Algorithm
+		want      Hash
+		wantErr   bool
+	}{
+		{name: "sha-1", algorithm: SHA_1, want: mustHex("13972225ed3dbed5493964ea97b2384fa2ef5db9")},
+		{name: "sha-256", algorithm: SHA_256, want: mustHex("5a926725ff7fa2013771f03e879e49b24342e265")},
+		{name: "sha-384", algorithm: SHA_384, want: mustHex("29167ee5cfd41bf3a6ae982ab52ac26de125a4a6")},
+		{name: "sha-512", algorithm: SHA_512, want: mustHex("328e06856cc544f71931934123bab0152cfb47c4")},
+		{name: "sha3-256", algorithm: SHA3_256, want: mustHex("9ca4278434dd4705eaa2d08ab6461cf895b61db2")},
+		{name: "sha3-512", algorithm: SHA3_512, want: mustHex("49710e7f4bfc76870e343547b4bb747f80d22fde")},
+		{name: "empty algorithm defaults to sha-1", algorithm: "", want: mustHex("13972225ed3dbed5493964ea97b2384fa2ef5db9")},
+		{name: "unknown algorithm", algorithm: "md5", wantErr: true},
+	}
+
+	service := newTestLibraryNative()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := service.computeSubjectKeyIdentifier(spkiDER, tt.algorithm)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("computeSubjectKeyIdentifier() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !tt.wantErr && !reflect.DeepEqual(got, []byte(tt.want)) {
+				t.Errorf("computeSubjectKeyIdentifier() = %x, want %x", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestLibraryNative_HashSHA3_256(t *testing.T) {
 	type args struct {
 		dataToHash []byte

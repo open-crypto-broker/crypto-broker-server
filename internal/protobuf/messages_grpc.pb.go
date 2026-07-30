@@ -19,6 +19,8 @@ const _ = grpc.SupportPackageIsVersion7
 type CryptoGrpcClient interface {
 	HashData(ctx context.Context, in *HashDataRequest, opts ...grpc.CallOption) (*HashDataResponse, error)
 	SignCertificate(ctx context.Context, in *SignCertificateRequest, opts ...grpc.CallOption) (*SignCertificateResponse, error)
+	EncryptData(ctx context.Context, in *EncryptDataRequest, opts ...grpc.CallOption) (*EncryptDataResponse, error)
+	DecryptData(ctx context.Context, in *DecryptDataRequest, opts ...grpc.CallOption) (*DecryptDataResponse, error)
 }
 
 type cryptoGrpcClient struct {
@@ -47,12 +49,32 @@ func (c *cryptoGrpcClient) SignCertificate(ctx context.Context, in *SignCertific
 	return out, nil
 }
 
+func (c *cryptoGrpcClient) EncryptData(ctx context.Context, in *EncryptDataRequest, opts ...grpc.CallOption) (*EncryptDataResponse, error) {
+	out := new(EncryptDataResponse)
+	err := c.cc.Invoke(ctx, "/CryptoBroker.CryptoGrpc/EncryptData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cryptoGrpcClient) DecryptData(ctx context.Context, in *DecryptDataRequest, opts ...grpc.CallOption) (*DecryptDataResponse, error) {
+	out := new(DecryptDataResponse)
+	err := c.cc.Invoke(ctx, "/CryptoBroker.CryptoGrpc/DecryptData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CryptoGrpcServer is the server API for CryptoGrpc service.
 // All implementations must embed UnimplementedCryptoGrpcServer
 // for forward compatibility
 type CryptoGrpcServer interface {
 	HashData(context.Context, *HashDataRequest) (*HashDataResponse, error)
 	SignCertificate(context.Context, *SignCertificateRequest) (*SignCertificateResponse, error)
+	EncryptData(context.Context, *EncryptDataRequest) (*EncryptDataResponse, error)
+	DecryptData(context.Context, *DecryptDataRequest) (*DecryptDataResponse, error)
 	mustEmbedUnimplementedCryptoGrpcServer()
 }
 
@@ -65,6 +87,12 @@ func (UnimplementedCryptoGrpcServer) HashData(context.Context, *HashDataRequest)
 }
 func (UnimplementedCryptoGrpcServer) SignCertificate(context.Context, *SignCertificateRequest) (*SignCertificateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SignCertificate not implemented")
+}
+func (UnimplementedCryptoGrpcServer) EncryptData(context.Context, *EncryptDataRequest) (*EncryptDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EncryptData not implemented")
+}
+func (UnimplementedCryptoGrpcServer) DecryptData(context.Context, *DecryptDataRequest) (*DecryptDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DecryptData not implemented")
 }
 func (UnimplementedCryptoGrpcServer) mustEmbedUnimplementedCryptoGrpcServer() {}
 
@@ -115,6 +143,42 @@ func _CryptoGrpc_SignCertificate_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CryptoGrpc_EncryptData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EncryptDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CryptoGrpcServer).EncryptData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/CryptoBroker.CryptoGrpc/EncryptData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CryptoGrpcServer).EncryptData(ctx, req.(*EncryptDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CryptoGrpc_DecryptData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DecryptDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CryptoGrpcServer).DecryptData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/CryptoBroker.CryptoGrpc/DecryptData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CryptoGrpcServer).DecryptData(ctx, req.(*DecryptDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _CryptoGrpc_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "CryptoBroker.CryptoGrpc",
 	HandlerType: (*CryptoGrpcServer)(nil),
@@ -126,6 +190,14 @@ var _CryptoGrpc_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SignCertificate",
 			Handler:    _CryptoGrpc_SignCertificate_Handler,
+		},
+		{
+			MethodName: "EncryptData",
+			Handler:    _CryptoGrpc_EncryptData_Handler,
+		},
+		{
+			MethodName: "DecryptData",
+			Handler:    _CryptoGrpc_DecryptData_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -36,6 +36,7 @@ type SignCertificateInput struct {
 	IsCA                  bool
 	PathLenConstraint     int
 	SignatureAlgorithm    x509.SignatureAlgorithm
+	SKIHashAlg            Algorithm
 	CACert                *x509.Certificate
 	PrivateKey            any
 }
@@ -100,11 +101,8 @@ func (service *LibraryNative) SignCertificate(input SignCertificateInput) ([]byt
 		clientCRTTemplate.ExtraExtensions = append(clientCRTTemplate.ExtraExtensions, extension)
 	}
 
-	// Add Subject Key Identifier (SKI) extension
-	// RFC 5280: The keyIdentifier is composed of the 160-bit SHA-1 hash of the
-	// value of the BIT STRING subjectPublicKey (excluding the tag, length, and
-	// number of unused bits).
-	ski, err := service.computeSubjectKeyIdentifier(input.CSR.RawSubjectPublicKeyInfo)
+	// Add Subject Key Identifier (SKI) extension.
+	ski, err := service.computeSubjectKeyIdentifier(input.CSR.RawSubjectPublicKeyInfo, input.SKIHashAlg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute subject key identifier: %w", err)
 	}
@@ -230,10 +228,9 @@ func (service *LibraryNative) buildRawSubjectExactOrder(input, sep string) ([]by
 	return asn1.Marshal(rdns)
 }
 
-// computeSubjectKeyIdentifier computes the Subject Key Identifier (SKI) from SubjectPublicKeyInfo bytes.
-// According to RFC 5280 and OpenSSL's default behavior, the SKI is the SHA-1 hash of the
-// subjectPublicKey BIT STRING value (excluding the tag, length, and unused-bits octet).
-func (service *LibraryNative) computeSubjectKeyIdentifier(spkiDER []byte) ([]byte, error) {
+// computeSubjectKeyIdentifier computes a 160-bit Subject Key Identifier (SKI) from SubjectPublicKeyInfo bytes.
+// It hashes the subjectPublicKey BIT STRING value, excluding the tag, length, and unused-bits octet.
+func (service *LibraryNative) computeSubjectKeyIdentifier(spkiDER []byte, algorithm Algorithm) ([]byte, error) {
 	// Parse the SPKI structure to get the subjectPublicKey BIT STRING
 	var spki struct {
 		Algorithm        pkix.AlgorithmIdentifier
@@ -244,10 +241,36 @@ func (service *LibraryNative) computeSubjectKeyIdentifier(spkiDER []byte) ([]byt
 		return nil, fmt.Errorf("failed to unmarshal SPKI: %w", err)
 	}
 
-	// Compute SHA-1 of the public key bytes
-	// #nosec G505 G401 -- SHA-1 is required for Subject Key Identifier per RFC 5280
-	hash := sha1.Sum(spki.SubjectPublicKey.Bytes)
-	return hash[:], nil
+	if algorithm == "" {
+		algorithm = SHA_1
+	}
+
+	var digest []byte
+	switch algorithm {
+	case SHA_1:
+		// #nosec G505 G401 -- SHA-1 remains supported for backwards-compatible SKI generation.
+		hash := sha1.Sum(spki.SubjectPublicKey.Bytes)
+		digest = hash[:]
+	case SHA_256:
+		hash := sha256.Sum256(spki.SubjectPublicKey.Bytes)
+		digest = hash[:]
+	case SHA_384:
+		hash := sha512.Sum384(spki.SubjectPublicKey.Bytes)
+		digest = hash[:]
+	case SHA_512:
+		hash := sha512.Sum512(spki.SubjectPublicKey.Bytes)
+		digest = hash[:]
+	case SHA3_256:
+		hash := sha3.Sum256(spki.SubjectPublicKey.Bytes)
+		digest = hash[:]
+	case SHA3_512:
+		hash := sha3.Sum512(spki.SubjectPublicKey.Bytes)
+		digest = hash[:]
+	default:
+		return nil, fmt.Errorf("unsupported SKI hash algorithm %q, available algorithms: %v", algorithm, SignCertificateSKIHashingAlgorithmsSupported)
+	}
+
+	return digest[:20], nil
 }
 
 // buildBasicConstraintsExtension creates a non-critical Basic Constraints extension.

@@ -10,6 +10,7 @@
     SignCertificate:
       SignAlg: ecdsa
       HashAlg: sha-512
+      SKIHashAlg: sha-256
       Validity:
         ValidNotBeforeOffset: -1h
         ValidNotAfterOffset: 8760h

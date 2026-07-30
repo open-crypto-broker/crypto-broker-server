@@ -4,6 +4,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"log/slog"
 	"reflect"
 	"slices"
 	"strings"
@@ -42,6 +43,7 @@ type rawProfileAPISignData struct {
 type rawProfileAPISignCertificate struct {
 	SignAlg          string                                       `yaml:"SignAlg"`
 	HashAlg          string                                       `yaml:"HashAlg"`
+	SKIHashAlg       string                                       `yaml:"SKIHashAlg"`
 	Validity         rawProfileAPISignCertificateValidity         `yaml:"Validity"`
 	KeyConstraints   rawProfileAPISignCertificateKeyConstraints   `yaml:"KeyConstraints"`
 	KeyUsage         []string                                     `yaml:"KeyUsage"`
@@ -137,6 +139,11 @@ func (p rawProfile) mapToProfile() (Profile, error) {
 		}
 
 		signAlg, hashAlg := c10y.NewAlgorithm(p.API.SignCertificate.SignAlg), c10y.NewAlgorithm(p.API.SignCertificate.HashAlg)
+		skiHashAlg := c10y.NewAlgorithm(p.API.SignCertificate.SKIHashAlg)
+		if p.API.SignCertificate.SKIHashAlg == "" {
+			skiHashAlg = c10y.SHA_1
+			slog.Warn("SKIHashAlg is not set; defaulting to deprecated sha-1, set an explicit value", "profile", p.Name)
+		}
 		signatureAlgorithm, err := c10y.ComposeSignatureAlgorithm(signAlg, hashAlg)
 		if err != nil {
 			return Profile{}, fmt.Errorf("problem with signature algorithm, err: %w", err)
@@ -150,6 +157,7 @@ func (p rawProfile) mapToProfile() (Profile, error) {
 		api.SignCertificate = ProfileAPISignCertificate{
 			SignAlg:            signAlg,
 			HashAlg:            hashAlg,
+			SKIHashAlg:         skiHashAlg,
 			SignatureAlgorithm: signatureAlgorithm,
 			Validity: ProfileAPISignCertificateValidity{
 				NotBeforeOffset: notBeforeOffset,
@@ -232,6 +240,12 @@ func (certGeneration rawProfileAPISignCertificate) validate() error {
 	signAlg, hashAlg := c10y.NewAlgorithm(certGeneration.SignAlg), c10y.NewAlgorithm(certGeneration.HashAlg)
 	if _, errSignAlg := c10y.ComposeSignatureAlgorithm(signAlg, hashAlg); errSignAlg != nil {
 		err = errors.Join(err, errSignAlg)
+	}
+	if certGeneration.SKIHashAlg != "" {
+		skiHashAlg := c10y.NewAlgorithm(certGeneration.SKIHashAlg)
+		if !skiHashAlg.IsSupported(c10y.SignCertificateSKIHashing) {
+			err = errors.Join(err, fmt.Errorf("unsupported SKI hash algorithm: %s, available algorithms: %v", skiHashAlg, c10y.SignCertificateSKIHashingAlgorithmsSupported))
+		}
 	}
 
 	// Check key Usage
