@@ -230,7 +230,7 @@ func TestRawProfileAPISignCertificate_validateSKIHashAlgorithm(t *testing.T) {
 		BasicConstraints: rawProfileAPISignCertificateBasicConstraints{CA: false},
 	}
 
-	for _, algorithm := range []string{"sha-1", "sha-256", "sha-384", "sha-512", "sha3-256", "sha3-512"} {
+	for _, algorithm := range []string{"sha-1", "sha-256", "sha-384", "sha-512", "sha3-256", "sha3-384", "sha3-512"} {
 		t.Run("accepts "+algorithm, func(t *testing.T) {
 			input := validSignCertificate
 			input.SKIHashAlg = algorithm

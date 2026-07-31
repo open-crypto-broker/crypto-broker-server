@@ -263,6 +263,9 @@ func (service *LibraryNative) computeSubjectKeyIdentifier(spkiDER []byte, algori
 	case SHA3_256:
 		hash := sha3.Sum256(spki.SubjectPublicKey.Bytes)
 		digest = hash[:]
+	case SHA3_384:
+		hash := sha3.Sum384(spki.SubjectPublicKey.Bytes)
+		digest = hash[:]
 	case SHA3_512:
 		hash := sha3.Sum512(spki.SubjectPublicKey.Bytes)
 		digest = hash[:]

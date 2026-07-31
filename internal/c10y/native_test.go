@@ -46,6 +46,7 @@ func TestLibraryNative_computeSubjectKeyIdentifier(t *testing.T) {
 		{name: "sha-384", algorithm: SHA_384, want: mustHex("29167ee5cfd41bf3a6ae982ab52ac26de125a4a6")},
 		{name: "sha-512", algorithm: SHA_512, want: mustHex("328e06856cc544f71931934123bab0152cfb47c4")},
 		{name: "sha3-256", algorithm: SHA3_256, want: mustHex("9ca4278434dd4705eaa2d08ab6461cf895b61db2")},
+		{name: "sha3-384", algorithm: SHA3_384, want: mustHex("90f11e6d78a184b69215aeab6645f85394178673")},
 		{name: "sha3-512", algorithm: SHA3_512, want: mustHex("49710e7f4bfc76870e343547b4bb747f80d22fde")},
 		{name: "empty algorithm defaults to sha-1", algorithm: "", want: mustHex("13972225ed3dbed5493964ea97b2384fa2ef5db9")},
 		{name: "unknown algorithm", algorithm: "md5", wantErr: true},

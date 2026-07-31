@@ -58,7 +58,7 @@ var SignCertificateHashingAlgorithmsSupported = []Algorithm{
 
 // SignCertificateSKIHashingAlgorithmsSupported lists algorithms that can generate 160-bit Subject Key Identifiers.
 var SignCertificateSKIHashingAlgorithmsSupported = []Algorithm{
-	SHA_1, SHA_256, SHA_384, SHA_512, SHA3_256, SHA3_512,
+	SHA_1, SHA_256, SHA_384, SHA_512, SHA3_256, SHA3_384, SHA3_512,
 }
 
 // Algorithm represents string that is keyword of cryptographic algorithm used by crypto broker.
