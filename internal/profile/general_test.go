@@ -77,6 +77,7 @@ func TestRetrieve(t *testing.T) {
 						SignatureAlgorithm: 12,
 						SignAlg:            "ecdsa",
 						HashAlg:            "sha-512",
+						SKIHashAlg:         "sha-256",
 						Validity:           ProfileAPISignCertificateValidity{NotBeforeOffset: -3600000000000, NotAfterOffset: 31536000000000000},
 						KeyConstraints: ProfileAPISignCertificateKeyConstraints{
 							Subject: map[c10y.Algorithm]c10y.BitSizeConstraints{

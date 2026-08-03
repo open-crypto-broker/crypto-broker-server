@@ -11,6 +11,7 @@ import (
 // Predefined Algorithm value should be denoted as normalized strings.
 // Please see [normalize] before adding new constant here.
 const (
+	SHA_1       Algorithm = "sha-1"
 	SHA3_256    Algorithm = "sha3-256"
 	SHA3_384    Algorithm = "sha3-384"
 	SHA3_512    Algorithm = "sha3-512"
@@ -35,6 +36,9 @@ const (
 
 	// SignCertificateHashing represents hashing operation in SignCertificate API
 	SignCertificateHashing Operation = "signCertificateHashing"
+
+	// SignCertificateSKIHashing represents hashing used to generate certificate Subject Key Identifiers.
+	SignCertificateSKIHashing Operation = "signCertificateSKIHashing"
 )
 
 // HashDataAlgorithmsSupported predefined list of supported hashing algorithms by c10y pkg
@@ -50,6 +54,11 @@ var SignCertificateSigningAlgorithmsSupported = []Algorithm{
 // SignCertificateHashingAlgorithmsSupported list of supported hashing algorithms in SignCertificate API
 var SignCertificateHashingAlgorithmsSupported = []Algorithm{
 	SHA_256, SHA_384, SHA_512,
+}
+
+// SignCertificateSKIHashingAlgorithmsSupported lists algorithms that can generate 160-bit Subject Key Identifiers.
+var SignCertificateSKIHashingAlgorithmsSupported = []Algorithm{
+	SHA_1, SHA_256, SHA_384, SHA_512, SHA3_256, SHA3_384, SHA3_512,
 }
 
 // Algorithm represents string that is keyword of cryptographic algorithm used by crypto broker.
@@ -73,6 +82,8 @@ func (alg Algorithm) IsSupported(operation Operation) bool {
 		return slices.Contains(SignCertificateSigningAlgorithmsSupported, alg)
 	case SignCertificateHashing:
 		return slices.Contains(SignCertificateHashingAlgorithmsSupported, alg)
+	case SignCertificateSKIHashing:
+		return slices.Contains(SignCertificateSKIHashingAlgorithmsSupported, alg)
 	case HashData:
 		return slices.Contains(HashDataAlgorithmsSupported, alg)
 	default:

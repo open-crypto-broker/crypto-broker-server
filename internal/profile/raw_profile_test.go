@@ -3,6 +3,7 @@ package profile
 import (
 	"crypto/x509"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
@@ -218,6 +219,37 @@ func TestRawProfileAPISignCertificate_validate_rejectsUnsupportedUsageOrAlgorith
 	}
 }
 
+func TestRawProfileAPISignCertificate_validateSKIHashAlgorithm(t *testing.T) {
+	validSignCertificate := rawProfileAPISignCertificate{
+		SignAlg: "ecdsa",
+		HashAlg: "sha-512",
+		Validity: rawProfileAPISignCertificateValidity{
+			NotBeforeOffset: "-1h",
+			NotAfterOffset:  "1h",
+		},
+		BasicConstraints: rawProfileAPISignCertificateBasicConstraints{CA: false},
+	}
+
+	for _, algorithm := range []string{"sha-1", "sha-256", "sha-384", "sha-512", "sha3-256", "sha3-384", "sha3-512"} {
+		t.Run("accepts "+algorithm, func(t *testing.T) {
+			input := validSignCertificate
+			input.SKIHashAlg = algorithm
+			if err := input.validate(); err != nil {
+				t.Fatalf("validate() error = %v", err)
+			}
+		})
+	}
+
+	t.Run("rejects unknown algorithm", func(t *testing.T) {
+		input := validSignCertificate
+		input.SKIHashAlg = "md5"
+		err := input.validate()
+		if err == nil || !strings.Contains(err.Error(), "unsupported SKI hash algorithm: md5") {
+			t.Fatalf("validate() error = %v, want unsupported SKI hash algorithm error", err)
+		}
+	})
+}
+
 func TestRawProfile_mapToProfile_mapsSignCertificateFields(t *testing.T) {
 	rp := rawProfile{
 		Name: "MyProfile",
@@ -226,8 +258,9 @@ func TestRawProfile_mapToProfile_mapsSignCertificateFields(t *testing.T) {
 		},
 		API: rawProfileAPI{
 			SignCertificate: rawProfileAPISignCertificate{
-				SignAlg: "ecdsa",
-				HashAlg: "sha-512",
+				SignAlg:    "ecdsa",
+				HashAlg:    "sha-512",
+				SKIHashAlg: "sha-256",
 				Validity: rawProfileAPISignCertificateValidity{
 					NotBeforeOffset: "-1h",
 					NotAfterOffset:  "24h",
@@ -269,6 +302,9 @@ func TestRawProfile_mapToProfile_mapsSignCertificateFields(t *testing.T) {
 	if got.API.SignCertificate.SignatureAlgorithm != x509.ECDSAWithSHA512 {
 		t.Fatalf("SignatureAlgorithm = %v, want %v", got.API.SignCertificate.SignatureAlgorithm, x509.ECDSAWithSHA512)
 	}
+	if got.API.SignCertificate.SKIHashAlg != c10y.SHA_256 {
+		t.Fatalf("SKIHashAlg = %q, want %q", got.API.SignCertificate.SKIHashAlg, c10y.SHA_256)
+	}
 	if got.API.SignCertificate.BasicConstraints.PathLenConstraint != -1 {
 		t.Fatalf("PathLenConstraint = %d, want -1 when unset", got.API.SignCertificate.BasicConstraints.PathLenConstraint)
 	}
@@ -289,5 +325,29 @@ func TestRawProfile_mapToProfile_mapsSignCertificateFields(t *testing.T) {
 	if got.API.SignCertificate.KeyConstraints.Issuer[c10y.ECDSA].MinKeySize != 256 ||
 		got.API.SignCertificate.KeyConstraints.Issuer[c10y.ECDSA].MaxKeySize != 521 {
 		t.Fatalf("Issuer key constraints not mapped correctly: %#v", got.API.SignCertificate.KeyConstraints.Issuer[c10y.ECDSA])
+	}
+}
+
+func TestRawProfile_mapToProfile_defaultsSKIHashAlgorithmToSHA1(t *testing.T) {
+	rp := rawProfile{
+		Name:     "MyProfile",
+		Settings: rawProfileSettings{CryptoLibrary: "native"},
+		API: rawProfileAPI{SignCertificate: rawProfileAPISignCertificate{
+			SignAlg: "ecdsa",
+			HashAlg: "sha-512",
+			Validity: rawProfileAPISignCertificateValidity{
+				NotBeforeOffset: "-1h",
+				NotAfterOffset:  "1h",
+			},
+			BasicConstraints: rawProfileAPISignCertificateBasicConstraints{CA: false},
+		}},
+	}
+
+	got, err := rp.mapToProfile()
+	if err != nil {
+		t.Fatalf("mapToProfile() unexpected error: %v", err)
+	}
+	if got.API.SignCertificate.SKIHashAlg != c10y.SHA_1 {
+		t.Fatalf("SKIHashAlg = %q, want %q", got.API.SignCertificate.SKIHashAlg, c10y.SHA_1)
 	}
 }

@@ -68,6 +68,7 @@ type SignAPIOpts struct {
 // SignProfileOpts represents all information required in certificate signing process provided from profile
 type SignProfileOpts struct {
 	SignatureAlgorithm    x509.SignatureAlgorithm
+	SKIHashAlg            Algorithm
 	Validity              SignProfileValidity
 	KeyUsage              []x509.KeyUsage
 	ExtendedKeyUsage      []x509.ExtKeyUsage

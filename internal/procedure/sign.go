@@ -138,6 +138,7 @@ func (procedure *SignCertificate) signCertificate(req signCertificateRequest, p 
 		IsCA:                  p.API.SignCertificate.BasicConstraints.CA,
 		PathLenConstraint:     p.API.SignCertificate.BasicConstraints.PathLenConstraint,
 		SignatureAlgorithm:    p.API.SignCertificate.SignatureAlgorithm,
+		SKIHashAlg:            p.API.SignCertificate.SKIHashAlg,
 	}
 
 	if req.validNotBefore != nil {

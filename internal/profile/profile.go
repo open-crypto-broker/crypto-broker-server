@@ -36,6 +36,7 @@ type ProfileAPISignData struct {
 type ProfileAPISignCertificate struct {
 	SignAlg            c10y.Algorithm
 	HashAlg            c10y.Algorithm
+	SKIHashAlg         c10y.Algorithm
 	SignatureAlgorithm x509.SignatureAlgorithm
 	Validity           ProfileAPISignCertificateValidity
 	KeyConstraints     ProfileAPISignCertificateKeyConstraints
