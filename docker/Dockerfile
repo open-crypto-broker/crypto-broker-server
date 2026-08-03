@@ -2,7 +2,6 @@
 
 ARG GO_VERSION=1.26
 ARG ALPINE_VERSION=3.24
-ARG GRPC_HEALTH_PROBE_VERSION=v0.4.53
 
 # Runtime user/group id. Defaults to 1000 (the uid Platform Mesh assigns to the
 # sidecar and the owner of the shared Unix socket). Override at build time with
@@ -47,14 +46,6 @@ RUN mkdir -p /socket-skel/open-crypto-broker
 RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} \
     go build -trimpath -ldflags="-s -w" -o app ./cmd/server
 
-## Redeclare GRPC_HEALTH_PROBE_VERSION
-ARG GRPC_HEALTH_PROBE_VERSION
-## Install grpc-health-probe for health checks (built for the target arch; the
-## `find` normalises the output path, which differs for cross-compiled installs).
-RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} \
-    go install github.com/grpc-ecosystem/grpc-health-probe@${GRPC_HEALTH_PROBE_VERSION} \
- && cp "$(find /go/bin -name grpc-health-probe -type f | head -n1)" /grpc-health-probe
-
 ## Deploy with scratch docker image (no other binaries, dependencies, etc)
 FROM scratch
 
@@ -73,8 +64,6 @@ COPY --from=build /app/example-profiles ./profiles
 ## the non-root runtime user create and remove the socket; otherwise the freshly
 ## created volume is root-owned and bind() fails with "permission denied".
 COPY --from=build --chown=${APP_UID}:${APP_GID} /socket-skel/open-crypto-broker /tmp/open-crypto-broker
-## Healthcheck: use grpc-health-probe to check the gRPC health endpoint
-COPY --from=build /grpc-health-probe /usr/local/bin/grpc-health-probe
 
 # Run as a non-root user. In Platform Mesh the operator injects this container as
 # the sidecar and overrides the uid to 1000 (the owner of the shared Unix socket),
@@ -83,6 +72,3 @@ COPY --from=build /grpc-health-probe /usr/local/bin/grpc-health-probe
 USER ${APP_UID}:${APP_GID}
 
 ENTRYPOINT ["./app"]
-
-HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
-  CMD ["/usr/local/bin/grpc-health-probe", "-addr", "unix:///tmp/open-crypto-broker/crypto-broker-server.sock"]
