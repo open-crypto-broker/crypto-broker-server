@@ -3,6 +3,23 @@
 The list of commits in this changelog is automatically generated in the release process.
 The commits follow the Conventional Commit specification.
 
+## [0.4.1] - 2026-08-03
+
+### 🚀 Features
+
+- Made SKI hash alg configurable in profile (#143)
+- Upgrade packages (#145)
+- Configure SpanKindServer to allow the tracing system to connect traces (#141)
+
+### 🐛 Bug Fixes
+
+- Make uid in Dockerfile configurable (#142)
+- Adjust file permission for Profiles.yaml file (#140)
+
+### ⚙️ Miscellaneous Tasks
+
+- Remove grpc-health-probe (#144)
+
 ## [0.4.0] - 2026-07-24
 
 ### 🚀 Features
