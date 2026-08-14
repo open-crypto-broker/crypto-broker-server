@@ -14,7 +14,8 @@ updates:
     cooldown:
       default-days: 7
   - package-ecosystem: "gitsubmodule" # zizmor: ignore[dependabot-cooldown]
-    directory: "/protobuf"
+    # Look for the .gitmodules file in the root of the repository to find submodules.
+    directory: "/"
     schedule:
       interval: "daily"
     open-pull-requests-limit: 10
