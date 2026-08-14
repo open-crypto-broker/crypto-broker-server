@@ -3,6 +3,21 @@
 The list of commits in this changelog is automatically generated in the release process.
 The commits follow the Conventional Commit specification.
 
+## [0.4.2] - 2026-08-14
+
+### 🚀 Features
+
+- Upgrade go version to 1.26.6 (#149)
+- Add dependabot submodule check (#147)
+
+### 🐛 Bug Fixes
+
+- Adjust gitsubmodule path (#148)
+
+### ⚙️ Miscellaneous Tasks
+
+- Remove OCM variable (#146)
+
 ## [0.4.1] - 2026-08-03
 
 ### 🚀 Features
