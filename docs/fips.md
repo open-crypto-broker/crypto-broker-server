@@ -67,6 +67,9 @@ The relevant Taskfile variables are:
 | `FIPS_MODE_MODULE_VERSION` | - | Go Cryptographic Module version to link (`GOFIPS140` at build time) | `v1.0.0`, ... |
 | `FIPS_GODEBUG_VALUE` | - | `GODEBUG` value applied when the server starts | `fips140=on`, `fips140=only`, `fips140=off` |
 
+The selected module is also passed to the Docker build when running
+`task build-docker`.
+
 When `FIPS_GODEBUG_VALUE` is set to `fips140=only`, the Go runtime rejects any call to a non-FIPS-compliant algorithm. The server's built-in recovery middleware catches the resulting panic and returns it as a server error rather than terminating the process. For example:
 
 ```text
