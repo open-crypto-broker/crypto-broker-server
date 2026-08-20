@@ -52,6 +52,10 @@ func traceContextFromRequest(req any) *pb.TraceContext {
 		return traceContextFromMetadata(r.GetMetadata())
 	case *pb.FakeEndpointRequest:
 		return traceContextFromMetadata(r.GetMetadata())
+	case *pb.EncryptDataRequest:
+		return traceContextFromMetadata(r.GetMetadata())
+	case *pb.DecryptDataRequest:
+		return traceContextFromMetadata(r.GetMetadata())
 	default:
 		return nil
 	}
