@@ -16,7 +16,6 @@ func TestCryptoBrokerDevServer_Benchmark(t *testing.T) {
 	server := NewCryptoBrokerDevServer(
 		procedure.NewBenchmark(),
 		procedure.NewFakeEndpoint(),
-		false,
 	)
 
 	resp, err := server.Benchmark(context.Background(), &protobuf.BenchmarkRequest{
@@ -38,7 +37,6 @@ func TestCryptoBrokerDevServer_FakeEndpoint(t *testing.T) {
 	server := NewCryptoBrokerDevServer(
 		procedure.NewBenchmark(),
 		procedure.NewFakeEndpoint(),
-		false,
 	)
 
 	for i := 1; i <= 4; i++ {

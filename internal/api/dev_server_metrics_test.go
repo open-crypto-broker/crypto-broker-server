@@ -20,7 +20,6 @@ func TestCryptoBrokerDevServer_Benchmark_MetricsEnabled_Success_RecordsMetricsBr
 	server := NewCryptoBrokerDevServer(
 		procedure.NewBenchmark(),
 		procedure.NewFakeEndpoint(),
-		true,
 	)
 
 	resp, err := server.Benchmark(context.Background(), &protobuf.BenchmarkRequest{
@@ -44,7 +43,6 @@ func TestCryptoBrokerDevServer_FakeEndpoint_MetricsEnabled_CoversErrorAndSuccess
 	server := NewCryptoBrokerDevServer(
 		procedure.NewBenchmark(),
 		procedure.NewFakeEndpoint(),
-		true,
 	)
 
 	// First 4 calls should return error.
