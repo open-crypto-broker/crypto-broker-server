@@ -2,9 +2,14 @@ package interceptors
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 )
@@ -93,4 +98,54 @@ func TestContextWithRemoteTraceFromProtoRequest(t *testing.T) {
 	if !sc.IsRemote() {
 		t.Fatalf("expected remote span context")
 	}
+}
+
+func TestUnaryRequestLifecycleObservabilityInterceptor(t *testing.T) {
+	recorder := tracetest.NewSpanRecorder()
+	provider := sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+		sdktrace.WithSpanProcessor(recorder),
+	)
+	t.Cleanup(func() {
+		if err := provider.Shutdown(context.Background()); err != nil {
+			t.Errorf("shutdown tracer provider: %v", err)
+		}
+	})
+
+	interceptor := unaryRequestLifecycleObservabilityInterceptor(provider.Tracer("test"), false)
+	_, err := interceptor(context.Background(), &protobuf.HashDataRequest{}, &grpc.UnaryServerInfo{
+		FullMethod: "/CryptoBroker.CryptoGrpc/HashData",
+	}, func(context.Context, any) (any, error) {
+		return nil, errors.New("hash failed")
+	})
+	if err == nil {
+		t.Fatal("expected interceptor to return handler error")
+	}
+
+	spans := recorder.Ended()
+	if len(spans) != 1 {
+		t.Fatalf("ended spans = %d, want 1", len(spans))
+	}
+	span := spans[0]
+	if span.Name() != "/CryptoBroker.CryptoGrpc/HashData" {
+		t.Errorf("span name = %q", span.Name())
+	}
+	if span.SpanKind() != trace.SpanKindInternal {
+		t.Errorf("span kind = %s, want internal", span.SpanKind())
+	}
+	if span.Status().Code != codes.Error {
+		t.Errorf("span status = %s, want error", span.Status().Code)
+	}
+	if !hasAttribute(span.Attributes(), "rpc.method", "HashData") {
+		t.Errorf("span does not include rpc.method=HashData")
+	}
+}
+
+func hasAttribute(attributes []attribute.KeyValue, key, value string) bool {
+	for _, attribute := range attributes {
+		if string(attribute.Key) == key && attribute.Value.AsString() == value {
+			return true
+		}
+	}
+	return false
 }

@@ -159,6 +159,7 @@ func main() {
 		grpc.ChainUnaryInterceptor(
 			interceptors.UnaryRemoteTraceInterceptor(),
 			interceptors.UnaryCorrelationInterceptor(),
+			interceptors.UnaryRequestLifecycleObservabilityInterceptor(container.MeterProvider != nil),
 			logging.UnaryServerInterceptor(interceptorLogger(rpcLogger)),
 			recovery.UnaryServerInterceptor(recovery.WithRecoveryHandler(grpcPanicRecoveryHandler)),
 		),
@@ -173,7 +174,7 @@ func main() {
 
 	var pprofSrv *http.Server
 	if os.Getenv(env.APP_ENV) == devENV {
-		dev := api.NewCryptoBrokerDevServer(procedure.NewBenchmark(), procedure.NewFakeEndpoint(), true)
+		dev := api.NewCryptoBrokerDevServer(procedure.NewBenchmark(), procedure.NewFakeEndpoint())
 		pb.RegisterCryptoGrpcDevServer(server, dev)
 
 		if pprofAddr := os.Getenv(env.PPROF_ADDR); pprofAddr != "" {
