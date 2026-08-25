@@ -18,6 +18,7 @@ FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS b
 
 ARG TARGETOS
 ARG TARGETARCH
+ARG GOFIPS140=off
 
 WORKDIR /app
 
@@ -43,7 +44,10 @@ RUN mkdir -p /socket-skel/open-crypto-broker
 
 # -trimpath makes the build reproducible (no local paths baked in); -s -w drop
 # the symbol table and debug info to shrink the binary.
-RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} \
+RUN CGO_ENABLED=0 \
+    GOOS=${TARGETOS:-linux} \
+    GOARCH=${TARGETARCH:-amd64} \
+    GOFIPS140=${GOFIPS140} \
     go build -trimpath -ldflags="-s -w" -o app ./cmd/server
 
 ## Deploy with scratch docker image (no other binaries, dependencies, etc)
