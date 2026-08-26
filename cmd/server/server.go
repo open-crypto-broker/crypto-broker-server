@@ -163,8 +163,8 @@ func main() {
 			logging.UnaryServerInterceptor(interceptorLogger(rpcLogger)),
 			recovery.UnaryServerInterceptor(recovery.WithRecoveryHandler(grpcPanicRecoveryHandler)),
 		),
-		grpc.MaxRecvMsgSize(api.MaxGrpcRecvMsgSize),
-		grpc.MaxSendMsgSize(api.MaxGrpcSendMsgSize),
+		grpc.MaxRecvMsgSize(int(api.MaxGrpcRecvMsgSize)),
+		grpc.MaxSendMsgSize(int(api.MaxGrpcSendMsgSize)),
 		grpc.MaxConcurrentStreams(getMaxConcurrentStreams()),
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 	)
