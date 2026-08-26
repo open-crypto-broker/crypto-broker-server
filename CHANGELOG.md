@@ -3,6 +3,25 @@
 The list of commits in this changelog is automatically generated in the release process.
 The commits follow the Conventional Commit specification.
 
+## [0.5.0] - 2026-08-26
+
+### 🚀 Features
+
+- Switched to proto message size limits (#156)
+- Upgrade go to version 1.27 (#157)
+- SLSA level 3 adjustments (#155)
+- Support FIPS container builds (#151)
+- Refactored to middleware telemetry code
+- Updated proto
+- Updated traceContextFromRequest
+- Implemented Encrypt and Decrypt data procedures
+- Updated proto reference and created boilerplate code for encrypt and decrypt
+
+### 🐛 Bug Fixes
+
+- Adjusted code to review comments
+- Added encrypt and decrypt benchmarks to CI command
+
 ## [0.4.2] - 2026-08-14
 
 ### 🚀 Features
