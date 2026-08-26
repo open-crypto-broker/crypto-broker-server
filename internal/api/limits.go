@@ -1,5 +1,7 @@
 package api
 
+import "github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
+
 // Size limits are intentionally conservative; they bound memory usage and avoid
 // expensive parsing work on obviously unreasonable input.
 //
@@ -9,8 +11,8 @@ const (
 	MB = 1024 * KB
 
 	// gRPC transport-level limits (bytes)
-	MaxGrpcRecvMsgSize = 2 * MB
-	MaxGrpcSendMsgSize = 1 * MB
+	MaxGrpcRecvMsgSize = protobuf.MessageSizeLimit_MESSAGE_SIZE_LIMIT_MAX_REQUEST_BYTES
+	MaxGrpcSendMsgSize = protobuf.MessageSizeLimit_MESSAGE_SIZE_LIMIT_MAX_RESPONSE_BYTES
 
 	// Hash Data
 	maxHashInputBytes = 1 * MB
