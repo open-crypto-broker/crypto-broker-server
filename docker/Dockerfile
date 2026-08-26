@@ -1,6 +1,6 @@
 ## This Dockerfile builds the Crypto Broker Server
 
-ARG GO_VERSION=1.26
+ARG GO_VERSION=1.27
 ARG ALPINE_VERSION=3.24
 
 # Runtime user/group id. Defaults to 1000 (the uid Platform Mesh assigns to the
