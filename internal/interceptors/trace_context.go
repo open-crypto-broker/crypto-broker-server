@@ -4,17 +4,39 @@ import (
 	"context"
 
 	pb "github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
-// UnaryRemoteTraceInterceptor links the incoming context to the client trace when
-// metadata.traceContext carries valid trace/span IDs. Register before correlation and logging
-// interceptors so handlers and request logs see the propagated trace.
+// UnaryRemoteTraceInterceptor keeps a valid W3C transport trace context. When
+// transport propagation is absent or invalid, it uses metadata.traceContext as a
+// fallback. Register before correlation and logging interceptors so handlers and
+// request logs see the propagated trace.
 func UnaryRemoteTraceInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+		if hasValidTransportTraceContext(ctx) {
+			return handler(ctx, req)
+		}
 		return handler(ContextWithRemoteTraceFromProtoRequest(ctx, req), req)
 	}
+}
+
+func hasValidTransportTraceContext(ctx context.Context) bool {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return false
+	}
+	traceparent := md.Get("traceparent")
+	if len(traceparent) == 0 {
+		return false
+	}
+	extracted := propagation.TraceContext{}.Extract(
+		context.Background(),
+		propagation.MapCarrier{"traceparent": traceparent[0]},
+	)
+	return trace.SpanContextFromContext(extracted).IsValid()
 }
 
 // ContextWithRemoteTraceFromProtoRequest links ctx to the client trace when
