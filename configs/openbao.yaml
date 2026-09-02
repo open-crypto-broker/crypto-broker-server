@@ -1,0 +1,5 @@
+# Copy this file outside the repository or mount it as a secret before adding a
+# real token.
+address: https://openbao.example.internal
+token: replace-with-a-runtime-token
+namespace: crypto-server

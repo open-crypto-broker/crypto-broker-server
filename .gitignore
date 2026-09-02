@@ -37,4 +37,8 @@ bin/
 
 profiles/
 
+# Local KMS credentials. Keep only non-secret example configuration in Git.
+config/*.yaml
+!config/*.example.yaml
+
 benchmark-results.json

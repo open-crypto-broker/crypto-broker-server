@@ -2,6 +2,9 @@
 # Default profile kept minimal – broad demo; not tied to a single external standard.
 #   Reasoning: Showcases widest hash (sha3-512) and high-strength hash/sign combo for testing.
 - Name: Default
+  KMS:
+    Client: openbao
+    Config: openbao.yaml
   Settings:
     CryptoLibrary: native
   API:
