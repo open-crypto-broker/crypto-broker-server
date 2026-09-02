@@ -13,6 +13,7 @@ type Profile struct {
 	Name     string
 	Settings ProfileSettings
 	API      ProfileAPI
+	KMS      ProfileKMS
 }
 
 type ProfileSettings struct {
@@ -24,6 +25,12 @@ type ProfileAPI struct {
 	HashData        ProfileAPIHashData
 	SignData        ProfileAPISignData
 	EncryptData     ProfileAPIEncryptData
+}
+
+type ProfileKMS struct {
+	Client string
+	Config string
+	Cache  bool
 }
 
 type ProfileAPIHashData struct {
