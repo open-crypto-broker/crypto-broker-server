@@ -184,6 +184,10 @@ func validateEncryptDataRequest(req *pb.EncryptDataRequest) error {
 		return err
 	}
 
+	if err := validateKMSConfiguration(req.GetKeySource(), req.GetProfile()); err != nil {
+		return err
+	}
+
 	metadata := req.GetEncryptMetadata()
 	if metadata == nil {
 		return invalidArg("encryptMetadata", "required")
@@ -194,6 +198,7 @@ func validateEncryptDataRequest(req *pb.EncryptDataRequest) error {
 	if err := checkMaxLen("encryptMetadata.aad", len(metadata.GetAad()), maxEncryptionAADBytes); err != nil {
 		return err
 	}
+
 	return validateMetadata(req.GetMetadata())
 }
 
@@ -208,6 +213,9 @@ func validateDecryptDataRequest(req *pb.DecryptDataRequest) error {
 		return err
 	}
 	if err := checkMaxLen("ciphertext", len(req.GetCiphertext()), maxEncryptionDataBytes); err != nil {
+		return err
+	}
+	if err := validateKMSConfiguration(req.GetKeySource(), req.GetProfile()); err != nil {
 		return err
 	}
 
@@ -234,5 +242,25 @@ func validateKeySource(keySource *pb.KeySource) error {
 	if rawKey := keySource.GetRawKey(); rawKey != nil {
 		return checkMaxLen("keySource.rawKey", len(rawKey), maxEncryptionKeyBytes)
 	}
+	return nil
+}
+
+func validateKMSConfiguration(keySource *pb.KeySource, profileName string) error {
+	keyID := keySource.GetKeyId()
+	if keyID == "" {
+		return nil
+	}
+
+	profile, err := profile.Retrieve(profileName)
+	if err != nil {
+		return err
+	}
+
+	configured := profile.KMS.Client != "" && profile.KMS.Config != ""
+
+	if !configured {
+		return status.Errorf(codes.FailedPrecondition, "KMS is not configured for profile %q", profile.Name)
+	}
+
 	return nil
 }
