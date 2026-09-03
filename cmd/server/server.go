@@ -28,10 +28,12 @@ import (
 	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
 	pb "github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel/propagation"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/stats"
 	"google.golang.org/grpc/status"
 )
 
@@ -73,6 +75,14 @@ func interceptorLogger(l *slog.Logger) logging.Logger {
 		}
 		l.Log(ctx, slog.Level(lvl), msg, fields...)
 	})
+}
+
+func newGRPCServerStatsHandler(options ...otelgrpc.Option) stats.Handler {
+	options = append(options, otelgrpc.WithPropagators(propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	)))
+	return otelgrpc.NewServerHandler(options...)
 }
 
 // main defines executable program logic
@@ -166,7 +176,7 @@ func main() {
 		grpc.MaxRecvMsgSize(int(api.MaxGrpcRecvMsgSize)),
 		grpc.MaxSendMsgSize(int(api.MaxGrpcSendMsgSize)),
 		grpc.MaxConcurrentStreams(getMaxConcurrentStreams()),
-		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+		grpc.StatsHandler(newGRPCServerStatsHandler()),
 	)
 
 	// Register crypto broker service
