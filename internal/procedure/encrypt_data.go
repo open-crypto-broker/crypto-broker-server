@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/kms"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 )
@@ -80,19 +81,25 @@ func validateEncryptionKeySource(keySource *protobuf.KeySource, p profile.Profil
 		return nil, ArgumentError("keySource is required")
 	}
 
-	source := keySource.GetSource()
-	rawKey, ok := source.(*protobuf.KeySource_RawKey)
-	if !ok {
-		if _, keyIDProvided := source.(*protobuf.KeySource_KeyId); keyIDProvided {
-			return nil, ArgumentError("keySource.keyId is not supported without a KMS implementation")
-		}
-		return nil, ArgumentError("keySource.rawKey is required")
+	key, err := GetKey(p.Name, keySource)
+	if err != nil {
+		return nil, err
 	}
 
 	expectedKeyLength := p.API.EncryptData.KeySize / 8
-	if len(rawKey.RawKey) != expectedKeyLength {
-		return nil, ArgumentError("invalid AES-GCM key length: got %d, want %d", len(rawKey.RawKey), expectedKeyLength)
+	if len(key) != expectedKeyLength {
+		return nil, ArgumentError("invalid AES-GCM key length: got %d, want %d", len(key), expectedKeyLength)
 	}
 
-	return rawKey.RawKey, nil
+	return key, nil
+}
+
+func GetKey(profileName string, keySource *protobuf.KeySource) ([]byte, error) {
+	keyID := keySource.GetKeyId()
+
+	if keyID != "" {
+		return kms.GetKey(profileName, keyID)
+	}
+
+	return keySource.GetRawKey(), nil
 }

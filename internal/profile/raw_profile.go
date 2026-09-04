@@ -20,10 +20,16 @@ type rawProfile struct {
 	Name     string             `yaml:"Name"`
 	Settings rawProfileSettings `yaml:"Settings"`
 	API      rawProfileAPI      `yaml:"API"`
+	KMS      rawProfileKMS      `yaml:"KMS"`
 }
 
 type rawProfileSettings struct {
 	CryptoLibrary string `yaml:"CryptoLibrary"`
+}
+
+type rawProfileKMS struct {
+	Client string `yaml:"Client"`
+	Config string `yaml:"Config"`
 }
 
 type rawProfileAPI struct {
@@ -195,6 +201,10 @@ func (p rawProfile) mapToProfile() (Profile, error) {
 			CryptoLibrary: strings.ToLower(p.Settings.CryptoLibrary),
 		},
 		API: api,
+		KMS: ProfileKMS{
+			Client: p.KMS.Client,
+			Config: p.KMS.Config,
+		},
 	}, nil
 }
 

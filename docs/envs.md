@@ -3,6 +3,7 @@
 | `CRYPTO_BROKER_APP_ENV` | No | prod | Specifies the server runtime environment | `prod`, `dev` |
 | `CRYPTO_BROKER_GRPC_MAX_CONCURRENT_STREAMS` | No | 1024 | Specifies how many concurrent connections server can accept | uint32 |
 | `CRYPTO_BROKER_PROFILES_DIR` | Yes | - | Full OS path to directory containing profile files in YAML format | Any valid directory path |
+| `CRYPTO_BROKER_KMS_DIR` | When using KMS | `configs/` in `.env.example` | Directory containing KMS connection configuration files and user-defined custom client implementations. | Any valid directory path |
 | `CRYPTO_BROKER_LOG_LEVEL` | No | `info` | Log level for the server | `debug`, `info`, `warn`, `error` |
 | `CRYPTO_BROKER_LOG_FORMAT` | No | `json` | Log output format | `json`, `text` |
 | `CRYPTO_BROKER_LOG_OUTPUT` | No | `stdout` | Log output destination | `stdout`, `stderr` |
