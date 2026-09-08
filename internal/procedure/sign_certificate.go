@@ -51,7 +51,14 @@ func (procedure *SignCertificate) Execute(req *protobuf.SignCertificateRequest) 
 		return nil, fmt.Errorf("error while signing data: %w", err)
 	}
 
-	resp := &protobuf.SignCertificateResponse{Metadata: req.GetMetadata()}
+	resp := &protobuf.SignCertificateResponse{
+		Metadata: req.GetMetadata(),
+		Descriptor_: &protobuf.CryptoDescriptor{
+			Profile:   reqProfile.Name,
+			Operation: "SignCertificate",
+			Algorithm: c10y.SignatureAlgorithmOIDName(reqProfile.API.SignCertificate.SignatureAlgorithm),
+		},
+	}
 	switch req.GetOutputFormat() {
 	case protobuf.SignOutputFormat_PEM:
 		block := &pem.Block{Type: "CERTIFICATE", Bytes: clientCRTRaw}

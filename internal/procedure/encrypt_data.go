@@ -59,6 +59,11 @@ func (procedure *EncryptData) Execute(req *protobuf.EncryptDataRequest) (*protob
 			Tag:   result.Tag,
 		},
 		Metadata: req.GetMetadata(),
+		Descriptor_: &protobuf.CryptoDescriptor{
+			Profile:   reqProfile.Name,
+			Operation: "EncryptData",
+			Algorithm: reqProfile.API.EncryptData.EncryptAlg.String(),
+		},
 	}, nil
 }
 
