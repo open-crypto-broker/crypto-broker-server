@@ -281,6 +281,27 @@ func ComposeSignatureAlgorithm(signAlg, hashAlg Algorithm) (x509.SignatureAlgori
 	}
 }
 
+// SignatureAlgorithmOIDName returns the X.509 OID shortname for alg (e.g. "ecdsa-with-SHA512").
+// Falls back to alg.String() for values not produced by ComposeSignatureAlgorithm.
+func SignatureAlgorithmOIDName(alg x509.SignatureAlgorithm) string {
+	switch alg {
+	case x509.ECDSAWithSHA256:
+		return "ecdsa-with-SHA256"
+	case x509.ECDSAWithSHA384:
+		return "ecdsa-with-SHA384"
+	case x509.ECDSAWithSHA512:
+		return "ecdsa-with-SHA512"
+	case x509.SHA256WithRSA:
+		return "sha256WithRSAEncryption"
+	case x509.SHA384WithRSA:
+		return "sha384WithRSAEncryption"
+	case x509.SHA512WithRSA:
+		return "sha512WithRSAEncryption"
+	default:
+		return alg.String()
+	}
+}
+
 type BitSizeConstraints struct {
 	MinKeySize int
 	MaxKeySize int

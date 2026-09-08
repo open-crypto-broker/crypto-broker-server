@@ -32,6 +32,11 @@ func (procedure *HashData) Execute(req *protobuf.HashDataRequest) (*protobuf.Has
 	resp := &protobuf.HashDataResponse{
 		HashAlgorithm: reqProfile.API.HashData.HashAlg.String(),
 		Metadata:      req.GetMetadata(),
+		Descriptor_: &protobuf.CryptoDescriptor{
+			Profile:   reqProfile.Name,
+			Operation: "HashData",
+			Algorithm: reqProfile.API.HashData.HashAlg.String(),
+		},
 	}
 
 	switch req.GetOutputFormat() {
