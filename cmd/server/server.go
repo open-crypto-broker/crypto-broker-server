@@ -80,6 +80,7 @@ func main() {
 	// Create context for initialization
 	ctx := context.Background()
 	rpcLogger := clog.SetupGlobalLogger(ctx)
+	otel.ConfigureErrorHandler(rpcLogger)
 	rpcLogger.Info("Server info", slog.String("git.sha", gitSHA), slog.String("git.tag", gitTag))
 	rpcLogger.Debug("Bootstrapping server dependencies")
 	container := di.NewContainer(ctx, defaultProfiles)

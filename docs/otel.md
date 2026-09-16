@@ -54,6 +54,8 @@ The server generates the following trace spans:
 
 Traces include error information and span status codes for failed operations.
 
+When an asynchronous trace export fails after startup, the server emits an `ERROR` log with the message `OpenTelemetry telemetry export failed` and the underlying error. The failed export does not interrupt gRPC request processing.
+
 ### OpenTelemetry Logging
 
 The Crypto Broker Server includes OpenTelemetry (OTEL) logging support for centralized log aggregation and correlation with traces. Logs are automatically structured and can be exported to both console and OTLP-compatible backends simultaneously.
@@ -122,6 +124,8 @@ The `OTEL_METRICS_EXPORTER` variable supports several values:
 * **Comma-separated**: `console,otlphttp`, `otlpgrpc,console` - Export to multiple destinations simultaneously
 
 #### Metrics Collection
+
+When an asynchronous metrics export fails, the server emits an `ERROR` log with the message `OpenTelemetry telemetry export failed` and the underlying error. The next scheduled export continues normally and gRPC request processing is unaffected.
 
 The server collects metrics at following levels:
 
