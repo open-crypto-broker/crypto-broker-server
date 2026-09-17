@@ -2,6 +2,33 @@
 
 This document describes how to work with & configure OTEL related stuff in `crypto-broker-server`
 
+### Telemetry Name Prefix
+
+The optional `OTEL_PREFIX` environment variable adds a common prefix to every exported metric name and span name. It can be used to make Crypto Broker telemetry easier to identify in an observability backend such as Dynatrace.
+
+After leading and trailing whitespace is removed, the value is used exactly as configured. The server does not add a separator, so include one in `OTEL_PREFIX` when required:
+
+```bash
+export OTEL_PREFIX="crypto-broker:"
+task run
+```
+
+For example:
+
+```text
+crypto_requests_total  -> crypto-broker:crypto_requests_total
+<original span name>   -> crypto-broker:<original span name>
+```
+
+The prefix applies to:
+
+* Application and automatically collected metric names exported through console, OTLP HTTP, or OTLP gRPC
+* Span names exported through console, OTLP HTTP, or OTLP gRPC
+
+It does not apply to log records or OpenTelemetry resource attributes such as `service.name`. When `OTEL_PREFIX` is unset or empty, metric and span names are exported unchanged. Names that already start with the configured prefix are not prefixed again.
+
+Set the variable before starting the server. When using `task run`, it can also be placed in the local `.env` file loaded by `Taskfile.yaml`.
+
 ### OpenTelemetry Tracing
 
 The Crypto Broker Server includes OpenTelemetry (OTEL) tracing support for distributed observability. Traces are automatically generated for all gRPC requests and include detailed spans for cryptographic operations.
