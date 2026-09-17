@@ -26,7 +26,7 @@ func TestGetKeyUsesCachedKey(t *testing.T) {
 	if !bytes.Equal(first, kmsClient.key) || !bytes.Equal(second, kmsClient.key) {
 		t.Fatalf("GetKey() = %q, %q, want %q", first, second, kmsClient.key)
 	}
-	
+
 	if kmsClient.calls != 1 {
 		t.Errorf("KMS client calls = %d, want 1", kmsClient.calls)
 	}

@@ -16,9 +16,9 @@ type OpenBao struct {
 }
 
 type openBaoConfig struct {
-	Address   string `yaml:"address"`
-	Token     string `yaml:"token"`
-	Mount     string `yaml:"mount"`
+	Address string `yaml:"address"`
+	Token   string `yaml:"token"`
+	Mount   string `yaml:"mount"`
 }
 
 func Connect(configFile io.Reader) (*OpenBao, error) {
