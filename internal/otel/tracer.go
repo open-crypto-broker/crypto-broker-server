@@ -14,9 +14,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
-	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -98,19 +96,13 @@ func NewTracerProvider(ctx context.Context) (*TracerProvider, error) {
 		return &TracerProvider{tp: tp}, nil
 	}
 
-	res, err := resource.New(ctx,
-		resource.WithAttributes(
-			semconv.ServiceNameKey.String(serviceName),
-			semconv.ServiceVersionKey.String(serviceVersion),
-			semconv.ServiceNamespaceKey.String("crypto-broker"),
-		),
-	)
+	res, err := NewResource(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create resource: %w", err)
 	}
 
 	sampler := defineSampler()
-	batchers = append(batchers, sdktrace.WithResource(res), sdktrace.WithSampler(sampler))
+	batchers = append(batchers, sdktrace.WithSpanProcessor(prefixSpanProcessor{}), sdktrace.WithResource(res), sdktrace.WithSampler(sampler))
 	tp := sdktrace.NewTracerProvider(batchers...)
 	otel.SetTracerProvider(tp)
 
