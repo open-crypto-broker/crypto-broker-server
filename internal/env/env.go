@@ -62,6 +62,9 @@ const (
 	// OTEL_SERVICE_VERSION is OpenTelemetry environment variable that specifies the service version for traces.
 	OTEL_SERVICE_VERSION = "OTEL_SERVICE_VERSION"
 
+	// OTEL_PREFIX is prepended to exported OpenTelemetry metric and span names.
+	OTEL_PREFIX = "OTEL_PREFIX"
+
 	// OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION is OpenTelemetry environment variable for OTLP HTTP exporter authorization.
 	// For Dynatrace, use format: "Api-Token YOUR_API_TOKEN"
 	// Example: OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION="Api-Token dt0c01.xxx..."

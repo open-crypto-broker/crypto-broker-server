@@ -20,7 +20,7 @@ type Client interface {
 
 var (
 	clients = make(map[string]Client)
-	mux sync.RWMutex
+	mux     sync.RWMutex
 
 	keys = cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig)
 )
