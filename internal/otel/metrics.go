@@ -16,8 +16,6 @@ import (
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	"go.opentelemetry.io/otel/metric"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
-	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 )
 
 // MeterProvider holds the OpenTelemetry meter provider
@@ -94,13 +92,7 @@ func NewMeterProvider(ctx context.Context) (*MeterProvider, error) {
 		return &MeterProvider{mp: mp}, nil
 	}
 
-	res, err := resource.New(ctx,
-		resource.WithAttributes(
-			semconv.ServiceNameKey.String(serviceName),
-			semconv.ServiceVersionKey.String(serviceVersion),
-			semconv.ServiceNamespaceKey.String("crypto-broker"),
-		),
-	)
+	res, err := NewResource(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create resource: %w", err)
 	}
@@ -177,7 +169,7 @@ func getMetricReadersHTTP(ctx context.Context, interval time.Duration) (sdkmetri
 		return nil, fmt.Errorf("failed to create HTTP OTLP metric exporter: %w", err)
 	}
 
-	reader := sdkmetric.NewPeriodicReader(exporter, sdkmetric.WithInterval(interval))
+	reader := sdkmetric.NewPeriodicReader(prefixedMetricExporter{exporter}, sdkmetric.WithInterval(interval))
 
 	slog.Info("HTTP OTLP metrics exporter configured", slog.String("endpoint", endpointHost), slog.String("path", urlPath))
 
@@ -194,7 +186,7 @@ func getMetricReadersGRPC(ctx context.Context, interval time.Duration) (sdkmetri
 		return nil, fmt.Errorf("failed to create gRPC OTLP metric exporter: %w", err)
 	}
 
-	reader := sdkmetric.NewPeriodicReader(exporter, sdkmetric.WithInterval(interval))
+	reader := sdkmetric.NewPeriodicReader(prefixedMetricExporter{exporter}, sdkmetric.WithInterval(interval))
 
 	slog.Info("gRPC OTLP metric exporter configured", slog.String("endpoint", otlpEndpoint))
 
@@ -208,7 +200,7 @@ func getMetricReadersConsole(interval time.Duration) (sdkmetric.Reader, error) {
 		return nil, fmt.Errorf("failed to create console metric exporter: %w", err)
 	}
 
-	reader := sdkmetric.NewPeriodicReader(exporter, sdkmetric.WithInterval(interval))
+	reader := sdkmetric.NewPeriodicReader(prefixedMetricExporter{exporter}, sdkmetric.WithInterval(interval))
 
 	slog.Info("Console metric exporter configured")
 
