@@ -114,6 +114,61 @@ func (SignOutputFormat) EnumDescriptor() ([]byte, []int) {
 	return file_protobuf_messages_proto_rawDescGZIP(), []int{1}
 }
 
+// Output format for signatures produced by SignData and accepted by VerifyData.
+// SIGNATURE_CMS wraps the signature in an RFC 5652 CMS SignedData structure;
+// the other formats carry the bare signature value in the requested encoding.
+type SignatureFormat int32
+
+const (
+	SignatureFormat_SIGNATURE_RAW SignatureFormat = 0
+	SignatureFormat_SIGNATURE_DER SignatureFormat = 1
+	SignatureFormat_SIGNATURE_PEM SignatureFormat = 2
+	SignatureFormat_SIGNATURE_CMS SignatureFormat = 3
+)
+
+// Enum value maps for SignatureFormat.
+var (
+	SignatureFormat_name = map[int32]string{
+		0: "SIGNATURE_RAW",
+		1: "SIGNATURE_DER",
+		2: "SIGNATURE_PEM",
+		3: "SIGNATURE_CMS",
+	}
+	SignatureFormat_value = map[string]int32{
+		"SIGNATURE_RAW": 0,
+		"SIGNATURE_DER": 1,
+		"SIGNATURE_PEM": 2,
+		"SIGNATURE_CMS": 3,
+	}
+)
+
+func (x SignatureFormat) Enum() *SignatureFormat {
+	p := new(SignatureFormat)
+	*p = x
+	return p
+}
+
+func (x SignatureFormat) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SignatureFormat) Descriptor() protoreflect.EnumDescriptor {
+	return file_protobuf_messages_proto_enumTypes[2].Descriptor()
+}
+
+func (SignatureFormat) Type() protoreflect.EnumType {
+	return &file_protobuf_messages_proto_enumTypes[2]
+}
+
+func (x SignatureFormat) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use SignatureFormat.Descriptor instead.
+func (SignatureFormat) EnumDescriptor() ([]byte, []int) {
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{2}
+}
+
 // Single source of truth for gRPC message size limits, applied as transport options in the server and clients.
 type MessageSizeLimit int32
 
@@ -150,11 +205,11 @@ func (x MessageSizeLimit) String() string {
 }
 
 func (MessageSizeLimit) Descriptor() protoreflect.EnumDescriptor {
-	return file_protobuf_messages_proto_enumTypes[2].Descriptor()
+	return file_protobuf_messages_proto_enumTypes[3].Descriptor()
 }
 
 func (MessageSizeLimit) Type() protoreflect.EnumType {
-	return &file_protobuf_messages_proto_enumTypes[2]
+	return &file_protobuf_messages_proto_enumTypes[3]
 }
 
 func (x MessageSizeLimit) Number() protoreflect.EnumNumber {
@@ -163,7 +218,118 @@ func (x MessageSizeLimit) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use MessageSizeLimit.Descriptor instead.
 func (MessageSizeLimit) EnumDescriptor() ([]byte, []int) {
-	return file_protobuf_messages_proto_rawDescGZIP(), []int{2}
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{3}
+}
+
+// Single source of truth for payload field size limits (values in bytes)
+type PayloadLimits int32
+
+const (
+	PayloadLimits_PAYLOAD_LIMITS_UNSPECIFIED PayloadLimits = 0
+	// Profile and Metadata
+	PayloadLimits_PAYLOAD_LIMITS_PROFILE_MAX_LEN     PayloadLimits = 64
+	PayloadLimits_PAYLOAD_LIMITS_METADATA_ID_MAX_LEN PayloadLimits = 128
+	// Hash Data
+	PayloadLimits_PAYLOAD_LIMITS_HASH_DATA_INPUT_MAX_LEN PayloadLimits = 1048576 // 1 MiB
+	// Sign Certificate
+	PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_CSR_MAX_LEN                PayloadLimits = 65536 // 64 KiB
+	PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_CA_PRIVATE_KEY_MAX_LEN     PayloadLimits = 65536 // 64 KiB
+	PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_CA_CERT_MAX_LEN            PayloadLimits = 65536 // 64 KiB
+	PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_SUBJECT_MAX_LEN            PayloadLimits = 1024  // 1 KiB
+	PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_DISTRIBUTION_POINTS_MAX    PayloadLimits = 16    // #Entries, not bytes
+	PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_DISTRIBUTION_POINT_MAX_LEN PayloadLimits = 2048  // 2 KiB
+	// Encrypt / Decrypt Data
+	PayloadLimits_PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_KEYSOURCE_KEY_ID_MAX_LEN  PayloadLimits = 64
+	PayloadLimits_PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_KEYSOURCE_KEY_RAW_MAX_LEN PayloadLimits = 32
+	PayloadLimits_PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_DATA_MAX_LEN              PayloadLimits = 64
+	PayloadLimits_PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_NONCE_MAX_LEN             PayloadLimits = 32
+	PayloadLimits_PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_TAG_MAX_LEN               PayloadLimits = 32
+	PayloadLimits_PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_AAD_MAX_LEN               PayloadLimits = 32
+	// Sign / Verify Data
+	// TBD
+	// Tracing
+	PayloadLimits_PAYLOAD_LIMITS_TRACE_ID_MAX_LEN             PayloadLimits = 32
+	PayloadLimits_PAYLOAD_LIMITS_TRACE_SPAN_ID_MAX_LEN        PayloadLimits = 16
+	PayloadLimits_PAYLOAD_LIMITS_TRACE_FLAGS_MAX_LEN          PayloadLimits = 2
+	PayloadLimits_PAYLOAD_LIMITS_TRACE_STATE_MAX_LEN          PayloadLimits = 512
+	PayloadLimits_PAYLOAD_LIMITS_TRACE_CORRELATION_ID_MAX_LEN PayloadLimits = 128
+)
+
+// Enum value maps for PayloadLimits.
+var (
+	PayloadLimits_name = map[int32]string{
+		0:       "PAYLOAD_LIMITS_UNSPECIFIED",
+		64:      "PAYLOAD_LIMITS_PROFILE_MAX_LEN",
+		128:     "PAYLOAD_LIMITS_METADATA_ID_MAX_LEN",
+		1048576: "PAYLOAD_LIMITS_HASH_DATA_INPUT_MAX_LEN",
+		65536:   "PAYLOAD_LIMITS_SIGN_CERTIFICATE_CSR_MAX_LEN",
+		// Duplicate value: 65536: "PAYLOAD_LIMITS_SIGN_CERTIFICATE_CA_PRIVATE_KEY_MAX_LEN",
+		// Duplicate value: 65536: "PAYLOAD_LIMITS_SIGN_CERTIFICATE_CA_CERT_MAX_LEN",
+		1024: "PAYLOAD_LIMITS_SIGN_CERTIFICATE_SUBJECT_MAX_LEN",
+		16:   "PAYLOAD_LIMITS_SIGN_CERTIFICATE_DISTRIBUTION_POINTS_MAX",
+		2048: "PAYLOAD_LIMITS_SIGN_CERTIFICATE_DISTRIBUTION_POINT_MAX_LEN",
+		// Duplicate value: 64: "PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_KEYSOURCE_KEY_ID_MAX_LEN",
+		32: "PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_KEYSOURCE_KEY_RAW_MAX_LEN",
+		// Duplicate value: 64: "PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_DATA_MAX_LEN",
+		// Duplicate value: 32: "PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_NONCE_MAX_LEN",
+		// Duplicate value: 32: "PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_TAG_MAX_LEN",
+		// Duplicate value: 32: "PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_AAD_MAX_LEN",
+		// Duplicate value: 32: "PAYLOAD_LIMITS_TRACE_ID_MAX_LEN",
+		// Duplicate value: 16: "PAYLOAD_LIMITS_TRACE_SPAN_ID_MAX_LEN",
+		2:   "PAYLOAD_LIMITS_TRACE_FLAGS_MAX_LEN",
+		512: "PAYLOAD_LIMITS_TRACE_STATE_MAX_LEN",
+		// Duplicate value: 128: "PAYLOAD_LIMITS_TRACE_CORRELATION_ID_MAX_LEN",
+	}
+	PayloadLimits_value = map[string]int32{
+		"PAYLOAD_LIMITS_UNSPECIFIED":                                    0,
+		"PAYLOAD_LIMITS_PROFILE_MAX_LEN":                                64,
+		"PAYLOAD_LIMITS_METADATA_ID_MAX_LEN":                            128,
+		"PAYLOAD_LIMITS_HASH_DATA_INPUT_MAX_LEN":                        1048576,
+		"PAYLOAD_LIMITS_SIGN_CERTIFICATE_CSR_MAX_LEN":                   65536,
+		"PAYLOAD_LIMITS_SIGN_CERTIFICATE_CA_PRIVATE_KEY_MAX_LEN":        65536,
+		"PAYLOAD_LIMITS_SIGN_CERTIFICATE_CA_CERT_MAX_LEN":               65536,
+		"PAYLOAD_LIMITS_SIGN_CERTIFICATE_SUBJECT_MAX_LEN":               1024,
+		"PAYLOAD_LIMITS_SIGN_CERTIFICATE_DISTRIBUTION_POINTS_MAX":       16,
+		"PAYLOAD_LIMITS_SIGN_CERTIFICATE_DISTRIBUTION_POINT_MAX_LEN":    2048,
+		"PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_KEYSOURCE_KEY_ID_MAX_LEN":  64,
+		"PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_KEYSOURCE_KEY_RAW_MAX_LEN": 32,
+		"PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_DATA_MAX_LEN":              64,
+		"PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_NONCE_MAX_LEN":             32,
+		"PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_TAG_MAX_LEN":               32,
+		"PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_AAD_MAX_LEN":               32,
+		"PAYLOAD_LIMITS_TRACE_ID_MAX_LEN":                               32,
+		"PAYLOAD_LIMITS_TRACE_SPAN_ID_MAX_LEN":                          16,
+		"PAYLOAD_LIMITS_TRACE_FLAGS_MAX_LEN":                            2,
+		"PAYLOAD_LIMITS_TRACE_STATE_MAX_LEN":                            512,
+		"PAYLOAD_LIMITS_TRACE_CORRELATION_ID_MAX_LEN":                   128,
+	}
+)
+
+func (x PayloadLimits) Enum() *PayloadLimits {
+	p := new(PayloadLimits)
+	*p = x
+	return p
+}
+
+func (x PayloadLimits) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (PayloadLimits) Descriptor() protoreflect.EnumDescriptor {
+	return file_protobuf_messages_proto_enumTypes[4].Descriptor()
+}
+
+func (PayloadLimits) Type() protoreflect.EnumType {
+	return &file_protobuf_messages_proto_enumTypes[4]
+}
+
+func (x PayloadLimits) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use PayloadLimits.Descriptor instead.
+func (PayloadLimits) EnumDescriptor() ([]byte, []int) {
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{4}
 }
 
 // Meta-structures shared across other messages and functions
@@ -535,6 +701,138 @@ func (*KeySource_KeyId) isKeySource_Source() {}
 
 func (*KeySource_RawKey) isKeySource_Source() {}
 
+// Signing key material for SignData/VerifyData.
+// Legacy and post-quantum modes use a single KeySource. Hybrid (composite)
+// mode uses two component keys via componentKeys: the traditional key and the
+// ML-DSA key. For VerifyData the KeySource(s) carry the corresponding public keys.
+type SignKeySource struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Source:
+	//
+	//	*SignKeySource_Single
+	//	*SignKeySource_ComponentKeys
+	Source        isSignKeySource_Source `protobuf_oneof:"source"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SignKeySource) Reset() {
+	*x = SignKeySource{}
+	mi := &file_protobuf_messages_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SignKeySource) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SignKeySource) ProtoMessage() {}
+
+func (x *SignKeySource) ProtoReflect() protoreflect.Message {
+	mi := &file_protobuf_messages_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SignKeySource.ProtoReflect.Descriptor instead.
+func (*SignKeySource) Descriptor() ([]byte, []int) {
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *SignKeySource) GetSource() isSignKeySource_Source {
+	if x != nil {
+		return x.Source
+	}
+	return nil
+}
+
+func (x *SignKeySource) GetSingle() *KeySource {
+	if x != nil {
+		if x, ok := x.Source.(*SignKeySource_Single); ok {
+			return x.Single
+		}
+	}
+	return nil
+}
+
+func (x *SignKeySource) GetComponentKeys() *ComponentKeys {
+	if x != nil {
+		if x, ok := x.Source.(*SignKeySource_ComponentKeys); ok {
+			return x.ComponentKeys
+		}
+	}
+	return nil
+}
+
+type isSignKeySource_Source interface {
+	isSignKeySource_Source()
+}
+
+type SignKeySource_Single struct {
+	Single *KeySource `protobuf:"bytes,1,opt,name=single,proto3,oneof"`
+}
+
+type SignKeySource_ComponentKeys struct {
+	ComponentKeys *ComponentKeys `protobuf:"bytes,2,opt,name=componentKeys,proto3,oneof"`
+}
+
+func (*SignKeySource_Single) isSignKeySource_Source() {}
+
+func (*SignKeySource_ComponentKeys) isSignKeySource_Source() {}
+
+// Ordered list of component key sources for hybrid (composite) signing:
+// the traditional key followed by the ML-DSA key.
+type ComponentKeys struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Keys          []*KeySource           `protobuf:"bytes,1,rep,name=keys,proto3" json:"keys,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ComponentKeys) Reset() {
+	*x = ComponentKeys{}
+	mi := &file_protobuf_messages_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ComponentKeys) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ComponentKeys) ProtoMessage() {}
+
+func (x *ComponentKeys) ProtoReflect() protoreflect.Message {
+	mi := &file_protobuf_messages_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ComponentKeys.ProtoReflect.Descriptor instead.
+func (*ComponentKeys) Descriptor() ([]byte, []int) {
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ComponentKeys) GetKeys() []*KeySource {
+	if x != nil {
+		return x.Keys
+	}
+	return nil
+}
+
 // Caller-supplied encryption parameters. The nonce is always provided by the caller;
 // neither the broker nor the KMS generates it, so the caller owns nonce-uniqueness. AAD is optional.
 type EncryptMetadata struct {
@@ -547,7 +845,7 @@ type EncryptMetadata struct {
 
 func (x *EncryptMetadata) Reset() {
 	*x = EncryptMetadata{}
-	mi := &file_protobuf_messages_proto_msgTypes[5]
+	mi := &file_protobuf_messages_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -559,7 +857,7 @@ func (x *EncryptMetadata) String() string {
 func (*EncryptMetadata) ProtoMessage() {}
 
 func (x *EncryptMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_protobuf_messages_proto_msgTypes[5]
+	mi := &file_protobuf_messages_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -572,7 +870,7 @@ func (x *EncryptMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EncryptMetadata.ProtoReflect.Descriptor instead.
 func (*EncryptMetadata) Descriptor() ([]byte, []int) {
-	return file_protobuf_messages_proto_rawDescGZIP(), []int{5}
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *EncryptMetadata) GetNonce() []byte {
@@ -606,7 +904,7 @@ type CipherMetadata struct {
 
 func (x *CipherMetadata) Reset() {
 	*x = CipherMetadata{}
-	mi := &file_protobuf_messages_proto_msgTypes[6]
+	mi := &file_protobuf_messages_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -618,7 +916,7 @@ func (x *CipherMetadata) String() string {
 func (*CipherMetadata) ProtoMessage() {}
 
 func (x *CipherMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_protobuf_messages_proto_msgTypes[6]
+	mi := &file_protobuf_messages_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -631,7 +929,7 @@ func (x *CipherMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CipherMetadata.ProtoReflect.Descriptor instead.
 func (*CipherMetadata) Descriptor() ([]byte, []int) {
-	return file_protobuf_messages_proto_rawDescGZIP(), []int{6}
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *CipherMetadata) GetKeyId() string {
@@ -676,7 +974,7 @@ type DecryptMetadata struct {
 
 func (x *DecryptMetadata) Reset() {
 	*x = DecryptMetadata{}
-	mi := &file_protobuf_messages_proto_msgTypes[7]
+	mi := &file_protobuf_messages_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -688,7 +986,7 @@ func (x *DecryptMetadata) String() string {
 func (*DecryptMetadata) ProtoMessage() {}
 
 func (x *DecryptMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_protobuf_messages_proto_msgTypes[7]
+	mi := &file_protobuf_messages_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -701,7 +999,7 @@ func (x *DecryptMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DecryptMetadata.ProtoReflect.Descriptor instead.
 func (*DecryptMetadata) Descriptor() ([]byte, []int) {
-	return file_protobuf_messages_proto_rawDescGZIP(), []int{7}
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *DecryptMetadata) GetNonce() []byte {
@@ -738,7 +1036,7 @@ type HashDataRequest struct {
 
 func (x *HashDataRequest) Reset() {
 	*x = HashDataRequest{}
-	mi := &file_protobuf_messages_proto_msgTypes[8]
+	mi := &file_protobuf_messages_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -750,7 +1048,7 @@ func (x *HashDataRequest) String() string {
 func (*HashDataRequest) ProtoMessage() {}
 
 func (x *HashDataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protobuf_messages_proto_msgTypes[8]
+	mi := &file_protobuf_messages_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -763,7 +1061,7 @@ func (x *HashDataRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HashDataRequest.ProtoReflect.Descriptor instead.
 func (*HashDataRequest) Descriptor() ([]byte, []int) {
-	return file_protobuf_messages_proto_rawDescGZIP(), []int{8}
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *HashDataRequest) GetProfile() string {
@@ -811,7 +1109,7 @@ type HashDataResponse struct {
 
 func (x *HashDataResponse) Reset() {
 	*x = HashDataResponse{}
-	mi := &file_protobuf_messages_proto_msgTypes[9]
+	mi := &file_protobuf_messages_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -823,7 +1121,7 @@ func (x *HashDataResponse) String() string {
 func (*HashDataResponse) ProtoMessage() {}
 
 func (x *HashDataResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protobuf_messages_proto_msgTypes[9]
+	mi := &file_protobuf_messages_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -836,7 +1134,7 @@ func (x *HashDataResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HashDataResponse.ProtoReflect.Descriptor instead.
 func (*HashDataResponse) Descriptor() ([]byte, []int) {
-	return file_protobuf_messages_proto_rawDescGZIP(), []int{9}
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *HashDataResponse) GetHashAlgorithm() string {
@@ -920,7 +1218,7 @@ type SignCertificateRequest struct {
 
 func (x *SignCertificateRequest) Reset() {
 	*x = SignCertificateRequest{}
-	mi := &file_protobuf_messages_proto_msgTypes[10]
+	mi := &file_protobuf_messages_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -932,7 +1230,7 @@ func (x *SignCertificateRequest) String() string {
 func (*SignCertificateRequest) ProtoMessage() {}
 
 func (x *SignCertificateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protobuf_messages_proto_msgTypes[10]
+	mi := &file_protobuf_messages_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -945,7 +1243,7 @@ func (x *SignCertificateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignCertificateRequest.ProtoReflect.Descriptor instead.
 func (*SignCertificateRequest) Descriptor() ([]byte, []int) {
-	return file_protobuf_messages_proto_rawDescGZIP(), []int{10}
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *SignCertificateRequest) GetProfile() string {
@@ -1034,7 +1332,7 @@ type SignCertificateResponse struct {
 
 func (x *SignCertificateResponse) Reset() {
 	*x = SignCertificateResponse{}
-	mi := &file_protobuf_messages_proto_msgTypes[11]
+	mi := &file_protobuf_messages_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1046,7 +1344,7 @@ func (x *SignCertificateResponse) String() string {
 func (*SignCertificateResponse) ProtoMessage() {}
 
 func (x *SignCertificateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protobuf_messages_proto_msgTypes[11]
+	mi := &file_protobuf_messages_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1059,7 +1357,7 @@ func (x *SignCertificateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignCertificateResponse.ProtoReflect.Descriptor instead.
 func (*SignCertificateResponse) Descriptor() ([]byte, []int) {
-	return file_protobuf_messages_proto_rawDescGZIP(), []int{11}
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *SignCertificateResponse) GetMetadata() *Metadata {
@@ -1117,6 +1415,280 @@ func (*SignCertificateResponse_Pem) isSignCertificateResponse_SignedCertificate(
 
 func (*SignCertificateResponse_Der) isSignCertificateResponse_SignedCertificate() {}
 
+// SignData request and response messages
+type SignDataRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Profile         string                 `protobuf:"bytes,1,opt,name=profile,proto3" json:"profile,omitempty"`
+	KeySource       *SignKeySource         `protobuf:"bytes,2,opt,name=keySource,proto3" json:"keySource,omitempty"`
+	Input           []byte                 `protobuf:"bytes,3,opt,name=input,proto3" json:"input,omitempty"`
+	SignatureFormat *SignatureFormat       `protobuf:"varint,4,opt,name=signatureFormat,proto3,enum=CryptoBroker.SignatureFormat,oneof" json:"signatureFormat,omitempty"`
+	Metadata        *Metadata              `protobuf:"bytes,5,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *SignDataRequest) Reset() {
+	*x = SignDataRequest{}
+	mi := &file_protobuf_messages_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SignDataRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SignDataRequest) ProtoMessage() {}
+
+func (x *SignDataRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_protobuf_messages_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SignDataRequest.ProtoReflect.Descriptor instead.
+func (*SignDataRequest) Descriptor() ([]byte, []int) {
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *SignDataRequest) GetProfile() string {
+	if x != nil {
+		return x.Profile
+	}
+	return ""
+}
+
+func (x *SignDataRequest) GetKeySource() *SignKeySource {
+	if x != nil {
+		return x.KeySource
+	}
+	return nil
+}
+
+func (x *SignDataRequest) GetInput() []byte {
+	if x != nil {
+		return x.Input
+	}
+	return nil
+}
+
+func (x *SignDataRequest) GetSignatureFormat() SignatureFormat {
+	if x != nil && x.SignatureFormat != nil {
+		return *x.SignatureFormat
+	}
+	return SignatureFormat_SIGNATURE_RAW
+}
+
+func (x *SignDataRequest) GetMetadata() *Metadata {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+type SignDataResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Signature     []byte                 `protobuf:"bytes,1,opt,name=signature,proto3" json:"signature,omitempty"`
+	Descriptor_   *CryptoDescriptor      `protobuf:"bytes,2,opt,name=descriptor,proto3" json:"descriptor,omitempty"`
+	Metadata      *Metadata              `protobuf:"bytes,3,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SignDataResponse) Reset() {
+	*x = SignDataResponse{}
+	mi := &file_protobuf_messages_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SignDataResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SignDataResponse) ProtoMessage() {}
+
+func (x *SignDataResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_protobuf_messages_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SignDataResponse.ProtoReflect.Descriptor instead.
+func (*SignDataResponse) Descriptor() ([]byte, []int) {
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *SignDataResponse) GetSignature() []byte {
+	if x != nil {
+		return x.Signature
+	}
+	return nil
+}
+
+func (x *SignDataResponse) GetDescriptor_() *CryptoDescriptor {
+	if x != nil {
+		return x.Descriptor_
+	}
+	return nil
+}
+
+func (x *SignDataResponse) GetMetadata() *Metadata {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+// VerifyData request and response messages
+type VerifyDataRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Profile         string                 `protobuf:"bytes,1,opt,name=profile,proto3" json:"profile,omitempty"`
+	KeySource       *SignKeySource         `protobuf:"bytes,2,opt,name=keySource,proto3" json:"keySource,omitempty"`
+	Input           []byte                 `protobuf:"bytes,3,opt,name=input,proto3" json:"input,omitempty"`
+	Signature       []byte                 `protobuf:"bytes,4,opt,name=signature,proto3" json:"signature,omitempty"`
+	SignatureFormat *SignatureFormat       `protobuf:"varint,5,opt,name=signatureFormat,proto3,enum=CryptoBroker.SignatureFormat,oneof" json:"signatureFormat,omitempty"`
+	Metadata        *Metadata              `protobuf:"bytes,6,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *VerifyDataRequest) Reset() {
+	*x = VerifyDataRequest{}
+	mi := &file_protobuf_messages_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VerifyDataRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VerifyDataRequest) ProtoMessage() {}
+
+func (x *VerifyDataRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_protobuf_messages_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VerifyDataRequest.ProtoReflect.Descriptor instead.
+func (*VerifyDataRequest) Descriptor() ([]byte, []int) {
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *VerifyDataRequest) GetProfile() string {
+	if x != nil {
+		return x.Profile
+	}
+	return ""
+}
+
+func (x *VerifyDataRequest) GetKeySource() *SignKeySource {
+	if x != nil {
+		return x.KeySource
+	}
+	return nil
+}
+
+func (x *VerifyDataRequest) GetInput() []byte {
+	if x != nil {
+		return x.Input
+	}
+	return nil
+}
+
+func (x *VerifyDataRequest) GetSignature() []byte {
+	if x != nil {
+		return x.Signature
+	}
+	return nil
+}
+
+func (x *VerifyDataRequest) GetSignatureFormat() SignatureFormat {
+	if x != nil && x.SignatureFormat != nil {
+		return *x.SignatureFormat
+	}
+	return SignatureFormat_SIGNATURE_RAW
+}
+
+func (x *VerifyDataRequest) GetMetadata() *Metadata {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+type VerifyDataResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Valid         bool                   `protobuf:"varint,1,opt,name=valid,proto3" json:"valid,omitempty"`
+	Metadata      *Metadata              `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VerifyDataResponse) Reset() {
+	*x = VerifyDataResponse{}
+	mi := &file_protobuf_messages_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VerifyDataResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VerifyDataResponse) ProtoMessage() {}
+
+func (x *VerifyDataResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_protobuf_messages_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VerifyDataResponse.ProtoReflect.Descriptor instead.
+func (*VerifyDataResponse) Descriptor() ([]byte, []int) {
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *VerifyDataResponse) GetValid() bool {
+	if x != nil {
+		return x.Valid
+	}
+	return false
+}
+
+func (x *VerifyDataResponse) GetMetadata() *Metadata {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
 // EncryptData request and response messages
 type EncryptDataRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
@@ -1131,7 +1703,7 @@ type EncryptDataRequest struct {
 
 func (x *EncryptDataRequest) Reset() {
 	*x = EncryptDataRequest{}
-	mi := &file_protobuf_messages_proto_msgTypes[12]
+	mi := &file_protobuf_messages_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1143,7 +1715,7 @@ func (x *EncryptDataRequest) String() string {
 func (*EncryptDataRequest) ProtoMessage() {}
 
 func (x *EncryptDataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protobuf_messages_proto_msgTypes[12]
+	mi := &file_protobuf_messages_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1156,7 +1728,7 @@ func (x *EncryptDataRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EncryptDataRequest.ProtoReflect.Descriptor instead.
 func (*EncryptDataRequest) Descriptor() ([]byte, []int) {
-	return file_protobuf_messages_proto_rawDescGZIP(), []int{12}
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *EncryptDataRequest) GetProfile() string {
@@ -1206,7 +1778,7 @@ type EncryptDataResponse struct {
 
 func (x *EncryptDataResponse) Reset() {
 	*x = EncryptDataResponse{}
-	mi := &file_protobuf_messages_proto_msgTypes[13]
+	mi := &file_protobuf_messages_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1218,7 +1790,7 @@ func (x *EncryptDataResponse) String() string {
 func (*EncryptDataResponse) ProtoMessage() {}
 
 func (x *EncryptDataResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protobuf_messages_proto_msgTypes[13]
+	mi := &file_protobuf_messages_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1231,7 +1803,7 @@ func (x *EncryptDataResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EncryptDataResponse.ProtoReflect.Descriptor instead.
 func (*EncryptDataResponse) Descriptor() ([]byte, []int) {
-	return file_protobuf_messages_proto_rawDescGZIP(), []int{13}
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *EncryptDataResponse) GetCiphertext() []byte {
@@ -1276,7 +1848,7 @@ type DecryptDataRequest struct {
 
 func (x *DecryptDataRequest) Reset() {
 	*x = DecryptDataRequest{}
-	mi := &file_protobuf_messages_proto_msgTypes[14]
+	mi := &file_protobuf_messages_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1288,7 +1860,7 @@ func (x *DecryptDataRequest) String() string {
 func (*DecryptDataRequest) ProtoMessage() {}
 
 func (x *DecryptDataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protobuf_messages_proto_msgTypes[14]
+	mi := &file_protobuf_messages_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1301,7 +1873,7 @@ func (x *DecryptDataRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DecryptDataRequest.ProtoReflect.Descriptor instead.
 func (*DecryptDataRequest) Descriptor() ([]byte, []int) {
-	return file_protobuf_messages_proto_rawDescGZIP(), []int{14}
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *DecryptDataRequest) GetProfile() string {
@@ -1349,7 +1921,7 @@ type DecryptDataResponse struct {
 
 func (x *DecryptDataResponse) Reset() {
 	*x = DecryptDataResponse{}
-	mi := &file_protobuf_messages_proto_msgTypes[15]
+	mi := &file_protobuf_messages_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1361,7 +1933,7 @@ func (x *DecryptDataResponse) String() string {
 func (*DecryptDataResponse) ProtoMessage() {}
 
 func (x *DecryptDataResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protobuf_messages_proto_msgTypes[15]
+	mi := &file_protobuf_messages_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1374,7 +1946,7 @@ func (x *DecryptDataResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DecryptDataResponse.ProtoReflect.Descriptor instead.
 func (*DecryptDataResponse) Descriptor() ([]byte, []int) {
-	return file_protobuf_messages_proto_rawDescGZIP(), []int{15}
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *DecryptDataResponse) GetPlaintext() []byte {
@@ -1401,7 +1973,7 @@ type BenchmarkRequest struct {
 
 func (x *BenchmarkRequest) Reset() {
 	*x = BenchmarkRequest{}
-	mi := &file_protobuf_messages_proto_msgTypes[16]
+	mi := &file_protobuf_messages_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1413,7 +1985,7 @@ func (x *BenchmarkRequest) String() string {
 func (*BenchmarkRequest) ProtoMessage() {}
 
 func (x *BenchmarkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protobuf_messages_proto_msgTypes[16]
+	mi := &file_protobuf_messages_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1426,7 +1998,7 @@ func (x *BenchmarkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BenchmarkRequest.ProtoReflect.Descriptor instead.
 func (*BenchmarkRequest) Descriptor() ([]byte, []int) {
-	return file_protobuf_messages_proto_rawDescGZIP(), []int{16}
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *BenchmarkRequest) GetMetadata() *Metadata {
@@ -1446,7 +2018,7 @@ type BenchmarkResponse struct {
 
 func (x *BenchmarkResponse) Reset() {
 	*x = BenchmarkResponse{}
-	mi := &file_protobuf_messages_proto_msgTypes[17]
+	mi := &file_protobuf_messages_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1458,7 +2030,7 @@ func (x *BenchmarkResponse) String() string {
 func (*BenchmarkResponse) ProtoMessage() {}
 
 func (x *BenchmarkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protobuf_messages_proto_msgTypes[17]
+	mi := &file_protobuf_messages_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1471,7 +2043,7 @@ func (x *BenchmarkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BenchmarkResponse.ProtoReflect.Descriptor instead.
 func (*BenchmarkResponse) Descriptor() ([]byte, []int) {
-	return file_protobuf_messages_proto_rawDescGZIP(), []int{17}
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *BenchmarkResponse) GetBenchmarkResults() string {
@@ -1498,7 +2070,7 @@ type FakeEndpointRequest struct {
 
 func (x *FakeEndpointRequest) Reset() {
 	*x = FakeEndpointRequest{}
-	mi := &file_protobuf_messages_proto_msgTypes[18]
+	mi := &file_protobuf_messages_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1510,7 +2082,7 @@ func (x *FakeEndpointRequest) String() string {
 func (*FakeEndpointRequest) ProtoMessage() {}
 
 func (x *FakeEndpointRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protobuf_messages_proto_msgTypes[18]
+	mi := &file_protobuf_messages_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1523,7 +2095,7 @@ func (x *FakeEndpointRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FakeEndpointRequest.ProtoReflect.Descriptor instead.
 func (*FakeEndpointRequest) Descriptor() ([]byte, []int) {
-	return file_protobuf_messages_proto_rawDescGZIP(), []int{18}
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *FakeEndpointRequest) GetMetadata() *Metadata {
@@ -1543,7 +2115,7 @@ type FakeEndpointResponse struct {
 
 func (x *FakeEndpointResponse) Reset() {
 	*x = FakeEndpointResponse{}
-	mi := &file_protobuf_messages_proto_msgTypes[19]
+	mi := &file_protobuf_messages_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1555,7 +2127,7 @@ func (x *FakeEndpointResponse) String() string {
 func (*FakeEndpointResponse) ProtoMessage() {}
 
 func (x *FakeEndpointResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protobuf_messages_proto_msgTypes[19]
+	mi := &file_protobuf_messages_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1568,7 +2140,7 @@ func (x *FakeEndpointResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FakeEndpointResponse.ProtoReflect.Descriptor instead.
 func (*FakeEndpointResponse) Descriptor() ([]byte, []int) {
-	return file_protobuf_messages_proto_rawDescGZIP(), []int{19}
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *FakeEndpointResponse) GetMessage() string {
@@ -1625,7 +2197,13 @@ const file_protobuf_messages_proto_rawDesc = "" +
 	"\tKeySource\x12\x16\n" +
 	"\x05keyId\x18\x01 \x01(\tH\x00R\x05keyId\x12\x18\n" +
 	"\x06rawKey\x18\x02 \x01(\fH\x00R\x06rawKeyB\b\n" +
-	"\x06source\"F\n" +
+	"\x06source\"\x91\x01\n" +
+	"\rSignKeySource\x121\n" +
+	"\x06single\x18\x01 \x01(\v2\x17.CryptoBroker.KeySourceH\x00R\x06single\x12C\n" +
+	"\rcomponentKeys\x18\x02 \x01(\v2\x1b.CryptoBroker.ComponentKeysH\x00R\rcomponentKeysB\b\n" +
+	"\x06source\"<\n" +
+	"\rComponentKeys\x12+\n" +
+	"\x04keys\x18\x01 \x03(\v2\x17.CryptoBroker.KeySourceR\x04keys\"F\n" +
 	"\x0fEncryptMetadata\x12\x14\n" +
 	"\x05nonce\x18\x01 \x01(\fR\x05nonce\x12\x15\n" +
 	"\x03aad\x18\x02 \x01(\fH\x00R\x03aad\x88\x01\x01B\x06\n" +
@@ -1681,7 +2259,31 @@ const file_protobuf_messages_proto_rawDesc = "" +
 	"\n" +
 	"descriptor\x18\x05 \x01(\v2\x1e.CryptoBroker.CryptoDescriptorR\n" +
 	"descriptorB\x13\n" +
-	"\x11signedCertificate\"\x80\x02\n" +
+	"\x11signedCertificate\"\x92\x02\n" +
+	"\x0fSignDataRequest\x12\x18\n" +
+	"\aprofile\x18\x01 \x01(\tR\aprofile\x129\n" +
+	"\tkeySource\x18\x02 \x01(\v2\x1b.CryptoBroker.SignKeySourceR\tkeySource\x12\x14\n" +
+	"\x05input\x18\x03 \x01(\fR\x05input\x12L\n" +
+	"\x0fsignatureFormat\x18\x04 \x01(\x0e2\x1d.CryptoBroker.SignatureFormatH\x00R\x0fsignatureFormat\x88\x01\x01\x122\n" +
+	"\bmetadata\x18\x05 \x01(\v2\x16.CryptoBroker.MetadataR\bmetadataB\x12\n" +
+	"\x10_signatureFormat\"\xa4\x01\n" +
+	"\x10SignDataResponse\x12\x1c\n" +
+	"\tsignature\x18\x01 \x01(\fR\tsignature\x12>\n" +
+	"\n" +
+	"descriptor\x18\x02 \x01(\v2\x1e.CryptoBroker.CryptoDescriptorR\n" +
+	"descriptor\x122\n" +
+	"\bmetadata\x18\x03 \x01(\v2\x16.CryptoBroker.MetadataR\bmetadata\"\xb2\x02\n" +
+	"\x11VerifyDataRequest\x12\x18\n" +
+	"\aprofile\x18\x01 \x01(\tR\aprofile\x129\n" +
+	"\tkeySource\x18\x02 \x01(\v2\x1b.CryptoBroker.SignKeySourceR\tkeySource\x12\x14\n" +
+	"\x05input\x18\x03 \x01(\fR\x05input\x12\x1c\n" +
+	"\tsignature\x18\x04 \x01(\fR\tsignature\x12L\n" +
+	"\x0fsignatureFormat\x18\x05 \x01(\x0e2\x1d.CryptoBroker.SignatureFormatH\x00R\x0fsignatureFormat\x88\x01\x01\x122\n" +
+	"\bmetadata\x18\x06 \x01(\v2\x16.CryptoBroker.MetadataR\bmetadataB\x12\n" +
+	"\x10_signatureFormat\"^\n" +
+	"\x12VerifyDataResponse\x12\x14\n" +
+	"\x05valid\x18\x01 \x01(\bR\x05valid\x122\n" +
+	"\bmetadata\x18\x02 \x01(\v2\x16.CryptoBroker.MetadataR\bmetadata\"\x80\x02\n" +
 	"\x12EncryptDataRequest\x12\x18\n" +
 	"\aprofile\x18\x01 \x01(\tR\aprofile\x125\n" +
 	"\tkeySource\x18\x02 \x01(\v2\x17.CryptoBroker.KeySourceR\tkeySource\x12\x1c\n" +
@@ -1723,15 +2325,45 @@ const file_protobuf_messages_proto_rawDesc = "" +
 	"\x03RAW\x10\x01*$\n" +
 	"\x10SignOutputFormat\x12\a\n" +
 	"\x03DER\x10\x00\x12\a\n" +
-	"\x03PEM\x10\x01*\x90\x01\n" +
+	"\x03PEM\x10\x01*]\n" +
+	"\x0fSignatureFormat\x12\x11\n" +
+	"\rSIGNATURE_RAW\x10\x00\x12\x11\n" +
+	"\rSIGNATURE_DER\x10\x01\x12\x11\n" +
+	"\rSIGNATURE_PEM\x10\x02\x12\x11\n" +
+	"\rSIGNATURE_CMS\x10\x03*\x90\x01\n" +
 	"\x10MessageSizeLimit\x12\"\n" +
 	"\x1eMESSAGE_SIZE_LIMIT_UNSPECIFIED\x10\x00\x12+\n" +
 	"$MESSAGE_SIZE_LIMIT_MAX_REQUEST_BYTES\x10\x80\x80\x80\x01\x12+\n" +
-	"%MESSAGE_SIZE_LIMIT_MAX_RESPONSE_BYTES\x10\x80\x80@2\xdf\x02\n" +
+	"%MESSAGE_SIZE_LIMIT_MAX_RESPONSE_BYTES\x10\x80\x80@*\xb8\b\n" +
+	"\rPayloadLimits\x12\x1e\n" +
+	"\x1aPAYLOAD_LIMITS_UNSPECIFIED\x10\x00\x12\"\n" +
+	"\x1ePAYLOAD_LIMITS_PROFILE_MAX_LEN\x10@\x12'\n" +
+	"\"PAYLOAD_LIMITS_METADATA_ID_MAX_LEN\x10\x80\x01\x12,\n" +
+	"&PAYLOAD_LIMITS_HASH_DATA_INPUT_MAX_LEN\x10\x80\x80@\x121\n" +
+	"+PAYLOAD_LIMITS_SIGN_CERTIFICATE_CSR_MAX_LEN\x10\x80\x80\x04\x12<\n" +
+	"6PAYLOAD_LIMITS_SIGN_CERTIFICATE_CA_PRIVATE_KEY_MAX_LEN\x10\x80\x80\x04\x125\n" +
+	"/PAYLOAD_LIMITS_SIGN_CERTIFICATE_CA_CERT_MAX_LEN\x10\x80\x80\x04\x124\n" +
+	"/PAYLOAD_LIMITS_SIGN_CERTIFICATE_SUBJECT_MAX_LEN\x10\x80\b\x12;\n" +
+	"7PAYLOAD_LIMITS_SIGN_CERTIFICATE_DISTRIBUTION_POINTS_MAX\x10\x10\x12?\n" +
+	":PAYLOAD_LIMITS_SIGN_CERTIFICATE_DISTRIBUTION_POINT_MAX_LEN\x10\x80\x10\x12@\n" +
+	"<PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_KEYSOURCE_KEY_ID_MAX_LEN\x10@\x12A\n" +
+	"=PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_KEYSOURCE_KEY_RAW_MAX_LEN\x10 \x124\n" +
+	"0PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_DATA_MAX_LEN\x10@\x125\n" +
+	"1PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_NONCE_MAX_LEN\x10 \x123\n" +
+	"/PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_TAG_MAX_LEN\x10 \x123\n" +
+	"/PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_AAD_MAX_LEN\x10 \x12#\n" +
+	"\x1fPAYLOAD_LIMITS_TRACE_ID_MAX_LEN\x10 \x12(\n" +
+	"$PAYLOAD_LIMITS_TRACE_SPAN_ID_MAX_LEN\x10\x10\x12&\n" +
+	"\"PAYLOAD_LIMITS_TRACE_FLAGS_MAX_LEN\x10\x02\x12'\n" +
+	"\"PAYLOAD_LIMITS_TRACE_STATE_MAX_LEN\x10\x80\x04\x120\n" +
+	"+PAYLOAD_LIMITS_TRACE_CORRELATION_ID_MAX_LEN\x10\x80\x01\x1a\x02\x10\x012\xfb\x03\n" +
 	"\n" +
 	"CryptoGrpc\x12I\n" +
 	"\bHashData\x12\x1d.CryptoBroker.HashDataRequest\x1a\x1e.CryptoBroker.HashDataResponse\x12^\n" +
-	"\x0fSignCertificate\x12$.CryptoBroker.SignCertificateRequest\x1a%.CryptoBroker.SignCertificateResponse\x12R\n" +
+	"\x0fSignCertificate\x12$.CryptoBroker.SignCertificateRequest\x1a%.CryptoBroker.SignCertificateResponse\x12I\n" +
+	"\bSignData\x12\x1d.CryptoBroker.SignDataRequest\x1a\x1e.CryptoBroker.SignDataResponse\x12O\n" +
+	"\n" +
+	"VerifyData\x12\x1f.CryptoBroker.VerifyDataRequest\x1a .CryptoBroker.VerifyDataResponse\x12R\n" +
 	"\vEncryptData\x12 .CryptoBroker.EncryptDataRequest\x1a!.CryptoBroker.EncryptDataResponse\x12R\n" +
 	"\vDecryptData\x12 .CryptoBroker.DecryptDataRequest\x1a!.CryptoBroker.DecryptDataResponse2\xb4\x01\n" +
 	"\rCryptoGrpcDev\x12L\n" +
@@ -1750,75 +2382,99 @@ func file_protobuf_messages_proto_rawDescGZIP() []byte {
 	return file_protobuf_messages_proto_rawDescData
 }
 
-var file_protobuf_messages_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_protobuf_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_protobuf_messages_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
+var file_protobuf_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_protobuf_messages_proto_goTypes = []any{
 	(HashOutputFormat)(0),           // 0: CryptoBroker.HashOutputFormat
 	(SignOutputFormat)(0),           // 1: CryptoBroker.SignOutputFormat
-	(MessageSizeLimit)(0),           // 2: CryptoBroker.MessageSizeLimit
-	(*Metadata)(nil),                // 3: CryptoBroker.Metadata
-	(*CryptoDescriptor)(nil),        // 4: CryptoBroker.CryptoDescriptor
-	(*DeprecationWarning)(nil),      // 5: CryptoBroker.DeprecationWarning
-	(*TraceContext)(nil),            // 6: CryptoBroker.TraceContext
-	(*KeySource)(nil),               // 7: CryptoBroker.KeySource
-	(*EncryptMetadata)(nil),         // 8: CryptoBroker.EncryptMetadata
-	(*CipherMetadata)(nil),          // 9: CryptoBroker.CipherMetadata
-	(*DecryptMetadata)(nil),         // 10: CryptoBroker.DecryptMetadata
-	(*HashDataRequest)(nil),         // 11: CryptoBroker.HashDataRequest
-	(*HashDataResponse)(nil),        // 12: CryptoBroker.HashDataResponse
-	(*SignCertificateRequest)(nil),  // 13: CryptoBroker.SignCertificateRequest
-	(*SignCertificateResponse)(nil), // 14: CryptoBroker.SignCertificateResponse
-	(*EncryptDataRequest)(nil),      // 15: CryptoBroker.EncryptDataRequest
-	(*EncryptDataResponse)(nil),     // 16: CryptoBroker.EncryptDataResponse
-	(*DecryptDataRequest)(nil),      // 17: CryptoBroker.DecryptDataRequest
-	(*DecryptDataResponse)(nil),     // 18: CryptoBroker.DecryptDataResponse
-	(*BenchmarkRequest)(nil),        // 19: CryptoBroker.BenchmarkRequest
-	(*BenchmarkResponse)(nil),       // 20: CryptoBroker.BenchmarkResponse
-	(*FakeEndpointRequest)(nil),     // 21: CryptoBroker.FakeEndpointRequest
-	(*FakeEndpointResponse)(nil),    // 22: CryptoBroker.FakeEndpointResponse
+	(SignatureFormat)(0),            // 2: CryptoBroker.SignatureFormat
+	(MessageSizeLimit)(0),           // 3: CryptoBroker.MessageSizeLimit
+	(PayloadLimits)(0),              // 4: CryptoBroker.PayloadLimits
+	(*Metadata)(nil),                // 5: CryptoBroker.Metadata
+	(*CryptoDescriptor)(nil),        // 6: CryptoBroker.CryptoDescriptor
+	(*DeprecationWarning)(nil),      // 7: CryptoBroker.DeprecationWarning
+	(*TraceContext)(nil),            // 8: CryptoBroker.TraceContext
+	(*KeySource)(nil),               // 9: CryptoBroker.KeySource
+	(*SignKeySource)(nil),           // 10: CryptoBroker.SignKeySource
+	(*ComponentKeys)(nil),           // 11: CryptoBroker.ComponentKeys
+	(*EncryptMetadata)(nil),         // 12: CryptoBroker.EncryptMetadata
+	(*CipherMetadata)(nil),          // 13: CryptoBroker.CipherMetadata
+	(*DecryptMetadata)(nil),         // 14: CryptoBroker.DecryptMetadata
+	(*HashDataRequest)(nil),         // 15: CryptoBroker.HashDataRequest
+	(*HashDataResponse)(nil),        // 16: CryptoBroker.HashDataResponse
+	(*SignCertificateRequest)(nil),  // 17: CryptoBroker.SignCertificateRequest
+	(*SignCertificateResponse)(nil), // 18: CryptoBroker.SignCertificateResponse
+	(*SignDataRequest)(nil),         // 19: CryptoBroker.SignDataRequest
+	(*SignDataResponse)(nil),        // 20: CryptoBroker.SignDataResponse
+	(*VerifyDataRequest)(nil),       // 21: CryptoBroker.VerifyDataRequest
+	(*VerifyDataResponse)(nil),      // 22: CryptoBroker.VerifyDataResponse
+	(*EncryptDataRequest)(nil),      // 23: CryptoBroker.EncryptDataRequest
+	(*EncryptDataResponse)(nil),     // 24: CryptoBroker.EncryptDataResponse
+	(*DecryptDataRequest)(nil),      // 25: CryptoBroker.DecryptDataRequest
+	(*DecryptDataResponse)(nil),     // 26: CryptoBroker.DecryptDataResponse
+	(*BenchmarkRequest)(nil),        // 27: CryptoBroker.BenchmarkRequest
+	(*BenchmarkResponse)(nil),       // 28: CryptoBroker.BenchmarkResponse
+	(*FakeEndpointRequest)(nil),     // 29: CryptoBroker.FakeEndpointRequest
+	(*FakeEndpointResponse)(nil),    // 30: CryptoBroker.FakeEndpointResponse
 }
 var file_protobuf_messages_proto_depIdxs = []int32{
-	5,  // 0: CryptoBroker.Metadata.deprecation:type_name -> CryptoBroker.DeprecationWarning
-	6,  // 1: CryptoBroker.Metadata.traceContext:type_name -> CryptoBroker.TraceContext
-	3,  // 2: CryptoBroker.HashDataRequest.metadata:type_name -> CryptoBroker.Metadata
-	0,  // 3: CryptoBroker.HashDataRequest.outputFormat:type_name -> CryptoBroker.HashOutputFormat
-	3,  // 4: CryptoBroker.HashDataResponse.metadata:type_name -> CryptoBroker.Metadata
-	4,  // 5: CryptoBroker.HashDataResponse.descriptor:type_name -> CryptoBroker.CryptoDescriptor
-	3,  // 6: CryptoBroker.SignCertificateRequest.metadata:type_name -> CryptoBroker.Metadata
-	1,  // 7: CryptoBroker.SignCertificateRequest.outputFormat:type_name -> CryptoBroker.SignOutputFormat
-	3,  // 8: CryptoBroker.SignCertificateResponse.metadata:type_name -> CryptoBroker.Metadata
-	4,  // 9: CryptoBroker.SignCertificateResponse.descriptor:type_name -> CryptoBroker.CryptoDescriptor
-	7,  // 10: CryptoBroker.EncryptDataRequest.keySource:type_name -> CryptoBroker.KeySource
-	8,  // 11: CryptoBroker.EncryptDataRequest.encryptMetadata:type_name -> CryptoBroker.EncryptMetadata
-	3,  // 12: CryptoBroker.EncryptDataRequest.metadata:type_name -> CryptoBroker.Metadata
-	9,  // 13: CryptoBroker.EncryptDataResponse.cipherMetadata:type_name -> CryptoBroker.CipherMetadata
-	3,  // 14: CryptoBroker.EncryptDataResponse.metadata:type_name -> CryptoBroker.Metadata
-	4,  // 15: CryptoBroker.EncryptDataResponse.descriptor:type_name -> CryptoBroker.CryptoDescriptor
-	7,  // 16: CryptoBroker.DecryptDataRequest.keySource:type_name -> CryptoBroker.KeySource
-	10, // 17: CryptoBroker.DecryptDataRequest.decryptMetadata:type_name -> CryptoBroker.DecryptMetadata
-	3,  // 18: CryptoBroker.DecryptDataRequest.metadata:type_name -> CryptoBroker.Metadata
-	3,  // 19: CryptoBroker.DecryptDataResponse.metadata:type_name -> CryptoBroker.Metadata
-	3,  // 20: CryptoBroker.BenchmarkRequest.metadata:type_name -> CryptoBroker.Metadata
-	3,  // 21: CryptoBroker.BenchmarkResponse.metadata:type_name -> CryptoBroker.Metadata
-	3,  // 22: CryptoBroker.FakeEndpointRequest.metadata:type_name -> CryptoBroker.Metadata
-	3,  // 23: CryptoBroker.FakeEndpointResponse.metadata:type_name -> CryptoBroker.Metadata
-	11, // 24: CryptoBroker.CryptoGrpc.HashData:input_type -> CryptoBroker.HashDataRequest
-	13, // 25: CryptoBroker.CryptoGrpc.SignCertificate:input_type -> CryptoBroker.SignCertificateRequest
-	15, // 26: CryptoBroker.CryptoGrpc.EncryptData:input_type -> CryptoBroker.EncryptDataRequest
-	17, // 27: CryptoBroker.CryptoGrpc.DecryptData:input_type -> CryptoBroker.DecryptDataRequest
-	19, // 28: CryptoBroker.CryptoGrpcDev.Benchmark:input_type -> CryptoBroker.BenchmarkRequest
-	21, // 29: CryptoBroker.CryptoGrpcDev.FakeEndpoint:input_type -> CryptoBroker.FakeEndpointRequest
-	12, // 30: CryptoBroker.CryptoGrpc.HashData:output_type -> CryptoBroker.HashDataResponse
-	14, // 31: CryptoBroker.CryptoGrpc.SignCertificate:output_type -> CryptoBroker.SignCertificateResponse
-	16, // 32: CryptoBroker.CryptoGrpc.EncryptData:output_type -> CryptoBroker.EncryptDataResponse
-	18, // 33: CryptoBroker.CryptoGrpc.DecryptData:output_type -> CryptoBroker.DecryptDataResponse
-	20, // 34: CryptoBroker.CryptoGrpcDev.Benchmark:output_type -> CryptoBroker.BenchmarkResponse
-	22, // 35: CryptoBroker.CryptoGrpcDev.FakeEndpoint:output_type -> CryptoBroker.FakeEndpointResponse
-	30, // [30:36] is the sub-list for method output_type
-	24, // [24:30] is the sub-list for method input_type
-	24, // [24:24] is the sub-list for extension type_name
-	24, // [24:24] is the sub-list for extension extendee
-	0,  // [0:24] is the sub-list for field type_name
+	7,  // 0: CryptoBroker.Metadata.deprecation:type_name -> CryptoBroker.DeprecationWarning
+	8,  // 1: CryptoBroker.Metadata.traceContext:type_name -> CryptoBroker.TraceContext
+	9,  // 2: CryptoBroker.SignKeySource.single:type_name -> CryptoBroker.KeySource
+	11, // 3: CryptoBroker.SignKeySource.componentKeys:type_name -> CryptoBroker.ComponentKeys
+	9,  // 4: CryptoBroker.ComponentKeys.keys:type_name -> CryptoBroker.KeySource
+	5,  // 5: CryptoBroker.HashDataRequest.metadata:type_name -> CryptoBroker.Metadata
+	0,  // 6: CryptoBroker.HashDataRequest.outputFormat:type_name -> CryptoBroker.HashOutputFormat
+	5,  // 7: CryptoBroker.HashDataResponse.metadata:type_name -> CryptoBroker.Metadata
+	6,  // 8: CryptoBroker.HashDataResponse.descriptor:type_name -> CryptoBroker.CryptoDescriptor
+	5,  // 9: CryptoBroker.SignCertificateRequest.metadata:type_name -> CryptoBroker.Metadata
+	1,  // 10: CryptoBroker.SignCertificateRequest.outputFormat:type_name -> CryptoBroker.SignOutputFormat
+	5,  // 11: CryptoBroker.SignCertificateResponse.metadata:type_name -> CryptoBroker.Metadata
+	6,  // 12: CryptoBroker.SignCertificateResponse.descriptor:type_name -> CryptoBroker.CryptoDescriptor
+	10, // 13: CryptoBroker.SignDataRequest.keySource:type_name -> CryptoBroker.SignKeySource
+	2,  // 14: CryptoBroker.SignDataRequest.signatureFormat:type_name -> CryptoBroker.SignatureFormat
+	5,  // 15: CryptoBroker.SignDataRequest.metadata:type_name -> CryptoBroker.Metadata
+	6,  // 16: CryptoBroker.SignDataResponse.descriptor:type_name -> CryptoBroker.CryptoDescriptor
+	5,  // 17: CryptoBroker.SignDataResponse.metadata:type_name -> CryptoBroker.Metadata
+	10, // 18: CryptoBroker.VerifyDataRequest.keySource:type_name -> CryptoBroker.SignKeySource
+	2,  // 19: CryptoBroker.VerifyDataRequest.signatureFormat:type_name -> CryptoBroker.SignatureFormat
+	5,  // 20: CryptoBroker.VerifyDataRequest.metadata:type_name -> CryptoBroker.Metadata
+	5,  // 21: CryptoBroker.VerifyDataResponse.metadata:type_name -> CryptoBroker.Metadata
+	9,  // 22: CryptoBroker.EncryptDataRequest.keySource:type_name -> CryptoBroker.KeySource
+	12, // 23: CryptoBroker.EncryptDataRequest.encryptMetadata:type_name -> CryptoBroker.EncryptMetadata
+	5,  // 24: CryptoBroker.EncryptDataRequest.metadata:type_name -> CryptoBroker.Metadata
+	13, // 25: CryptoBroker.EncryptDataResponse.cipherMetadata:type_name -> CryptoBroker.CipherMetadata
+	5,  // 26: CryptoBroker.EncryptDataResponse.metadata:type_name -> CryptoBroker.Metadata
+	6,  // 27: CryptoBroker.EncryptDataResponse.descriptor:type_name -> CryptoBroker.CryptoDescriptor
+	9,  // 28: CryptoBroker.DecryptDataRequest.keySource:type_name -> CryptoBroker.KeySource
+	14, // 29: CryptoBroker.DecryptDataRequest.decryptMetadata:type_name -> CryptoBroker.DecryptMetadata
+	5,  // 30: CryptoBroker.DecryptDataRequest.metadata:type_name -> CryptoBroker.Metadata
+	5,  // 31: CryptoBroker.DecryptDataResponse.metadata:type_name -> CryptoBroker.Metadata
+	5,  // 32: CryptoBroker.BenchmarkRequest.metadata:type_name -> CryptoBroker.Metadata
+	5,  // 33: CryptoBroker.BenchmarkResponse.metadata:type_name -> CryptoBroker.Metadata
+	5,  // 34: CryptoBroker.FakeEndpointRequest.metadata:type_name -> CryptoBroker.Metadata
+	5,  // 35: CryptoBroker.FakeEndpointResponse.metadata:type_name -> CryptoBroker.Metadata
+	15, // 36: CryptoBroker.CryptoGrpc.HashData:input_type -> CryptoBroker.HashDataRequest
+	17, // 37: CryptoBroker.CryptoGrpc.SignCertificate:input_type -> CryptoBroker.SignCertificateRequest
+	19, // 38: CryptoBroker.CryptoGrpc.SignData:input_type -> CryptoBroker.SignDataRequest
+	21, // 39: CryptoBroker.CryptoGrpc.VerifyData:input_type -> CryptoBroker.VerifyDataRequest
+	23, // 40: CryptoBroker.CryptoGrpc.EncryptData:input_type -> CryptoBroker.EncryptDataRequest
+	25, // 41: CryptoBroker.CryptoGrpc.DecryptData:input_type -> CryptoBroker.DecryptDataRequest
+	27, // 42: CryptoBroker.CryptoGrpcDev.Benchmark:input_type -> CryptoBroker.BenchmarkRequest
+	29, // 43: CryptoBroker.CryptoGrpcDev.FakeEndpoint:input_type -> CryptoBroker.FakeEndpointRequest
+	16, // 44: CryptoBroker.CryptoGrpc.HashData:output_type -> CryptoBroker.HashDataResponse
+	18, // 45: CryptoBroker.CryptoGrpc.SignCertificate:output_type -> CryptoBroker.SignCertificateResponse
+	20, // 46: CryptoBroker.CryptoGrpc.SignData:output_type -> CryptoBroker.SignDataResponse
+	22, // 47: CryptoBroker.CryptoGrpc.VerifyData:output_type -> CryptoBroker.VerifyDataResponse
+	24, // 48: CryptoBroker.CryptoGrpc.EncryptData:output_type -> CryptoBroker.EncryptDataResponse
+	26, // 49: CryptoBroker.CryptoGrpc.DecryptData:output_type -> CryptoBroker.DecryptDataResponse
+	28, // 50: CryptoBroker.CryptoGrpcDev.Benchmark:output_type -> CryptoBroker.BenchmarkResponse
+	30, // 51: CryptoBroker.CryptoGrpcDev.FakeEndpoint:output_type -> CryptoBroker.FakeEndpointResponse
+	44, // [44:52] is the sub-list for method output_type
+	36, // [36:44] is the sub-list for method input_type
+	36, // [36:36] is the sub-list for extension type_name
+	36, // [36:36] is the sub-list for extension extendee
+	0,  // [0:36] is the sub-list for field type_name
 }
 
 func init() { file_protobuf_messages_proto_init() }
@@ -1832,25 +2488,31 @@ func file_protobuf_messages_proto_init() {
 		(*KeySource_KeyId)(nil),
 		(*KeySource_RawKey)(nil),
 	}
-	file_protobuf_messages_proto_msgTypes[5].OneofWrappers = []any{}
-	file_protobuf_messages_proto_msgTypes[6].OneofWrappers = []any{}
+	file_protobuf_messages_proto_msgTypes[5].OneofWrappers = []any{
+		(*SignKeySource_Single)(nil),
+		(*SignKeySource_ComponentKeys)(nil),
+	}
 	file_protobuf_messages_proto_msgTypes[7].OneofWrappers = []any{}
-	file_protobuf_messages_proto_msgTypes[9].OneofWrappers = []any{
+	file_protobuf_messages_proto_msgTypes[8].OneofWrappers = []any{}
+	file_protobuf_messages_proto_msgTypes[9].OneofWrappers = []any{}
+	file_protobuf_messages_proto_msgTypes[11].OneofWrappers = []any{
 		(*HashDataResponse_HashValueHex)(nil),
 		(*HashDataResponse_HashValueRaw)(nil),
 	}
-	file_protobuf_messages_proto_msgTypes[10].OneofWrappers = []any{}
-	file_protobuf_messages_proto_msgTypes[11].OneofWrappers = []any{
+	file_protobuf_messages_proto_msgTypes[12].OneofWrappers = []any{}
+	file_protobuf_messages_proto_msgTypes[13].OneofWrappers = []any{
 		(*SignCertificateResponse_Pem)(nil),
 		(*SignCertificateResponse_Der)(nil),
 	}
+	file_protobuf_messages_proto_msgTypes[14].OneofWrappers = []any{}
+	file_protobuf_messages_proto_msgTypes[16].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_protobuf_messages_proto_rawDesc), len(file_protobuf_messages_proto_rawDesc)),
-			NumEnums:      3,
-			NumMessages:   20,
+			NumEnums:      5,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
