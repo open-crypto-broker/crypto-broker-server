@@ -19,6 +19,8 @@ const _ = grpc.SupportPackageIsVersion7
 type CryptoGrpcClient interface {
 	HashData(ctx context.Context, in *HashDataRequest, opts ...grpc.CallOption) (*HashDataResponse, error)
 	SignCertificate(ctx context.Context, in *SignCertificateRequest, opts ...grpc.CallOption) (*SignCertificateResponse, error)
+	SignData(ctx context.Context, in *SignDataRequest, opts ...grpc.CallOption) (*SignDataResponse, error)
+	VerifyData(ctx context.Context, in *VerifyDataRequest, opts ...grpc.CallOption) (*VerifyDataResponse, error)
 	EncryptData(ctx context.Context, in *EncryptDataRequest, opts ...grpc.CallOption) (*EncryptDataResponse, error)
 	DecryptData(ctx context.Context, in *DecryptDataRequest, opts ...grpc.CallOption) (*DecryptDataResponse, error)
 }
@@ -49,6 +51,24 @@ func (c *cryptoGrpcClient) SignCertificate(ctx context.Context, in *SignCertific
 	return out, nil
 }
 
+func (c *cryptoGrpcClient) SignData(ctx context.Context, in *SignDataRequest, opts ...grpc.CallOption) (*SignDataResponse, error) {
+	out := new(SignDataResponse)
+	err := c.cc.Invoke(ctx, "/CryptoBroker.CryptoGrpc/SignData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cryptoGrpcClient) VerifyData(ctx context.Context, in *VerifyDataRequest, opts ...grpc.CallOption) (*VerifyDataResponse, error) {
+	out := new(VerifyDataResponse)
+	err := c.cc.Invoke(ctx, "/CryptoBroker.CryptoGrpc/VerifyData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *cryptoGrpcClient) EncryptData(ctx context.Context, in *EncryptDataRequest, opts ...grpc.CallOption) (*EncryptDataResponse, error) {
 	out := new(EncryptDataResponse)
 	err := c.cc.Invoke(ctx, "/CryptoBroker.CryptoGrpc/EncryptData", in, out, opts...)
@@ -73,6 +93,8 @@ func (c *cryptoGrpcClient) DecryptData(ctx context.Context, in *DecryptDataReque
 type CryptoGrpcServer interface {
 	HashData(context.Context, *HashDataRequest) (*HashDataResponse, error)
 	SignCertificate(context.Context, *SignCertificateRequest) (*SignCertificateResponse, error)
+	SignData(context.Context, *SignDataRequest) (*SignDataResponse, error)
+	VerifyData(context.Context, *VerifyDataRequest) (*VerifyDataResponse, error)
 	EncryptData(context.Context, *EncryptDataRequest) (*EncryptDataResponse, error)
 	DecryptData(context.Context, *DecryptDataRequest) (*DecryptDataResponse, error)
 	mustEmbedUnimplementedCryptoGrpcServer()
@@ -87,6 +109,12 @@ func (UnimplementedCryptoGrpcServer) HashData(context.Context, *HashDataRequest)
 }
 func (UnimplementedCryptoGrpcServer) SignCertificate(context.Context, *SignCertificateRequest) (*SignCertificateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SignCertificate not implemented")
+}
+func (UnimplementedCryptoGrpcServer) SignData(context.Context, *SignDataRequest) (*SignDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SignData not implemented")
+}
+func (UnimplementedCryptoGrpcServer) VerifyData(context.Context, *VerifyDataRequest) (*VerifyDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VerifyData not implemented")
 }
 func (UnimplementedCryptoGrpcServer) EncryptData(context.Context, *EncryptDataRequest) (*EncryptDataResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EncryptData not implemented")
@@ -143,6 +171,42 @@ func _CryptoGrpc_SignCertificate_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CryptoGrpc_SignData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SignDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CryptoGrpcServer).SignData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/CryptoBroker.CryptoGrpc/SignData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CryptoGrpcServer).SignData(ctx, req.(*SignDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CryptoGrpc_VerifyData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CryptoGrpcServer).VerifyData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/CryptoBroker.CryptoGrpc/VerifyData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CryptoGrpcServer).VerifyData(ctx, req.(*VerifyDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CryptoGrpc_EncryptData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(EncryptDataRequest)
 	if err := dec(in); err != nil {
@@ -190,6 +254,14 @@ var _CryptoGrpc_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SignCertificate",
 			Handler:    _CryptoGrpc_SignCertificate_Handler,
+		},
+		{
+			MethodName: "SignData",
+			Handler:    _CryptoGrpc_SignData_Handler,
+		},
+		{
+			MethodName: "VerifyData",
+			Handler:    _CryptoGrpc_VerifyData_Handler,
 		},
 		{
 			MethodName: "EncryptData",
