@@ -80,6 +80,27 @@ func TestRawProfileAPIHashData_validate(t *testing.T) {
 	}
 }
 
+func TestRawProfileAPISignData_validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		in      rawProfileAPISignData
+		wantErr bool
+	}{
+		{name: "accepts ECDSA with SHA-512", in: rawProfileAPISignData{SignAlg: "ecdsa", HashAlg: "sha-512"}},
+		{name: "rejects unsupported signing algorithm", in: rawProfileAPISignData{SignAlg: "ed25519", HashAlg: "sha-512"}, wantErr: true},
+		{name: "rejects unsupported digest algorithm", in: rawProfileAPISignData{SignAlg: "ecdsa", HashAlg: "sha3-512"}, wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.in.validate()
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestRawProfileAPIEncryptData_validate(t *testing.T) {
 	tests := []struct {
 		name    string

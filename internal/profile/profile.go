@@ -32,6 +32,7 @@ type ProfileAPIHashData struct {
 
 type ProfileAPISignData struct {
 	SignAlg c10y.Algorithm
+	HashAlg c10y.Algorithm
 }
 
 type ProfileAPIEncryptData struct {

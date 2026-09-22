@@ -33,6 +33,11 @@ const (
 	maxCRLDistributionPoints   = 16
 	maxCRLDistributionPointLen = 2048
 
+	// SignData / VerifyData (PEM keys and raw signatures)
+	maxSigningDataBytes = 1 * MB
+	maxSigningKeyBytes  = 64 * KB
+	maxSignatureBytes   = 128 * KB
+
 	// Metadata / trace propagation
 	maxMetadataIdLen = 128
 

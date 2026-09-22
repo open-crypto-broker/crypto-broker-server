@@ -159,6 +159,30 @@ func ParsePrivateKeyFromPEM(key []byte) (any, error) {
 	}
 }
 
+// ParsePublicKeyFromPEM parses a PEM-encoded public key or certificate.
+func ParsePublicKeyFromPEM(key []byte) (any, error) {
+	block, _ := pem.Decode(key)
+	if block == nil {
+		return nil, fmt.Errorf("key must be PEM encoded")
+	}
+
+	switch block.Type {
+	case "PUBLIC KEY", "RSA PUBLIC KEY":
+		if block.Type == "RSA PUBLIC KEY" {
+			return x509.ParsePKCS1PublicKey(block.Bytes)
+		}
+		return x509.ParsePKIXPublicKey(block.Bytes)
+	case "CERTIFICATE":
+		certificate, err := x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			return nil, err
+		}
+		return certificate.PublicKey, nil
+	default:
+		return nil, fmt.Errorf("unsupported public key PEM block type: %q", block.Type)
+	}
+}
+
 // MapKeyUsageToExtension maps x509.KeyUsage to pkix.Extension or returns non-nil error if any
 func MapKeyUsageToExtension(usage x509.KeyUsage) (pkix.Extension, error) {
 	// x509.KeyUsage is a bitmask where bit 0 corresponds to digitalSignature, etc.
