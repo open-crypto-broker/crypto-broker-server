@@ -39,6 +39,7 @@ type rawProfileAPIHashData struct {
 
 type rawProfileAPISignData struct {
 	SignAlg string `yaml:"SignAlg"`
+	HashAlg string `yaml:"HashAlg"`
 }
 
 type rawProfileAPIEncryptData struct {
@@ -92,6 +93,7 @@ func (p rawProfile) mapToProfile() (Profile, error) {
 	if !reflect.DeepEqual(p.API.SignData, rawProfileAPISignData{}) {
 		api.SignData = ProfileAPISignData{
 			SignAlg: c10y.NewAlgorithm(p.API.SignData.SignAlg),
+			HashAlg: c10y.NewAlgorithm(p.API.SignData.HashAlg),
 		}
 	}
 
@@ -237,6 +239,16 @@ func (api rawProfileAPI) validate() error {
 }
 
 func (api rawProfileAPISignData) validate() error {
+	signAlg := c10y.NewAlgorithm(api.SignAlg)
+	if !signAlg.IsSupported(c10y.SignDataSigning) {
+		return fmt.Errorf("unsupported signing algorithm: %s, available algorithms: %v", signAlg, c10y.SignDataSigningAlgorithmsSupported)
+	}
+
+	hashAlg := c10y.NewAlgorithm(api.HashAlg)
+	if !hashAlg.IsSupported(c10y.SignDataHashing) {
+		return fmt.Errorf("unsupported signing hash algorithm: %s, available algorithms: %v", hashAlg, c10y.SignDataHashingAlgorithmsSupported)
+	}
+
 	return nil
 }
 

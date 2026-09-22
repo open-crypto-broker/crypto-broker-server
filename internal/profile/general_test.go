@@ -72,7 +72,7 @@ func TestRetrieve(t *testing.T) {
 				Settings: ProfileSettings{CryptoLibrary: "native"},
 				API: ProfileAPI{
 					HashData: ProfileAPIHashData{HashAlg: "sha3-512"},
-					SignData: ProfileAPISignData{SignAlg: ""},
+					SignData: ProfileAPISignData{SignAlg: "ecdsa", HashAlg: "sha-512"},
 					EncryptData: ProfileAPIEncryptData{
 						EncryptAlg: c10y.AES_GCM,
 						KeySize:    256,
@@ -147,6 +147,7 @@ func Test_convertRawProfilesData(t *testing.T) {
 						},
 						SignData: rawProfileAPISignData{
 							SignAlg: "ecdsa",
+							HashAlg: "sha-512",
 						},
 					},
 				},
@@ -168,7 +169,7 @@ func Test_convertRawProfilesData(t *testing.T) {
 							ExtendedKeyUsage: []x509.ExtKeyUsage(nil),
 							BasicConstraints: ProfileAPISignCertificateBasicConstraints{CA: false, PathLenConstraint: 0}},
 						HashData: ProfileAPIHashData{HashAlg: "sha3-512"},
-						SignData: ProfileAPISignData{SignAlg: "ecdsa"},
+						SignData: ProfileAPISignData{SignAlg: "ecdsa", HashAlg: "sha-512"},
 					}},
 			},
 			wantErr: false,
@@ -187,6 +188,7 @@ func Test_convertRawProfilesData(t *testing.T) {
 						},
 						SignData: rawProfileAPISignData{
 							SignAlg: "ecdsa",
+							HashAlg: "sha-512",
 						},
 					},
 				},
@@ -201,6 +203,7 @@ func Test_convertRawProfilesData(t *testing.T) {
 						},
 						SignData: rawProfileAPISignData{
 							SignAlg: "ecdsa",
+							HashAlg: "sha-512",
 						},
 					},
 				},

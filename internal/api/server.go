@@ -19,6 +19,8 @@ type CryptoBrokerServer struct {
 	protobuf.CryptoGrpcServer
 	procedureHashData        *procedure.HashData
 	procedureSignCertificate *procedure.SignCertificate
+	procedureSignData        *procedure.SignData
+	procedureVerifyData      *procedure.VerifyData
 	procedureEncryptData     *procedure.EncryptData
 	procedureDecryptData     *procedure.DecryptData
 	meter                    metric.Meter
@@ -36,6 +38,8 @@ func NewCryptoBrokerServer(
 	server := &CryptoBrokerServer{
 		procedureHashData:        procedureHashData,
 		procedureSignCertificate: procedureSignCertificate,
+		procedureSignData:        procedure.NewSignData(c10yNative),
+		procedureVerifyData:      procedure.NewVerifyData(c10yNative),
 		procedureEncryptData:     procedureEncryptData,
 		procedureDecryptData:     procedureDecryptData,
 		metricsEnabled:           metricsEnabled,
@@ -50,6 +54,34 @@ func NewCryptoBrokerServer(
 	}
 
 	return server
+}
+
+// SignData signs arbitrary input using the profile-selected signing algorithm.
+func (server *CryptoBrokerServer) SignData(ctx context.Context, req *protobuf.SignDataRequest) (*protobuf.SignDataResponse, error) {
+	span := trace.SpanFromContext(ctx)
+	span.SetAttributes(otel.AttributeCryptoProfile.String(req.GetProfile()), otel.AttributeCryptoInputSize.Int(len(req.GetInput())))
+	if err := validateSignDataRequest(req); err != nil {
+		return nil, fmt.Errorf("something went wrong while signing data: %w", err)
+	}
+	response, err := server.procedureSignData.Execute(req)
+	if err != nil {
+		return nil, fmt.Errorf("something went wrong while signing data: %w", err)
+	}
+	return response, nil
+}
+
+// VerifyData verifies an arbitrary-data signature using the profile-selected algorithm.
+func (server *CryptoBrokerServer) VerifyData(ctx context.Context, req *protobuf.VerifyDataRequest) (*protobuf.VerifyDataResponse, error) {
+	span := trace.SpanFromContext(ctx)
+	span.SetAttributes(otel.AttributeCryptoProfile.String(req.GetProfile()), otel.AttributeCryptoInputSize.Int(len(req.GetInput())))
+	if err := validateVerifyDataRequest(req); err != nil {
+		return nil, fmt.Errorf("something went wrong while verifying data: %w", err)
+	}
+	response, err := server.procedureVerifyData.Execute(req)
+	if err != nil {
+		return nil, fmt.Errorf("something went wrong while verifying data: %w", err)
+	}
+	return response, nil
 }
 
 // HashData contains data hashing logic
