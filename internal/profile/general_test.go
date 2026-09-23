@@ -70,6 +70,7 @@ func TestRetrieve(t *testing.T) {
 			want: Profile{
 				Name:     "Default",
 				Settings: ProfileSettings{CryptoLibrary: "native"},
+				KMS:      ProfileKMS{Client: "openbao", Config: "openbao.yaml", Cache: false},
 				API: ProfileAPI{
 					HashData: ProfileAPIHashData{HashAlg: "sha3-512"},
 					SignData: ProfileAPISignData{SignAlg: ""},
