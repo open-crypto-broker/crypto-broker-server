@@ -40,6 +40,23 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
+      - name: Verify production binary excludes dev code
+        shell: bash
+        run: |
+          go build -o server-production ./cmd/server
+          go build -tags dev -o server-dev ./cmd/server
+          go tool nm server-production > production-symbols.txt
+          go tool nm server-dev > dev-symbols.txt
+          if grep -E 'internal/(api\..*CryptoBrokerDevServer|procedure\..*(Benchmark|FakeEndpoint))' production-symbols.txt; then
+            echo 'Production binary contains dev code'
+            exit 1
+          fi
+          grep -E 'internal/procedure\.\(\*Benchmark\)\.Execute' dev-symbols.txt
+          grep -E 'internal/procedure\.\(\*FakeEndpoint\)\.Execute' dev-symbols.txt
+
+      - name: Run dev tests
+        run: CRYPTO_BROKER_PROFILES_DIR=${GITHUB_WORKSPACE}/example-profiles go test -tags dev ./...
+
       - name: Install Task
         uses: go-task/setup-task@a00fbb05ce67b35648be3c78cbc9fd85354c757e # v2.2.0
         with:

@@ -38,6 +38,13 @@ task build
 This will also save a checksum of all the file `sources` in the Taskfile cache `.task`.
 This means that, if no new changes are done, re-running the task will not build the binary again.
 
+`Benchmark` and `FakeEndpoint` require a build with `-tags dev` and
+`CRYPTO_BROKER_APP_ENV=dev` at runtime. Default builds exclude both RPCs.
+
+```shell
+go build -tags dev -o bin/crypto-broker-server-dev ./cmd/server
+```
+
 This repository uses a submodule for the proto files in `/protobuf` directory.
 
 To reload the `/protobuf` files to the latest `main` commit and recompile them, run the following:
@@ -66,6 +73,12 @@ The server is meant to be tested using the standard Golang Testing `go test`. If
 task ci
 ```
 
+To include dev tests, run
+
+```shell
+CRYPTO_BROKER_PROFILES_DIR="$PWD/example-profiles" go test -tags dev ./...
+```
+
 To run benchmarks, run
 
 ```shell
@@ -85,7 +98,7 @@ task run
 If you want to define your custom profiles dir, you can directly run the server with the following command:
 
 ```shell
-CRYPTO_BROKER_PROFILES_DIR=<path-to-your-Profile.yaml> go run cmd/server/server.go
+CRYPTO_BROKER_PROFILES_DIR=<path-to-your-Profile.yaml> go run ./cmd/server
 ```
 
 Both commands will keep the server running and listening on the unix socket. From another terminal in localhost, you can run the libraries' CLI in order to perform a local end2end test. For a more thorough end2end test, check the deployment repository.
@@ -108,7 +121,7 @@ To run & debug in `VSCode`:
             "request": "launch",
             "mode": "auto",
             "console": "integratedTerminal",
-            "program": "${workspaceFolder}/cmd/server/server.go",
+            "program": "${workspaceFolder}/cmd/server",
             "env": {
                 "CRYPTO_BROKER_PROFILES_DIR": "${workspaceFolder}/profiles"
             },
