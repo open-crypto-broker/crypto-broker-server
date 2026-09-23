@@ -25,7 +25,6 @@ import (
 	"github.com/open-crypto-broker/crypto-broker-server/internal/env"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/interceptors"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/otel"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
 	pb "github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
@@ -172,12 +171,10 @@ func main() {
 
 	// Register crypto broker service
 	pb.RegisterCryptoGrpcServer(server, container.Server)
+	registerDevService(server)
 
 	var pprofSrv *http.Server
 	if os.Getenv(env.APP_ENV) == devENV {
-		dev := api.NewCryptoBrokerDevServer(procedure.NewBenchmark(), procedure.NewFakeEndpoint())
-		pb.RegisterCryptoGrpcDevServer(server, dev)
-
 		if pprofAddr := os.Getenv(env.PPROF_ADDR); pprofAddr != "" {
 			pprofSrv = &http.Server{
 				Addr:              pprofAddr,
