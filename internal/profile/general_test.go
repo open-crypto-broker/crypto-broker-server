@@ -68,9 +68,7 @@ func TestRetrieve(t *testing.T) {
 				name: "Default",
 			},
 			want: Profile{
-				Name:     "Default",
-				Settings: ProfileSettings{CryptoLibrary: "native"},
-				KMS:      ProfileKMS{Client: "openbao", Config: "openbao.yaml", Cache: false},
+				Name: "Default",
 				API: ProfileAPI{
 					HashData: ProfileAPIHashData{HashAlg: "sha3-512"},
 					SignData: ProfileAPISignData{SignAlg: ""},
@@ -127,6 +125,32 @@ func TestRetrieve(t *testing.T) {
 	}
 }
 
+func TestConfiguration(t *testing.T) {
+	if err := LoadProfiles("Profiles.yaml"); err != nil {
+		t.Fatalf("LoadProfiles() error: %v", err)
+	}
+
+	wantSettings := SettingsConfiguration{CryptoLibrary: "native"}
+	if got := Settings(); !reflect.DeepEqual(got, wantSettings) {
+		t.Errorf("Settings() = %#v, want %#v", got, wantSettings)
+	}
+
+	wantKMS := KMSConfiguration{Client: "openbao", Config: "openbao.yaml", Cache: false}
+	if got := KMS(); !reflect.DeepEqual(got, wantKMS) {
+		t.Errorf("KMS() = %#v, want %#v", got, wantKMS)
+	}
+
+	configuredProfiles := Profiles()
+	if _, ok := configuredProfiles["Default"]; !ok {
+		t.Errorf("Profiles() does not contain Default")
+	}
+
+	delete(configuredProfiles, "Default")
+	if _, err := Retrieve("Default"); err != nil {
+		t.Errorf("modifying the result of Profiles() changed the configured profiles: %v", err)
+	}
+}
+
 func Test_convertRawProfilesData(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -139,9 +163,6 @@ func Test_convertRawProfilesData(t *testing.T) {
 			rawProfiles: []rawProfile{
 				{
 					Name: "Default",
-					Settings: rawProfileSettings{
-						CryptoLibrary: "native",
-					},
 					API: rawProfileAPI{
 						HashData: rawProfileAPIHashData{
 							HashAlg: "sha3-512",
@@ -154,8 +175,7 @@ func Test_convertRawProfilesData(t *testing.T) {
 			},
 			want: map[string]Profile{
 				"Default": {
-					Name:     "Default",
-					Settings: ProfileSettings{CryptoLibrary: "native"},
+					Name: "Default",
 					API: ProfileAPI{
 						SignCertificate: ProfileAPISignCertificate{
 							SignAlg:            "",
@@ -179,9 +199,6 @@ func Test_convertRawProfilesData(t *testing.T) {
 			rawProfiles: []rawProfile{
 				{
 					Name: "Default",
-					Settings: rawProfileSettings{
-						CryptoLibrary: "native",
-					},
 					API: rawProfileAPI{
 						HashData: rawProfileAPIHashData{
 							HashAlg: "sha3-512",
@@ -193,9 +210,6 @@ func Test_convertRawProfilesData(t *testing.T) {
 				},
 				{
 					Name: "Default",
-					Settings: rawProfileSettings{
-						CryptoLibrary: "native",
-					},
 					API: rawProfileAPI{
 						HashData: rawProfileAPIHashData{
 							HashAlg: "sha3-256",

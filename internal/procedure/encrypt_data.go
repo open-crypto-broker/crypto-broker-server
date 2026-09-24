@@ -37,7 +37,7 @@ func (procedure *EncryptData) Execute(req *protobuf.EncryptDataRequest) (*protob
 		return nil, ArgumentError("invalid AES-GCM nonce length: got %d, want %d", len(encryptMetadata.GetNonce()), c10y.AESGCMNonceSize)
 	}
 
-	engine, err := encryptionEngine(procedure.cryptographicEngineNative, reqProfile)
+	engine, err := encryptionEngine(procedure.cryptographicEngineNative)
 	if err != nil {
 		return nil, err
 	}
@@ -68,10 +68,11 @@ func (procedure *EncryptData) Execute(req *protobuf.EncryptDataRequest) (*protob
 	}, nil
 }
 
-func encryptionEngine(cryptographicEngineNative *c10y.LibraryNative, p profile.Profile) (*c10y.LibraryNative, error) {
-	if p.Settings.CryptoLibrary != c10y.LibNative {
+func encryptionEngine(cryptographicEngineNative *c10y.LibraryNative) (*c10y.LibraryNative, error) {
+	settings := profile.Settings()
+	if settings.CryptoLibrary != c10y.LibNative {
 		return nil, ArgumentError("unknown '%s' cryptographic engine, available values: %v",
-			p.Settings.CryptoLibrary, c10y.SupportedCryptographicLibraries)
+			settings.CryptoLibrary, c10y.SupportedCryptographicLibraries)
 	}
 
 	return cryptographicEngineNative, nil
@@ -86,7 +87,7 @@ func validateEncryptionKeySource(keySource *protobuf.KeySource, p profile.Profil
 		return nil, ArgumentError("keySource is required")
 	}
 
-	key, err := GetKey(p.Name, keySource)
+	key, err := GetKey(keySource)
 	if err != nil {
 		return nil, err
 	}
@@ -99,11 +100,11 @@ func validateEncryptionKeySource(keySource *protobuf.KeySource, p profile.Profil
 	return key, nil
 }
 
-func GetKey(profileName string, keySource *protobuf.KeySource) ([]byte, error) {
+func GetKey(keySource *protobuf.KeySource) ([]byte, error) {
 	keyID := keySource.GetKeyId()
 
 	if keyID != "" {
-		return kms.GetKey(profileName, keyID)
+		return kms.GetKey(keyID)
 	}
 
 	return keySource.GetRawKey(), nil

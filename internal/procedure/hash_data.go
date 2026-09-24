@@ -73,13 +73,14 @@ func (procedure *HashData) hashData(data []byte, p profile.Profile) (c10y.Hash, 
 		HashShake_256(size int, dataToHash []byte) (c10y.Hash, error)
 	}
 
+	settings := profile.Settings()
 	var h hasher
-	switch p.Settings.CryptoLibrary {
+	switch settings.CryptoLibrary {
 	case c10y.LibNative:
 		h = procedure.cryptographicEngineNative
 	default:
 		return nil, ArgumentError("unknown '%s' cryptographic engine, available values: %v",
-			p.Settings.CryptoLibrary, c10y.SupportedCryptographicLibraries)
+			settings.CryptoLibrary, c10y.SupportedCryptographicLibraries)
 	}
 
 	var (

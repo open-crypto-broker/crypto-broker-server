@@ -8,15 +8,13 @@ import (
 )
 
 // Profile represents profile concept.
-// It should be obtained from rawProfile's Retrieve() method.
+// It should be obtained through Retrieve or Profiles.
 type Profile struct {
-	Name     string
-	Settings ProfileSettings
-	API      ProfileAPI
-	KMS      ProfileKMS
+	Name string
+	API  ProfileAPI
 }
 
-type ProfileSettings struct {
+type SettingsConfiguration struct {
 	CryptoLibrary string
 }
 
@@ -27,7 +25,7 @@ type ProfileAPI struct {
 	EncryptData     ProfileAPIEncryptData
 }
 
-type ProfileKMS struct {
+type KMSConfiguration struct {
 	Client string
 	Config string
 	Cache  bool

@@ -251,15 +251,16 @@ func validateKMSConfiguration(keySource *pb.KeySource, profileName string) error
 		return nil
 	}
 
-	profile, err := profile.Retrieve(profileName)
+	_, err := profile.Retrieve(profileName)
 	if err != nil {
 		return err
 	}
 
-	configured := profile.KMS.Client != "" && profile.KMS.Config != ""
+	kms := profile.KMS()
+	configured := kms.Client != "" && kms.Config != ""
 
 	if !configured {
-		return status.Errorf(codes.FailedPrecondition, "KMS is not configured for profile %q", profile.Name)
+		return status.Error(codes.FailedPrecondition, "KMS is not configured")
 	}
 
 	return nil

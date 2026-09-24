@@ -20,6 +20,12 @@ var profilesRootDir *os.Root
 // Its nil until successful invocation of LoadProfiles function.
 var profiles map[string]Profile
 
+// settingsConfiguration is shared by all profiles.
+var settingsConfiguration SettingsConfiguration
+
+// kmsConfiguration is shared by all profiles.
+var kmsConfiguration KMSConfiguration
+
 // init sets profilesRootDir variable. Throws an error if the provided path is not absolute or it cannot be opened.
 // As per Golang convention, init function is called automatically before main function when the package is imported.
 func init() {
@@ -43,10 +49,8 @@ func init() {
 	profilesRootDir = root
 }
 
-// LoadProfiles parses & validates YAML formatted profiles from provided file.
-// Internally function
-//   - sets value of package global variable that holds such profiles
-//   - validates each profile, if any of them contains error, func returns it
+// LoadProfiles parses and validates the shared settings, KMS configuration,
+// and profiles from the provided YAML file.
 func LoadProfiles(profilesFileName string) error {
 	profileFile, err := profilesRootDir.Open(profilesFileName)
 	if err != nil {
@@ -58,16 +62,49 @@ func LoadProfiles(profilesFileName string) error {
 		return fmt.Errorf("could not read profile content, err: %w", err)
 	}
 
-	var rawProfiles []rawProfile
-	if err = yaml.Unmarshal(profileBytes, &rawProfiles); err != nil {
+	var rawConfig rawProfilesConfig
+	if err = yaml.Unmarshal(profileBytes, &rawConfig); err != nil {
 		return fmt.Errorf("could not unmarshal YAML profile, err: %w", err)
 	}
 
-	if profiles, err = convertRawProfilesData(rawProfiles); err != nil {
+	if err = rawConfig.Settings.validate(); err != nil {
+		return fmt.Errorf("could not parse settings, err: %w", err)
+	}
+
+	parsedProfiles, err := convertRawProfilesData(rawConfig.Profiles)
+	if err != nil {
 		return err
 	}
 
+	profiles = parsedProfiles
+	settingsConfiguration = rawConfig.Settings.configuration()
+	kmsConfiguration = KMSConfiguration{
+		Client: rawConfig.KMS.Client,
+		Config: rawConfig.KMS.Config,
+		Cache:  rawConfig.KMS.Cache,
+	}
+
 	return nil
+}
+
+// Settings returns the configuration shared by all profiles.
+func Settings() SettingsConfiguration {
+	return settingsConfiguration
+}
+
+// KMS returns the KMS configuration shared by all profiles.
+func KMS() KMSConfiguration {
+	return kmsConfiguration
+}
+
+// Profiles returns a copy of all configured profiles indexed by name.
+func Profiles() map[string]Profile {
+	configuredProfiles := make(map[string]Profile, len(profiles))
+	for name, configuredProfile := range profiles {
+		configuredProfiles[name] = configuredProfile
+	}
+
+	return configuredProfiles
 }
 
 func convertRawProfilesData(rawProfiles []rawProfile) (map[string]Profile, error) {

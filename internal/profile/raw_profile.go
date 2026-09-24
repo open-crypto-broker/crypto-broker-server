@@ -13,14 +13,18 @@ import (
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
 )
 
-// rawProfile struct convenient for YAML encoded profile parsing.
-// It is primarly used to parse YAML formatted profile and generate
-// exported, ready to use Profile out of it, through Profile() method.
-type rawProfile struct {
-	Name     string             `yaml:"Name"`
+// rawProfilesConfig represents the top-level YAML configuration.
+// Settings and KMS are shared by all profiles.
+type rawProfilesConfig struct {
 	Settings rawProfileSettings `yaml:"Settings"`
-	API      rawProfileAPI      `yaml:"API"`
 	KMS      rawProfileKMS      `yaml:"KMS"`
+	Profiles []rawProfile       `yaml:"Profiles"`
+}
+
+// rawProfile is used to parse a profile and convert it into an exported Profile.
+type rawProfile struct {
+	Name string        `yaml:"Name"`
+	API  rawProfileAPI `yaml:"API"`
 }
 
 type rawProfileSettings struct {
@@ -198,20 +202,12 @@ func (p rawProfile) mapToProfile() (Profile, error) {
 
 	return Profile{
 		Name: p.Name,
-		Settings: ProfileSettings{
-			CryptoLibrary: strings.ToLower(p.Settings.CryptoLibrary),
-		},
-		API: api,
-		KMS: ProfileKMS{
-			Client: p.KMS.Client,
-			Config: p.KMS.Config,
-			Cache:  p.KMS.Cache,
-		},
+		API:  api,
 	}, nil
 }
 
 func (p rawProfile) validate() error {
-	return errors.Join(ValidateName(p.Name), p.Settings.validate(), p.API.validate())
+	return errors.Join(ValidateName(p.Name), p.API.validate())
 }
 
 func (settings rawProfileSettings) validate() error {
@@ -221,6 +217,10 @@ func (settings rawProfileSettings) validate() error {
 	}
 
 	return nil
+}
+
+func (settings rawProfileSettings) configuration() SettingsConfiguration {
+	return SettingsConfiguration{CryptoLibrary: strings.ToLower(settings.CryptoLibrary)}
 }
 
 func (api rawProfileAPI) validate() error {

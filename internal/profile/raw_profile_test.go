@@ -138,9 +138,6 @@ func TestRawProfileAPIEncryptData_validate(t *testing.T) {
 func TestRawProfile_mapToProfile_mapsEncryptDataFields(t *testing.T) {
 	rp := rawProfile{
 		Name: "EncryptionProfile",
-		Settings: rawProfileSettings{
-			CryptoLibrary: "native",
-		},
 		API: rawProfileAPI{
 			EncryptData: rawProfileAPIEncryptData{
 				EncryptAlg: "AES-GCM",
@@ -335,9 +332,6 @@ func TestRawProfileAPISignCertificate_validateSKIHashAlgorithm(t *testing.T) {
 func TestRawProfile_mapToProfile_mapsSignCertificateFields(t *testing.T) {
 	rp := rawProfile{
 		Name: "MyProfile",
-		Settings: rawProfileSettings{
-			CryptoLibrary: "NATIVE",
-		},
 		API: rawProfileAPI{
 			SignCertificate: rawProfileAPISignCertificate{
 				SignAlg:    "ecdsa",
@@ -373,10 +367,6 @@ func TestRawProfile_mapToProfile_mapsSignCertificateFields(t *testing.T) {
 	if got.Name != "MyProfile" {
 		t.Fatalf("Name = %q, want %q", got.Name, "MyProfile")
 	}
-	if got.Settings.CryptoLibrary != "native" {
-		t.Fatalf("CryptoLibrary = %q, want %q", got.Settings.CryptoLibrary, "native")
-	}
-
 	if got.API.SignCertificate.SignAlg != c10y.ECDSA || got.API.SignCertificate.HashAlg != c10y.SHA_512 {
 		t.Fatalf("SignAlg/HashAlg = %q/%q, want %q/%q",
 			got.API.SignCertificate.SignAlg, got.API.SignCertificate.HashAlg, c10y.ECDSA, c10y.SHA_512)
@@ -433,8 +423,7 @@ func TestRawProfileAPIEncryptData_validateAndMap(t *testing.T) {
 	}
 
 	raw := rawProfile{
-		Name:     "EncryptionProfile",
-		Settings: rawProfileSettings{CryptoLibrary: "native"},
+		Name: "EncryptionProfile",
 		API: rawProfileAPI{EncryptData: rawProfileAPIEncryptData{
 			EncryptAlg: "AES-GCM",
 			KeySize:    256,
@@ -452,8 +441,7 @@ func TestRawProfileAPIEncryptData_validateAndMap(t *testing.T) {
 
 func TestRawProfile_mapToProfile_defaultsSKIHashAlgorithmToSHA1(t *testing.T) {
 	rp := rawProfile{
-		Name:     "MyProfile",
-		Settings: rawProfileSettings{CryptoLibrary: "native"},
+		Name: "MyProfile",
 		API: rawProfileAPI{SignCertificate: rawProfileAPISignCertificate{
 			SignAlg: "ecdsa",
 			HashAlg: "sha-512",

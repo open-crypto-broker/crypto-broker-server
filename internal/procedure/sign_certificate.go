@@ -84,13 +84,14 @@ func (procedure *SignCertificate) signCertificate(req signCertificateRequest, p 
 		SignCertificate(c10y.SignCertificateInput) ([]byte, error)
 	}
 
+	settings := profile.Settings()
 	var s signer
-	switch p.Settings.CryptoLibrary {
+	switch settings.CryptoLibrary {
 	case c10y.LibNative:
 		s = procedure.cryptographicEngineNative
 	default:
 		return nil, ArgumentError("unknown '%s' cryptographic engine, available values: %v",
-			p.Settings.CryptoLibrary, c10y.SupportedCryptographicLibraries)
+			settings.CryptoLibrary, c10y.SupportedCryptographicLibraries)
 	}
 
 	var subject string
