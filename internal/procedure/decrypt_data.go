@@ -37,7 +37,7 @@ func (procedure *DecryptData) Execute(req *protobuf.DecryptDataRequest) (*protob
 		return nil, ArgumentError("invalid AES-GCM tag length: got %d, want %d", len(decryptMetadata.GetTag()), c10y.AESGCMTagSize)
 	}
 
-	engine, err := encryptionEngine(procedure.cryptographicEngineNative, reqProfile)
+	engine, err := encryptionEngine(procedure.cryptographicEngineNative)
 	if err != nil {
 		return nil, err
 	}

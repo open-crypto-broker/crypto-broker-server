@@ -15,16 +15,15 @@ func TestGetKey(t *testing.T) {
 	kmsClient := &testClient{key: []byte("test-key")}
 
 	mux.Lock()
-	clients = make(map[string]Client)
-	clients["Default"] = kmsClient
+	client = kmsClient
 	mux.Unlock()
 
-	first, err := GetKey("Default", "test-key-id")
+	first, err := GetKey("test-key-id")
 	if err != nil {
 		t.Fatalf("first GetKey() error: %v", err)
 	}
 
-	second, err := GetKey("Default", "test-key-id")
+	second, err := GetKey("test-key-id")
 	if err != nil {
 		t.Fatalf("second GetKey() error: %v", err)
 	}
