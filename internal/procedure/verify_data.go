@@ -20,7 +20,7 @@ func (procedure *VerifyData) Execute(req *protobuf.VerifyDataRequest) (*protobuf
 	if err != nil {
 		return nil, ArgumentError("could not retrieve profile, err: %w", err)
 	}
-	format, err := effectiveSignatureFormat(req.SignatureFormat, reqProfile.API.SignData.SignatureFormat)
+	format, err := effectiveSignatureFormat(req.GetSignatureFormat(), signatureFormatWasSet(req), reqProfile.API.SignData.SignatureFormat)
 	if err != nil {
 		return nil, err
 	}
@@ -33,8 +33,8 @@ func (procedure *VerifyData) Execute(req *protobuf.VerifyDataRequest) (*protobuf
 	if err != nil {
 		return nil, ArgumentError("could not parse PEM public key: %w", err)
 	}
-	if err := c10y.ValidatePublicKey(publicKey, reqProfile.API.SignData.KeyConstraints); err != nil {
-		return nil, ArgumentError("public key does not satisfy SignData profile constraints: %w", err)
+	if validationErr := c10y.ValidatePublicKey(publicKey, reqProfile.API.SignData.KeyConstraints); validationErr != nil {
+		return nil, ArgumentError("public key does not satisfy SignData profile constraints: %w", validationErr)
 	}
 	engine, err := signingEngine(procedure.cryptographicEngineNative, reqProfile)
 	if err != nil {

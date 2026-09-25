@@ -10,6 +10,7 @@ import (
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 const signaturePEMBlockType = "SIGNATURE"
@@ -18,9 +19,9 @@ type ecdsaSignature struct {
 	R, S *big.Int
 }
 
-func effectiveSignatureFormat(requestFormat *protobuf.SignatureFormat, profileFormat profile.SignatureFormat) (protobuf.SignatureFormat, error) {
-	if requestFormat != nil {
-		return validateSignatureFormat(*requestFormat)
+func effectiveSignatureFormat(requestFormat protobuf.SignatureFormat, requestFormatSet bool, profileFormat profile.SignatureFormat) (protobuf.SignatureFormat, error) {
+	if requestFormatSet {
+		return validateSignatureFormat(requestFormat)
 	}
 
 	switch profileFormat {
@@ -33,6 +34,12 @@ func effectiveSignatureFormat(requestFormat *protobuf.SignatureFormat, profileFo
 	default:
 		return protobuf.SignatureFormat_SIGNATURE_RAW, ArgumentError("unsupported profile signature format %q", profileFormat)
 	}
+}
+
+func signatureFormatWasSet(message protoreflect.ProtoMessage) bool {
+	reflectMessage := message.ProtoReflect()
+	field := reflectMessage.Descriptor().Fields().ByName("signatureFormat")
+	return reflectMessage.Has(field)
 }
 
 func validateSignatureFormat(format protobuf.SignatureFormat) (protobuf.SignatureFormat, error) {
