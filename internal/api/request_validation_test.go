@@ -279,8 +279,12 @@ func TestValidateSignVerifyDataRequests(t *testing.T) {
 	t.Run("rejects missing signature", func(t *testing.T) {
 		assertInvalidArgument(t, validateVerifyDataRequest(&pb.VerifyDataRequest{Profile: "Default", KeySource: validKeySource}), "signature")
 	})
-	t.Run("rejects unsupported format", func(t *testing.T) {
+	t.Run("accepts PEM format", func(t *testing.T) {
 		format := pb.SignatureFormat_SIGNATURE_PEM
+		assertNoError(t, validateSignDataRequest(&pb.SignDataRequest{Profile: "Default", KeySource: validKeySource, SignatureFormat: &format}))
+	})
+	t.Run("rejects unsupported CMS format", func(t *testing.T) {
+		format := pb.SignatureFormat_SIGNATURE_CMS
 		assertInvalidArgument(t, validateSignDataRequest(&pb.SignDataRequest{Profile: "Default", KeySource: validKeySource, SignatureFormat: &format}), "signatureFormat")
 	})
 	t.Run("rejects hybrid key source", func(t *testing.T) {

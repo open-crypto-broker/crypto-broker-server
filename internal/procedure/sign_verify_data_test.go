@@ -1,6 +1,7 @@
 package procedure
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -8,6 +9,7 @@ import (
 	"encoding/pem"
 	"testing"
 
+	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 )
 
@@ -97,6 +99,77 @@ func TestSignData_ExecuteRejectsKeyOutsideProfileConstraints(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatal("SignData.Execute() accepted an ECDSA P-256 key below the profile minimum")
+	}
+}
+
+func TestSignVerifyData_Formats(t *testing.T) {
+	loadDefaultProfiles(t)
+
+	privateKey, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
+	if err != nil {
+		t.Fatalf("generate ECDSA key: %v", err)
+	}
+	privateKeyDER, err := x509.MarshalECPrivateKey(privateKey)
+	if err != nil {
+		t.Fatalf("marshal ECDSA private key: %v", err)
+	}
+	publicKeyDER, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		t.Fatalf("marshal ECDSA public key: %v", err)
+	}
+	privateKeyPEM := pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: privateKeyDER})
+	publicKeyPEM := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: publicKeyDER})
+
+	for _, format := range []protobuf.SignatureFormat{
+		protobuf.SignatureFormat_SIGNATURE_RAW,
+		protobuf.SignatureFormat_SIGNATURE_DER,
+		protobuf.SignatureFormat_SIGNATURE_PEM,
+	} {
+		t.Run(format.String(), func(t *testing.T) {
+			signed, err := NewSignData(newTestLibraryNative()).Execute(&protobuf.SignDataRequest{
+				Profile:         "Default",
+				KeySource:       signKeySource(privateKeyPEM),
+				Input:           []byte("document contents"),
+				SignatureFormat: &format,
+			})
+			if err != nil {
+				t.Fatalf("SignData.Execute() error: %v", err)
+			}
+			if format == protobuf.SignatureFormat_SIGNATURE_RAW && len(signed.GetSignature()) != 132 {
+				t.Fatalf("RAW P-521 signature length = %d, want 132", len(signed.GetSignature()))
+			}
+			if format == protobuf.SignatureFormat_SIGNATURE_PEM && !bytes.HasPrefix(signed.GetSignature(), []byte("-----BEGIN SIGNATURE-----")) {
+				t.Fatalf("PEM signature does not have a SIGNATURE block: %q", signed.GetSignature())
+			}
+
+			verified, err := NewVerifyData(newTestLibraryNative()).Execute(&protobuf.VerifyDataRequest{
+				Profile:         "Default",
+				KeySource:       signKeySource(publicKeyPEM),
+				Input:           []byte("document contents"),
+				Signature:       signed.GetSignature(),
+				SignatureFormat: &format,
+			})
+			if err != nil {
+				t.Fatalf("VerifyData.Execute() error: %v", err)
+			}
+			if !verified.GetValid() {
+				t.Fatal("VerifyData.Execute() returned invalid")
+			}
+		})
+	}
+}
+
+func TestEffectiveSignatureFormat(t *testing.T) {
+	format, err := effectiveSignatureFormat(nil, profile.SignatureFormatPEM)
+	if err != nil {
+		t.Fatalf("effectiveSignatureFormat() error: %v", err)
+	}
+	if format != protobuf.SignatureFormat_SIGNATURE_PEM {
+		t.Fatalf("effectiveSignatureFormat() = %s, want SIGNATURE_PEM", format)
+	}
+
+	if _, err = decodeSignature(protobuf.SignatureFormat_SIGNATURE_PEM, &ecdsa.PublicKey{}, []byte("not pem")); err == nil {
+		t.Fatal("decodeSignature() accepted malformed PEM")
 	}
 }
 

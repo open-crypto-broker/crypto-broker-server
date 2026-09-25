@@ -20,8 +20,9 @@ func (procedure *VerifyData) Execute(req *protobuf.VerifyDataRequest) (*protobuf
 	if err != nil {
 		return nil, ArgumentError("could not retrieve profile, err: %w", err)
 	}
-	if formatErr := validateRawSignatureFormat(req.GetSignatureFormat()); formatErr != nil {
-		return nil, formatErr
+	format, err := effectiveSignatureFormat(req.SignatureFormat, reqProfile.API.SignData.SignatureFormat)
+	if err != nil {
+		return nil, err
 	}
 
 	key, err := singleRawSigningKey(req.GetKeySource())
@@ -39,10 +40,14 @@ func (procedure *VerifyData) Execute(req *protobuf.VerifyDataRequest) (*protobuf
 	if err != nil {
 		return nil, err
 	}
+	signature, err := decodeSignature(format, publicKey, req.GetSignature())
+	if err != nil {
+		return nil, err
+	}
 	valid, err := engine.VerifyData(c10y.VerifyDataInput{
 		PublicKey: publicKey,
 		Data:      req.GetInput(),
-		Signature: req.GetSignature(),
+		Signature: signature,
 		SignAlg:   reqProfile.API.SignData.SignAlg,
 		HashAlg:   reqProfile.API.SignData.HashAlg,
 	})

@@ -91,7 +91,9 @@ func TestRawProfileAPISignData_validate(t *testing.T) {
 		{name: "rejects unsupported digest algorithm", in: rawProfileAPISignData{SigningMode: "legacy", SignAlg: "ecdsa", HashAlg: "sha3-512", SignatureFormat: "RAW", KeyConstraints: map[string]rawProfileAPISignDataConstraint{"ecdsa": {MinKeySize: 384, MaxKeySize: 521}}}, wantErr: true},
 		{name: "rejects hybrid mode without provider", in: rawProfileAPISignData{SigningMode: "hybrid", SignAlg: "ecdsa", HashAlg: "sha-512", SignatureFormat: "RAW", KeyConstraints: map[string]rawProfileAPISignDataConstraint{"ecdsa": {MinKeySize: 384, MaxKeySize: 521}}}, wantErr: true},
 		{name: "rejects post quantum mode without provider", in: rawProfileAPISignData{SigningMode: "post-quantum", SignAlg: "ml-dsa-65", SignatureFormat: "RAW"}, wantErr: true},
-		{name: "rejects unsupported format", in: rawProfileAPISignData{SigningMode: "legacy", SignAlg: "ecdsa", HashAlg: "sha-512", SignatureFormat: "CMS", KeyConstraints: map[string]rawProfileAPISignDataConstraint{"ecdsa": {MinKeySize: 384, MaxKeySize: 521}}}, wantErr: true},
+		{name: "accepts DER format", in: rawProfileAPISignData{SigningMode: "legacy", SignAlg: "ecdsa", HashAlg: "sha-512", SignatureFormat: "DER", KeyConstraints: map[string]rawProfileAPISignDataConstraint{"ecdsa": {MinKeySize: 384, MaxKeySize: 521}}}},
+		{name: "accepts PEM format", in: rawProfileAPISignData{SigningMode: "legacy", SignAlg: "ecdsa", HashAlg: "sha-512", SignatureFormat: "PEM", KeyConstraints: map[string]rawProfileAPISignDataConstraint{"ecdsa": {MinKeySize: 384, MaxKeySize: 521}}}},
+		{name: "rejects unsupported CMS format", in: rawProfileAPISignData{SigningMode: "legacy", SignAlg: "ecdsa", HashAlg: "sha-512", SignatureFormat: "CMS", KeyConstraints: map[string]rawProfileAPISignDataConstraint{"ecdsa": {MinKeySize: 384, MaxKeySize: 521}}}, wantErr: true},
 		{name: "rejects missing constraints", in: rawProfileAPISignData{SigningMode: "legacy", SignAlg: "ecdsa", HashAlg: "sha-512", SignatureFormat: "RAW"}, wantErr: true},
 	}
 

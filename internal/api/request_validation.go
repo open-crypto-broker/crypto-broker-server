@@ -240,8 +240,8 @@ func validateSignDataRequest(req *pb.SignDataRequest) error {
 	if err := checkMaxLen("input", len(req.GetInput()), maxSigningDataBytes); err != nil {
 		return err
 	}
-	if req.SignatureFormat != nil && req.GetSignatureFormat() != pb.SignatureFormat_SIGNATURE_RAW {
-		return invalidArg("signatureFormat", "only SIGNATURE_RAW is currently supported")
+	if req.SignatureFormat != nil && req.GetSignatureFormat() == pb.SignatureFormat_SIGNATURE_CMS {
+		return invalidArg("signatureFormat", "SIGNATURE_CMS is not currently supported")
 	}
 	return validateMetadata(req.GetMetadata())
 }
@@ -265,8 +265,8 @@ func validateVerifyDataRequest(req *pb.VerifyDataRequest) error {
 	if err := checkMaxLen("signature", len(req.GetSignature()), maxSignatureBytes); err != nil {
 		return err
 	}
-	if req.SignatureFormat != nil && req.GetSignatureFormat() != pb.SignatureFormat_SIGNATURE_RAW {
-		return invalidArg("signatureFormat", "only SIGNATURE_RAW is currently supported")
+	if req.SignatureFormat != nil && req.GetSignatureFormat() == pb.SignatureFormat_SIGNATURE_CMS {
+		return invalidArg("signatureFormat", "SIGNATURE_CMS is not currently supported")
 	}
 	return validateMetadata(req.GetMetadata())
 }
