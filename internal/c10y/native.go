@@ -1,7 +1,10 @@
 package c10y
 
 import (
+	"crypto"
+	"crypto/ecdsa"
 	"crypto/rand"
+	"crypto/rsa"
 	// #nosec G505 G401 -- SHA-1 is required for Subject Key Identifier per RFC 5280
 	"crypto/sha1"
 	"crypto/sha256"
@@ -39,6 +42,23 @@ type SignCertificateInput struct {
 	SKIHashAlg            Algorithm
 	CACert                *x509.Certificate
 	PrivateKey            any
+}
+
+// SignDataInput contains the legacy signing parameters selected by a profile.
+type SignDataInput struct {
+	PrivateKey any
+	Data       []byte
+	SignAlg    Algorithm
+	HashAlg    Algorithm
+}
+
+// VerifyDataInput contains the legacy verification parameters selected by a profile.
+type VerifyDataInput struct {
+	PublicKey any
+	Data      []byte
+	Signature []byte
+	SignAlg   Algorithm
+	HashAlg   Algorithm
 }
 
 var (
@@ -135,6 +155,72 @@ func (service *LibraryNative) SignCertificate(input SignCertificateInput) ([]byt
 
 	// create client certificate from template and CA public key - DER format
 	return x509.CreateCertificate(rand.Reader, &clientCRTTemplate, input.CACert, input.CSR.PublicKey, input.PrivateKey)
+}
+
+// SignData creates a legacy RSA PKCS#1 v1.5 or ASN.1 DER ECDSA signature.
+func (service *LibraryNative) SignData(input SignDataInput) ([]byte, error) {
+	digest, hash, err := signingDigest(input.Data, input.HashAlg)
+	if err != nil {
+		return nil, err
+	}
+
+	switch privateKey := input.PrivateKey.(type) {
+	case *rsa.PrivateKey:
+		if input.SignAlg != RSA {
+			return nil, fmt.Errorf("private key does not match configured signing algorithm %q", input.SignAlg)
+		}
+		return rsa.SignPKCS1v15(rand.Reader, privateKey, hash, digest)
+	case *ecdsa.PrivateKey:
+		if input.SignAlg != ECDSA {
+			return nil, fmt.Errorf("private key does not match configured signing algorithm %q", input.SignAlg)
+		}
+		return ecdsa.SignASN1(rand.Reader, privateKey, digest)
+	default:
+		return nil, fmt.Errorf("unsupported private key type %T", input.PrivateKey)
+	}
+}
+
+// VerifyData verifies a legacy RSA PKCS#1 v1.5 or ASN.1 DER ECDSA signature.
+func (service *LibraryNative) VerifyData(input VerifyDataInput) (bool, error) {
+	digest, hash, err := signingDigest(input.Data, input.HashAlg)
+	if err != nil {
+		return false, err
+	}
+
+	switch publicKey := input.PublicKey.(type) {
+	case *rsa.PublicKey:
+		if input.SignAlg != RSA {
+			return false, fmt.Errorf("public key does not match configured signing algorithm %q", input.SignAlg)
+		}
+		return rsa.VerifyPKCS1v15(publicKey, hash, digest, input.Signature) == nil, nil
+	case *ecdsa.PublicKey:
+		if input.SignAlg != ECDSA {
+			return false, fmt.Errorf("public key does not match configured signing algorithm %q", input.SignAlg)
+		}
+		return ecdsa.VerifyASN1(publicKey, digest, input.Signature), nil
+	default:
+		return false, fmt.Errorf("unsupported public key type %T", input.PublicKey)
+	}
+}
+
+func signingDigest(data []byte, algorithm Algorithm) ([]byte, crypto.Hash, error) {
+	var hash crypto.Hash
+	switch algorithm {
+	case SHA_256:
+		hash = crypto.SHA256
+	case SHA_384:
+		hash = crypto.SHA384
+	case SHA_512:
+		hash = crypto.SHA512
+	default:
+		return nil, 0, fmt.Errorf("unsupported signing hash algorithm %q", algorithm)
+	}
+
+	digest := hash.New()
+	if _, err := digest.Write(data); err != nil {
+		return nil, 0, fmt.Errorf("hash signing input: %w", err)
+	}
+	return digest.Sum(nil), hash, nil
 }
 
 // HashSHA3_256 returns sha3-256 hash of provided bytes or non-nil error if any.

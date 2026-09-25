@@ -43,6 +43,12 @@ const (
 
 	// EncryptDataEncryption represents encryption performed in EncryptData API.
 	EncryptDataEncryption Operation = "encryptDataEncryption"
+
+	// SignDataSigning represents signing performed in SignData API.
+	SignDataSigning Operation = "signDataSigning"
+
+	// SignDataHashing represents digest generation performed in SignData API.
+	SignDataHashing Operation = "signDataHashing"
 )
 
 // HashDataAlgorithmsSupported predefined list of supported hashing algorithms by c10y pkg
@@ -62,6 +68,12 @@ var SignCertificateHashingAlgorithmsSupported = []Algorithm{
 
 // EncryptDataEncryptionAlgorithmsSupported lists encryption algorithms supported by EncryptData API.
 var EncryptDataEncryptionAlgorithmsSupported = []Algorithm{AES_GCM}
+
+// SignDataSigningAlgorithmsSupported lists legacy signature algorithms supported by the native engine.
+var SignDataSigningAlgorithmsSupported = []Algorithm{RSA, ECDSA}
+
+// SignDataHashingAlgorithmsSupported lists digest algorithms supported by the native signing engine.
+var SignDataHashingAlgorithmsSupported = []Algorithm{SHA_256, SHA_384, SHA_512}
 
 // SignCertificateSKIHashingAlgorithmsSupported lists algorithms that can generate 160-bit Subject Key Identifiers.
 var SignCertificateSKIHashingAlgorithmsSupported = []Algorithm{
@@ -95,6 +107,10 @@ func (alg Algorithm) IsSupported(operation Operation) bool {
 		return slices.Contains(HashDataAlgorithmsSupported, alg)
 	case EncryptDataEncryption:
 		return slices.Contains(EncryptDataEncryptionAlgorithmsSupported, alg)
+	case SignDataSigning:
+		return slices.Contains(SignDataSigningAlgorithmsSupported, alg)
+	case SignDataHashing:
+		return slices.Contains(SignDataHashingAlgorithmsSupported, alg)
 	default:
 		return false
 	}

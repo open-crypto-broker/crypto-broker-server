@@ -7,6 +7,15 @@
   API:
     HashData:
       HashAlg: sha3-512
+    SignData:
+      SigningMode: legacy
+      SignAlg: ecdsa
+      HashAlg: sha-512
+      SignatureFormat: RAW
+      KeyConstraints:
+        ECDSA:
+          MinKeySize: 384
+          MaxKeySize: 521
     EncryptData:
       EncryptAlg: aes-gcm
       KeySize: 256

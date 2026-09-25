@@ -38,7 +38,16 @@ type rawProfileAPIHashData struct {
 }
 
 type rawProfileAPISignData struct {
-	SignAlg string `yaml:"SignAlg"`
+	SigningMode     string                                     `yaml:"SigningMode"`
+	SignAlg         string                                     `yaml:"SignAlg"`
+	HashAlg         string                                     `yaml:"HashAlg"`
+	SignatureFormat string                                     `yaml:"SignatureFormat"`
+	KeyConstraints  map[string]rawProfileAPISignDataConstraint `yaml:"KeyConstraints"`
+}
+
+type rawProfileAPISignDataConstraint struct {
+	MinKeySize int `yaml:"MinKeySize"`
+	MaxKeySize int `yaml:"MaxKeySize"`
 }
 
 type rawProfileAPIEncryptData struct {
@@ -90,8 +99,19 @@ func (p rawProfile) mapToProfile() (Profile, error) {
 	}
 
 	if !reflect.DeepEqual(p.API.SignData, rawProfileAPISignData{}) {
+		keyConstraints := make(map[c10y.Algorithm]c10y.BitSizeConstraints, len(p.API.SignData.KeyConstraints))
+		for algorithm, constraints := range p.API.SignData.KeyConstraints {
+			keyConstraints[c10y.NewAlgorithm(algorithm)] = c10y.BitSizeConstraints{
+				MinKeySize: constraints.MinKeySize,
+				MaxKeySize: constraints.MaxKeySize,
+			}
+		}
 		api.SignData = ProfileAPISignData{
-			SignAlg: c10y.NewAlgorithm(p.API.SignData.SignAlg),
+			SigningMode:     SigningMode(strings.ToLower(p.API.SignData.SigningMode)),
+			SignAlg:         c10y.NewAlgorithm(p.API.SignData.SignAlg),
+			HashAlg:         c10y.NewAlgorithm(p.API.SignData.HashAlg),
+			SignatureFormat: SignatureFormat(strings.ToUpper(p.API.SignData.SignatureFormat)),
+			KeyConstraints:  keyConstraints,
 		}
 	}
 
@@ -237,6 +257,48 @@ func (api rawProfileAPI) validate() error {
 }
 
 func (api rawProfileAPISignData) validate() error {
+	mode := SigningMode(strings.ToLower(api.SigningMode))
+	if mode != SigningModeLegacy && mode != SigningModeHybrid && mode != SigningModePostQuantum {
+		return fmt.Errorf("unsupported signing mode: %q, available values: [%s %s %s]", api.SigningMode, SigningModeLegacy, SigningModeHybrid, SigningModePostQuantum)
+	}
+	if mode != SigningModeLegacy {
+		return fmt.Errorf("signing mode %q is not supported by the configured cryptographic engine", mode)
+	}
+
+	format := SignatureFormat(strings.ToUpper(api.SignatureFormat))
+	if format != SignatureFormatRAW && format != SignatureFormatDER && format != SignatureFormatPEM && format != SignatureFormatCMS {
+		return fmt.Errorf("unsupported signature format: %q, available values: [%s %s %s %s]", api.SignatureFormat, SignatureFormatRAW, SignatureFormatDER, SignatureFormatPEM, SignatureFormatCMS)
+	}
+	if format == SignatureFormatCMS {
+		return fmt.Errorf("signature format %q is not supported by the configured cryptographic engine", format)
+	}
+
+	signAlg := c10y.NewAlgorithm(api.SignAlg)
+	if !signAlg.IsSupported(c10y.SignDataSigning) {
+		return fmt.Errorf("unsupported signing algorithm: %s, available algorithms: %v", signAlg, c10y.SignDataSigningAlgorithmsSupported)
+	}
+
+	hashAlg := c10y.NewAlgorithm(api.HashAlg)
+	if !hashAlg.IsSupported(c10y.SignDataHashing) {
+		return fmt.Errorf("unsupported signing hash algorithm: %s, available algorithms: %v", hashAlg, c10y.SignDataHashingAlgorithmsSupported)
+	}
+
+	var constraints rawProfileAPISignDataConstraint
+	ok := false
+	for algorithm, candidate := range api.KeyConstraints {
+		if c10y.NewAlgorithm(algorithm) == signAlg {
+			constraints = candidate
+			ok = true
+			break
+		}
+	}
+	if !ok {
+		return fmt.Errorf("missing key constraints for signing algorithm %q", signAlg)
+	}
+	if constraints.MinKeySize <= 0 || constraints.MaxKeySize <= 0 || constraints.MinKeySize > constraints.MaxKeySize {
+		return fmt.Errorf("invalid key constraints for signing algorithm %q", signAlg)
+	}
+
 	return nil
 }
 

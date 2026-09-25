@@ -72,7 +72,10 @@ func TestRetrieve(t *testing.T) {
 				Settings: ProfileSettings{CryptoLibrary: "native"},
 				API: ProfileAPI{
 					HashData: ProfileAPIHashData{HashAlg: "sha3-512"},
-					SignData: ProfileAPISignData{SignAlg: ""},
+					SignData: ProfileAPISignData{
+						SigningMode: SigningModeLegacy, SignAlg: "ecdsa", HashAlg: "sha-512", SignatureFormat: SignatureFormatRAW,
+						KeyConstraints: map[c10y.Algorithm]c10y.BitSizeConstraints{c10y.ECDSA: {MinKeySize: 384, MaxKeySize: 521}},
+					},
 					EncryptData: ProfileAPIEncryptData{
 						EncryptAlg: c10y.AES_GCM,
 						KeySize:    256,
@@ -146,7 +149,8 @@ func Test_convertRawProfilesData(t *testing.T) {
 							HashAlg: "sha3-512",
 						},
 						SignData: rawProfileAPISignData{
-							SignAlg: "ecdsa",
+							SigningMode: "legacy", SignAlg: "ecdsa", HashAlg: "sha-512", SignatureFormat: "RAW",
+							KeyConstraints: map[string]rawProfileAPISignDataConstraint{"ECDSA": {MinKeySize: 384, MaxKeySize: 521}},
 						},
 					},
 				},
@@ -168,7 +172,10 @@ func Test_convertRawProfilesData(t *testing.T) {
 							ExtendedKeyUsage: []x509.ExtKeyUsage(nil),
 							BasicConstraints: ProfileAPISignCertificateBasicConstraints{CA: false, PathLenConstraint: 0}},
 						HashData: ProfileAPIHashData{HashAlg: "sha3-512"},
-						SignData: ProfileAPISignData{SignAlg: "ecdsa"},
+						SignData: ProfileAPISignData{
+							SigningMode: SigningModeLegacy, SignAlg: "ecdsa", HashAlg: "sha-512", SignatureFormat: SignatureFormatRAW,
+							KeyConstraints: map[c10y.Algorithm]c10y.BitSizeConstraints{c10y.ECDSA: {MinKeySize: 384, MaxKeySize: 521}},
+						},
 					}},
 			},
 			wantErr: false,
@@ -186,7 +193,8 @@ func Test_convertRawProfilesData(t *testing.T) {
 							HashAlg: "sha3-512",
 						},
 						SignData: rawProfileAPISignData{
-							SignAlg: "ecdsa",
+							SigningMode: "legacy", SignAlg: "ecdsa", HashAlg: "sha-512", SignatureFormat: "RAW",
+							KeyConstraints: map[string]rawProfileAPISignDataConstraint{"ECDSA": {MinKeySize: 384, MaxKeySize: 521}},
 						},
 					},
 				},
@@ -200,7 +208,8 @@ func Test_convertRawProfilesData(t *testing.T) {
 							HashAlg: "sha3-256",
 						},
 						SignData: rawProfileAPISignData{
-							SignAlg: "ecdsa",
+							SigningMode: "legacy", SignAlg: "ecdsa", HashAlg: "sha-512", SignatureFormat: "RAW",
+							KeyConstraints: map[string]rawProfileAPISignDataConstraint{"ECDSA": {MinKeySize: 384, MaxKeySize: 521}},
 						},
 					},
 				},

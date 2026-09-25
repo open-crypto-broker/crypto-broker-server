@@ -227,6 +227,50 @@ func validateDecryptDataRequest(req *pb.DecryptDataRequest) error {
 	return validateMetadata(req.GetMetadata())
 }
 
+func validateSignDataRequest(req *pb.SignDataRequest) error {
+	if req == nil {
+		return invalidArg("request", "required")
+	}
+	if err := validateProfileName(req.GetProfile()); err != nil {
+		return err
+	}
+	if err := validateSignKeySource(req.GetKeySource()); err != nil {
+		return err
+	}
+	if err := checkMaxLen("input", len(req.GetInput()), maxSigningDataBytes); err != nil {
+		return err
+	}
+	if req.SignatureFormat != nil && req.GetSignatureFormat() == pb.SignatureFormat_SIGNATURE_CMS {
+		return invalidArg("signatureFormat", "SIGNATURE_CMS is not currently supported")
+	}
+	return validateMetadata(req.GetMetadata())
+}
+
+func validateVerifyDataRequest(req *pb.VerifyDataRequest) error {
+	if req == nil {
+		return invalidArg("request", "required")
+	}
+	if err := validateProfileName(req.GetProfile()); err != nil {
+		return err
+	}
+	if err := validateSignKeySource(req.GetKeySource()); err != nil {
+		return err
+	}
+	if err := checkMaxLen("input", len(req.GetInput()), maxSigningDataBytes); err != nil {
+		return err
+	}
+	if len(req.GetSignature()) == 0 {
+		return invalidArg("signature", "required")
+	}
+	if err := checkMaxLen("signature", len(req.GetSignature()), maxSignatureBytes); err != nil {
+		return err
+	}
+	if req.SignatureFormat != nil && req.GetSignatureFormat() == pb.SignatureFormat_SIGNATURE_CMS {
+		return invalidArg("signatureFormat", "SIGNATURE_CMS is not currently supported")
+	}
+	return validateMetadata(req.GetMetadata())
+}
+
 func validateKeySource(keySource *pb.KeySource) error {
 	if keySource == nil || keySource.GetSource() == nil {
 		return invalidArg("keySource", "required")
@@ -235,4 +279,24 @@ func validateKeySource(keySource *pb.KeySource) error {
 		return checkMaxLen("keySource.rawKey", len(rawKey), maxEncryptionKeyBytes)
 	}
 	return nil
+}
+
+func validateSignKeySource(keySource *pb.SignKeySource) error {
+	if keySource == nil || keySource.GetSource() == nil {
+		return invalidArg("keySource", "required")
+	}
+	if keySource.GetComponentKeys() != nil {
+		return invalidArg("keySource.componentKeys", "hybrid signing is not currently supported")
+	}
+	single := keySource.GetSingle()
+	if single == nil || single.GetSource() == nil {
+		return invalidArg("keySource.single", "required")
+	}
+	if len(single.GetRawKey()) == 0 {
+		if single.GetKeyId() != "" {
+			return invalidArg("keySource.single.keyId", "KMS-backed signing is not currently supported")
+		}
+		return invalidArg("keySource.single.rawKey", "required")
+	}
+	return checkMaxLen("keySource.single.rawKey", len(single.GetRawKey()), maxSigningKeyBytes)
 }

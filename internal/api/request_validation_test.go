@@ -268,6 +268,35 @@ func TestValidateEncryptionRequests(t *testing.T) {
 	})
 }
 
+func TestValidateSignVerifyDataRequests(t *testing.T) {
+	validKeySource := &pb.SignKeySource{Source: &pb.SignKeySource_Single{
+		Single: &pb.KeySource{Source: &pb.KeySource_RawKey{RawKey: []byte("pem key")}},
+	}}
+
+	t.Run("accepts raw SignData request", func(t *testing.T) {
+		assertNoError(t, validateSignDataRequest(&pb.SignDataRequest{Profile: "Default", KeySource: validKeySource}))
+	})
+	t.Run("rejects missing signature", func(t *testing.T) {
+		assertInvalidArgument(t, validateVerifyDataRequest(&pb.VerifyDataRequest{Profile: "Default", KeySource: validKeySource}), "signature")
+	})
+	t.Run("accepts PEM format", func(t *testing.T) {
+		format := pb.SignatureFormat_SIGNATURE_PEM
+		assertNoError(t, validateSignDataRequest(&pb.SignDataRequest{Profile: "Default", KeySource: validKeySource, SignatureFormat: &format}))
+	})
+	t.Run("rejects unsupported CMS format", func(t *testing.T) {
+		format := pb.SignatureFormat_SIGNATURE_CMS
+		assertInvalidArgument(t, validateSignDataRequest(&pb.SignDataRequest{Profile: "Default", KeySource: validKeySource, SignatureFormat: &format}), "signatureFormat")
+	})
+	t.Run("rejects hybrid key source", func(t *testing.T) {
+		assertInvalidArgument(t, validateSignDataRequest(&pb.SignDataRequest{
+			Profile: "Default",
+			KeySource: &pb.SignKeySource{Source: &pb.SignKeySource_ComponentKeys{
+				ComponentKeys: &pb.ComponentKeys{},
+			}},
+		}), "keySource.componentKeys")
+	})
+}
+
 func TestValidateMetadata(t *testing.T) {
 	tests := []struct {
 		name      string
