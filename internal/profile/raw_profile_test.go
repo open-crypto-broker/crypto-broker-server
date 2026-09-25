@@ -86,9 +86,13 @@ func TestRawProfileAPISignData_validate(t *testing.T) {
 		in      rawProfileAPISignData
 		wantErr bool
 	}{
-		{name: "accepts ECDSA with SHA-512", in: rawProfileAPISignData{SignAlg: "ecdsa", HashAlg: "sha-512"}},
-		{name: "rejects unsupported signing algorithm", in: rawProfileAPISignData{SignAlg: "ed25519", HashAlg: "sha-512"}, wantErr: true},
-		{name: "rejects unsupported digest algorithm", in: rawProfileAPISignData{SignAlg: "ecdsa", HashAlg: "sha3-512"}, wantErr: true},
+		{name: "accepts legacy ECDSA with SHA-512", in: validRawSignDataProfile()},
+		{name: "rejects unsupported signing algorithm", in: rawProfileAPISignData{SigningMode: "legacy", SignAlg: "ed25519", HashAlg: "sha-512", SignatureFormat: "RAW", KeyConstraints: map[string]rawProfileAPISignDataConstraint{"ed25519": {MinKeySize: 256, MaxKeySize: 256}}}, wantErr: true},
+		{name: "rejects unsupported digest algorithm", in: rawProfileAPISignData{SigningMode: "legacy", SignAlg: "ecdsa", HashAlg: "sha3-512", SignatureFormat: "RAW", KeyConstraints: map[string]rawProfileAPISignDataConstraint{"ecdsa": {MinKeySize: 384, MaxKeySize: 521}}}, wantErr: true},
+		{name: "rejects hybrid mode without provider", in: rawProfileAPISignData{SigningMode: "hybrid", SignAlg: "ecdsa", HashAlg: "sha-512", SignatureFormat: "RAW", KeyConstraints: map[string]rawProfileAPISignDataConstraint{"ecdsa": {MinKeySize: 384, MaxKeySize: 521}}}, wantErr: true},
+		{name: "rejects post quantum mode without provider", in: rawProfileAPISignData{SigningMode: "post-quantum", SignAlg: "ml-dsa-65", SignatureFormat: "RAW"}, wantErr: true},
+		{name: "rejects unsupported format", in: rawProfileAPISignData{SigningMode: "legacy", SignAlg: "ecdsa", HashAlg: "sha-512", SignatureFormat: "CMS", KeyConstraints: map[string]rawProfileAPISignDataConstraint{"ecdsa": {MinKeySize: 384, MaxKeySize: 521}}}, wantErr: true},
+		{name: "rejects missing constraints", in: rawProfileAPISignData{SigningMode: "legacy", SignAlg: "ecdsa", HashAlg: "sha-512", SignatureFormat: "RAW"}, wantErr: true},
 	}
 
 	for _, tt := range tests {
@@ -98,6 +102,13 @@ func TestRawProfileAPISignData_validate(t *testing.T) {
 				t.Fatalf("validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func validRawSignDataProfile() rawProfileAPISignData {
+	return rawProfileAPISignData{
+		SigningMode: "legacy", SignAlg: "ecdsa", HashAlg: "sha-512", SignatureFormat: "RAW",
+		KeyConstraints: map[string]rawProfileAPISignDataConstraint{"ecdsa": {MinKeySize: 384, MaxKeySize: 521}},
 	}
 }
 

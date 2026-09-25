@@ -31,9 +31,31 @@ type ProfileAPIHashData struct {
 }
 
 type ProfileAPISignData struct {
-	SignAlg c10y.Algorithm
-	HashAlg c10y.Algorithm
+	SigningMode     SigningMode
+	SignAlg         c10y.Algorithm
+	HashAlg         c10y.Algorithm
+	SignatureFormat SignatureFormat
+	KeyConstraints  map[c10y.Algorithm]c10y.BitSizeConstraints
 }
+
+// SigningMode selects the profile-driven signature scheme family.
+type SigningMode string
+
+const (
+	SigningModeLegacy      SigningMode = "legacy"
+	SigningModeHybrid      SigningMode = "hybrid"
+	SigningModePostQuantum SigningMode = "post-quantum"
+)
+
+// SignatureFormat is the profile default used when a request omits signatureFormat.
+type SignatureFormat string
+
+const (
+	SignatureFormatRAW SignatureFormat = "RAW"
+	SignatureFormatDER SignatureFormat = "DER"
+	SignatureFormatPEM SignatureFormat = "PEM"
+	SignatureFormatCMS SignatureFormat = "CMS"
+)
 
 type ProfileAPIEncryptData struct {
 	EncryptAlg c10y.Algorithm

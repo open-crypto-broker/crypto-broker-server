@@ -26,7 +26,7 @@ func (procedure *SignData) Execute(req *protobuf.SignDataRequest) (*protobuf.Sig
 		return nil, formatErr
 	}
 
-	privateKey, err := signingPrivateKey(req.GetKeySource())
+	privateKey, err := signingPrivateKey(req.GetKeySource(), reqProfile)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func signingEngine(engine *c10y.LibraryNative, p profile.Profile) (*c10y.Library
 	return engine, nil
 }
 
-func signingPrivateKey(keySource *protobuf.SignKeySource) (any, error) {
+func signingPrivateKey(keySource *protobuf.SignKeySource, p profile.Profile) (any, error) {
 	key, err := singleRawSigningKey(keySource)
 	if err != nil {
 		return nil, err
@@ -73,6 +73,9 @@ func signingPrivateKey(keySource *protobuf.SignKeySource) (any, error) {
 	privateKey, err := c10y.ParsePrivateKeyFromPEM(key)
 	if err != nil {
 		return nil, ArgumentError("could not parse PEM private key: %w", err)
+	}
+	if err := c10y.ValidatePrivateKey(privateKey, p.API.SignData.KeyConstraints); err != nil {
+		return nil, ArgumentError("private key does not satisfy SignData profile constraints: %w", err)
 	}
 	return privateKey, nil
 }
