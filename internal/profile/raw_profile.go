@@ -269,7 +269,7 @@ func (api rawProfileAPISignData) validate() error {
 	if format != SignatureFormatRAW && format != SignatureFormatDER && format != SignatureFormatPEM && format != SignatureFormatCMS {
 		return fmt.Errorf("unsupported signature format: %q, available values: [%s %s %s %s]", api.SignatureFormat, SignatureFormatRAW, SignatureFormatDER, SignatureFormatPEM, SignatureFormatCMS)
 	}
-	if format != SignatureFormatRAW {
+	if format == SignatureFormatCMS {
 		return fmt.Errorf("signature format %q is not supported by the configured cryptographic engine", format)
 	}
 

@@ -22,8 +22,9 @@ func (procedure *SignData) Execute(req *protobuf.SignDataRequest) (*protobuf.Sig
 	if err != nil {
 		return nil, ArgumentError("could not retrieve profile, err: %w", err)
 	}
-	if formatErr := validateRawSignatureFormat(req.GetSignatureFormat()); formatErr != nil {
-		return nil, formatErr
+	format, err := effectiveSignatureFormat(req.SignatureFormat, reqProfile.API.SignData.SignatureFormat)
+	if err != nil {
+		return nil, err
 	}
 
 	privateKey, err := signingPrivateKey(req.GetKeySource(), reqProfile)
@@ -42,6 +43,10 @@ func (procedure *SignData) Execute(req *protobuf.SignDataRequest) (*protobuf.Sig
 	})
 	if err != nil {
 		return nil, ArgumentError("could not sign data: %w", err)
+	}
+	signature, err = encodeSignature(format, privateKey, signature)
+	if err != nil {
+		return nil, err
 	}
 
 	return &protobuf.SignDataResponse{
@@ -92,11 +97,4 @@ func singleRawSigningKey(keySource *protobuf.SignKeySource) ([]byte, error) {
 		return nil, ArgumentError("keySource.single.keyId is not supported without a KMS implementation")
 	}
 	return nil, ArgumentError("keySource.single.rawKey is required")
-}
-
-func validateRawSignatureFormat(format protobuf.SignatureFormat) error {
-	if format != protobuf.SignatureFormat_SIGNATURE_RAW {
-		return ArgumentError("signatureFormat %s is not currently supported", format.String())
-	}
-	return nil
 }
