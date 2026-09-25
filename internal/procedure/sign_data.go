@@ -22,7 +22,7 @@ func (procedure *SignData) Execute(req *protobuf.SignDataRequest) (*protobuf.Sig
 	if err != nil {
 		return nil, ArgumentError("could not retrieve profile, err: %w", err)
 	}
-	format, err := effectiveSignatureFormat(req.SignatureFormat, reqProfile.API.SignData.SignatureFormat)
+	format, err := effectiveSignatureFormat(req.GetSignatureFormat(), signatureFormatWasSet(req), reqProfile.API.SignData.SignatureFormat)
 	if err != nil {
 		return nil, err
 	}

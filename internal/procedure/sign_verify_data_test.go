@@ -160,7 +160,7 @@ func TestSignVerifyData_Formats(t *testing.T) {
 }
 
 func TestEffectiveSignatureFormat(t *testing.T) {
-	format, err := effectiveSignatureFormat(nil, profile.SignatureFormatPEM)
+	format, err := effectiveSignatureFormat(protobuf.SignatureFormat_SIGNATURE_RAW, false, profile.SignatureFormatPEM)
 	if err != nil {
 		t.Fatalf("effectiveSignatureFormat() error: %v", err)
 	}
