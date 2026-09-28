@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 func TestUnaryCorrelationInterceptor(t *testing.T) {
@@ -72,6 +73,29 @@ func TestUnaryRemoteTraceInterceptor(t *testing.T) {
 		sc := trace.SpanContextFromContext(ctx)
 		if !sc.IsValid() {
 			t.Fatalf("expected valid span context in handler")
+		}
+		return "ok", nil
+	})
+	if err != nil {
+		t.Fatalf("interceptor returned error: %v", err)
+	}
+}
+
+func TestUnaryRemoteTraceInterceptorFallsBackForInvalidTransportContext(t *testing.T) {
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("traceparent", "invalid"))
+	req := &protobuf.HashDataRequest{
+		Metadata: &protobuf.Metadata{
+			TraceContext: &protobuf.TraceContext{
+				TraceId: "0af7651916cd43dd8448eb211c80319c",
+				SpanId:  "b9c7c989f97918e1",
+			},
+		},
+	}
+
+	_, err := UnaryRemoteTraceInterceptor()(ctx, req, &grpc.UnaryServerInfo{}, func(ctx context.Context, _ any) (any, error) {
+		got := trace.SpanContextFromContext(ctx)
+		if !got.IsValid() || !got.IsRemote() {
+			t.Fatalf("span context = %s/%s, want valid remote protobuf context", got.TraceID(), got.SpanID())
 		}
 		return "ok", nil
 	})
