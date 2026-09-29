@@ -38,8 +38,8 @@ task build
 This will also save a checksum of all the file `sources` in the Taskfile cache `.task`.
 This means that, if no new changes are done, re-running the task will not build the binary again.
 
-`Benchmark` and `FakeEndpoint` require a build with `-tags dev` and
-`CRYPTO_BROKER_APP_ENV=dev` at runtime. Default builds exclude both RPCs.
+Normal RPCs are available in both builds. To add `Benchmark` and `FakeEndpoint`,
+build with `-tags dev`:
 
 ```shell
 go build -tags dev -o bin/crypto-broker-server-dev ./cmd/server
