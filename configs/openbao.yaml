@@ -1,0 +1,5 @@
+# Copy this file outside the repository or mount it as a secret before adding a
+# real token.
+address: http://127.0.0.1:8200
+token: s.rlnkTs9nn6xBnnWbIMHTFOK2
+mount: keys2

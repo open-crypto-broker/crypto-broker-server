@@ -12,6 +12,10 @@
 .golangci.yml
 Taskfile.yaml
 
+# Do not send local KMS credentials to Docker builds.
+config/*.yaml
+!config/*.example.yaml
+
 # Build outputs & benchmark artefacts (rebuilt inside the image)
 bin/
 benchmark-results.json

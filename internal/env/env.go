@@ -9,6 +9,9 @@ const (
 	// to directory that contains files with defined profiles in YAML format.
 	PROFILES_DIRECTORY = "CRYPTO_BROKER_PROFILES_DIR"
 
+	// KMS_DIRECTORY is an absolute path or a path relative to the process working directory. It contains KMS configuration files and user-defined custom client implementations.
+	KMS_DIRECTORY = "CRYPTO_BROKER_KMS_DIR"
+
 	// LOG_LEVEL is environment variable that should contain log level.
 	// Valid values are denoted in internal/clog package
 	LOG_LEVEL = "CRYPTO_BROKER_LOG_LEVEL"
