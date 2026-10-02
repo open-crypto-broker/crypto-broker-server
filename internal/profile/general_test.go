@@ -53,6 +53,11 @@ func TestRetrieve(t *testing.T) {
 		t.Fatal("could not load profiles")
 	}
 
+	wantKMS := KMSConfiguration{Client: "openbao", Config: "openbao.yaml", Cache: false}
+	if got := KMS(); got != wantKMS {
+		t.Fatalf("KMS() = %#v, want %#v from Settings.KMS", got, wantKMS)
+	}
+
 	type args struct {
 		name string
 	}
@@ -68,9 +73,7 @@ func TestRetrieve(t *testing.T) {
 				name: "Default",
 			},
 			want: Profile{
-				Name:     "Default",
-				Settings: ProfileSettings{CryptoLibrary: "native"},
-				KMS:      ProfileKMS{Client: "openbao", Config: "openbao.yaml", Cache: false},
+				Name: "Default",
 				API: ProfileAPI{
 					HashData: ProfileAPIHashData{HashAlg: "sha3-512"},
 					SignData: ProfileAPISignData{
@@ -142,9 +145,6 @@ func Test_convertRawProfilesData(t *testing.T) {
 			rawProfiles: []rawProfile{
 				{
 					Name: "Default",
-					Settings: rawProfileSettings{
-						CryptoLibrary: "native",
-					},
 					API: rawProfileAPI{
 						HashData: rawProfileAPIHashData{
 							HashAlg: "sha3-512",
@@ -158,8 +158,7 @@ func Test_convertRawProfilesData(t *testing.T) {
 			},
 			want: map[string]Profile{
 				"Default": {
-					Name:     "Default",
-					Settings: ProfileSettings{CryptoLibrary: "native"},
+					Name: "Default",
 					API: ProfileAPI{
 						SignCertificate: ProfileAPISignCertificate{
 							SignAlg:            "",
@@ -186,9 +185,6 @@ func Test_convertRawProfilesData(t *testing.T) {
 			rawProfiles: []rawProfile{
 				{
 					Name: "Default",
-					Settings: rawProfileSettings{
-						CryptoLibrary: "native",
-					},
 					API: rawProfileAPI{
 						HashData: rawProfileAPIHashData{
 							HashAlg: "sha3-512",
@@ -201,9 +197,6 @@ func Test_convertRawProfilesData(t *testing.T) {
 				},
 				{
 					Name: "Default",
-					Settings: rawProfileSettings{
-						CryptoLibrary: "native",
-					},
 					API: rawProfileAPI{
 						HashData: rawProfileAPIHashData{
 							HashAlg: "sha3-256",

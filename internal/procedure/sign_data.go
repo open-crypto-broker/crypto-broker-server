@@ -61,8 +61,9 @@ func (procedure *SignData) Execute(req *protobuf.SignDataRequest) (*protobuf.Sig
 }
 
 func signingEngine(engine *c10y.LibraryNative, p profile.Profile) (*c10y.LibraryNative, error) {
-	if p.Settings.CryptoLibrary != c10y.LibNative {
-		return nil, ArgumentError("unknown '%s' cryptographic engine, available values: %v", p.Settings.CryptoLibrary, c10y.SupportedCryptographicLibraries)
+	settings := profile.Settings()
+	if settings.CryptoLibrary != c10y.LibNative {
+		return nil, ArgumentError("unknown '%s' cryptographic engine, available values: %v", settings.CryptoLibrary, c10y.SupportedCryptographicLibraries)
 	}
 	if !p.API.SignData.SignAlg.IsSupported(c10y.SignDataSigning) || !p.API.SignData.HashAlg.IsSupported(c10y.SignDataHashing) {
 		return nil, ArgumentError("profile does not contain a supported SignData configuration")
