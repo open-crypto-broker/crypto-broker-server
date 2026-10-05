@@ -286,7 +286,7 @@ func validateKeySource(keySource *pb.KeySource) error {
 	if rawKey := keySource.GetRawKey(); rawKey != nil {
 		return checkMaxLen("keySource.rawKey", len(rawKey), maxEncryptionKeyBytes)
 	}
-	return nil
+	return checkMaxLen("keySource.keyId", len(keySource.GetKeyId()), maxEncryptionKeyIDLen)
 }
 
 func validateSignKeySource(keySource *pb.SignKeySource) error {

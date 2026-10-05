@@ -241,6 +241,16 @@ func TestValidateEncryptionRequests(t *testing.T) {
 		}), "keySource")
 	})
 
+	t.Run("rejects oversized KMS key ID", func(t *testing.T) {
+		assertInvalidArgument(t, validateEncryptDataRequest(&pb.EncryptDataRequest{
+			Profile: "Default",
+			KeySource: &pb.KeySource{Source: &pb.KeySource_KeyId{
+				KeyId: strings.Repeat("A", maxEncryptionKeyIDLen+1),
+			}},
+			EncryptMetadata: &pb.EncryptMetadata{Nonce: validNonce},
+		}), "keySource.keyId")
+	})
+
 	t.Run("rejects missing encrypt metadata", func(t *testing.T) {
 		assertInvalidArgument(t, validateEncryptDataRequest(&pb.EncryptDataRequest{
 			Profile:   "Default",
