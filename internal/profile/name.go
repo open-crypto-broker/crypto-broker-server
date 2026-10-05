@@ -1,8 +1,12 @@
 package profile
 
-import "fmt"
+import (
+	"fmt"
 
-const MaxNameLen = 64
+	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
+)
+
+const MaxNameLen = int(protobuf.PayloadLimits_PAYLOAD_LIMITS_PROFILE_MAX_LEN)
 
 func ValidateName(name string) error {
 	if name == "" {
