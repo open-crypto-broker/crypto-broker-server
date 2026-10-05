@@ -1,4 +1,4 @@
-// Package kms manages the key-management service clients configured for profiles.
+// Package kms manages the globally configured key-management service client.
 package kms
 
 import (
@@ -10,7 +10,7 @@ import (
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/cache"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/env"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/kms/client"
+	openbao "github.com/open-crypto-broker/crypto-broker-server/internal/kms/client"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
 )
 
@@ -19,18 +19,18 @@ type Client interface {
 }
 
 var (
-	clients = make(map[string]Client)
-	mux     sync.RWMutex
+	client Client
+	mux    sync.RWMutex
 
 	keys = cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig)
 )
 
 const cacheTTL = 60 * time.Minute
 
-func Load(profileName string) error {
-	p, err := profile.Retrieve(profileName)
-	if err != nil {
-		return fmt.Errorf("retrieve profile %q: %w", profileName, err)
+func Load() error {
+	configuration := profile.KMS()
+	if configuration.Client == "" || configuration.Config == "" {
+		return fmt.Errorf("KMS is not configured")
 	}
 
 	directory := os.Getenv(env.KMS_DIRECTORY)
@@ -44,63 +44,58 @@ func Load(profileName string) error {
 	}
 	defer root.Close()
 
-	configFile, err := root.Open(p.KMS.Config)
+	configFile, err := root.Open(configuration.Config)
 	if err != nil {
-		return fmt.Errorf("open KMS configuration for profile %q: %w", profileName, err)
+		return fmt.Errorf("open KMS configuration: %w", err)
 	}
 	defer configFile.Close()
 
 	var kmsClient Client
 
-	switch p.KMS.Client {
+	switch configuration.Client {
 	case "openbao":
-		kmsClient, err = client.Connect(configFile)
+		kmsClient, err = openbao.Connect(configFile)
 	default:
-		return fmt.Errorf("unsupported KMS adapter %q for profile %q", p.KMS.Client, profileName)
+		return fmt.Errorf("unsupported KMS adapter %q", configuration.Client)
 	}
 
 	if err != nil {
-		return fmt.Errorf("load KMS adapter for profile %q: %w", profileName, err)
+		return fmt.Errorf("load KMS adapter: %w", err)
 	}
 
 	mux.Lock()
-	clients[profileName] = kmsClient
+	client = kmsClient
 	mux.Unlock()
 
 	return nil
 }
 
-// GetKey retrieves keyID using the KMS client registered for profileName.
-func GetKey(profileName, keyID string) ([]byte, error) {
-	cacheKey := profileName + keyID
+// GetKey retrieves keyID using the globally configured KMS client.
+func GetKey(keyID string) ([]byte, error) {
+	configuration := profile.KMS()
 
-	p, err := profile.Retrieve(profileName)
-	if err != nil {
-		return nil, fmt.Errorf("retrieve profile %q: %w", profileName, err)
-	}
-
-	if p.KMS.Cache {
-		key, ok := keys.Get(cacheKey)
+	if configuration.Cache {
+		key, ok := keys.Get(keyID)
 		if ok {
 			return bytes.Clone(key), nil
 		}
 	}
 
 	mux.RLock()
-	kmsClient, ok := clients[profileName]
+	kmsClient := client
 	mux.RUnlock()
 
-	if !ok {
-		err = Load(profileName)
+	if kmsClient == nil {
+		err := Load()
 		if err != nil {
 			return nil, err
 		}
 
 		mux.RLock()
-		kmsClient, ok = clients[profileName]
+		kmsClient = client
 		mux.RUnlock()
-		if !ok {
-			return nil, fmt.Errorf("KMS client was not registered for profile %q", profileName)
+		if kmsClient == nil {
+			return nil, fmt.Errorf("KMS client was not loaded")
 		}
 	}
 
@@ -109,8 +104,8 @@ func GetKey(profileName, keyID string) ([]byte, error) {
 		return nil, err
 	}
 
-	if p.KMS.Cache {
-		keys.SetWithTTL(cacheKey, bytes.Clone(key), int64(max(1, len(key))), cacheTTL)
+	if configuration.Cache {
+		keys.SetWithTTL(keyID, bytes.Clone(key), int64(max(1, len(key))), cacheTTL)
 		keys.Wait()
 	}
 
