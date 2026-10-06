@@ -88,7 +88,7 @@ Set `GOFIPS140` before running `go build` to instruct the Go toolchain to link t
 GOFIPS140=v1.0.0 go build \
   -o bin/crypto-broker-server \
   -ldflags="-X main.gitSHA=$(git rev-parse --short HEAD) -X main.gitTag=$(git describe --tags --always)" \
-  cmd/server/server.go
+  ./cmd/server
 ```
 
 > **Note:** `GOFIPS140` is consumed by the Go toolchain at build time. It has no effect if set at runtime.
