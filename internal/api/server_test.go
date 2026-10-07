@@ -422,6 +422,47 @@ func toPointerUint64(value int64) *uint64 {
 	return &v
 }
 
+func TestCryptoBrokerServer_SignCertificateSource(t *testing.T) {
+	if err := profile.LoadProfiles("Profiles.yaml"); err != nil {
+		t.Fatal(err)
+	}
+	certificate, privateKey, csr := mustMakeTestCAAndCSR(t)
+	library := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
+	server := &CryptoBrokerServer{
+		procedureSignCertificate: procedure.NewSignCertificate(library, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig)),
+	}
+	tests := []struct {
+		name    string
+		caCert  string
+		source  *protobuf.KeySource
+		wantErr string
+	}{
+		{name: "legacy certificate", caCert: certificate},
+		{name: "raw certificate", source: &protobuf.KeySource{Source: &protobuf.KeySource_RawKey{RawKey: []byte(certificate)}}},
+		{name: "empty certificate", source: &protobuf.KeySource{Source: &protobuf.KeySource_RawKey{}}, wantErr: "caCert"},
+		{name: "oversized certificate", source: &protobuf.KeySource{Source: &protobuf.KeySource_RawKey{RawKey: make([]byte, maxCACertBytes+1)}}, wantErr: "caCert"},
+		{name: "ambiguous source", caCert: certificate, source: &protobuf.KeySource{Source: &protobuf.KeySource_KeyId{KeyId: "ca"}}, wantErr: "keySource"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			req := &protobuf.SignCertificateRequest{
+				Profile: "Default", Csr: csr, CaPrivateKey: privateKey,
+				CaCert: test.caCert, KeySource: test.source,
+			}
+
+			resp, err := server.SignCertificate(context.Background(), req)
+
+			if test.wantErr != "" {
+				assertInvalidArgument(t, err, test.wantErr)
+				return
+			}
+			if err != nil || len(resp.GetDer()) == 0 {
+				t.Fatalf("SignCertificate() failed: %v", err)
+			}
+		})
+	}
+}
+
 func TestNewCryptoBrokerServer(t *testing.T) {
 	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	procedureHash := procedure.NewHashData(libraryNative)
