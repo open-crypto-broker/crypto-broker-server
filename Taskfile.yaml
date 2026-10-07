@@ -3,6 +3,13 @@ version: '3'
 dotenv: ['.env']
 
 vars:
+  BUF_VERSION: "1.73.0"
+  # Keep in sync with google.golang.org/protobuf in go.mod
+  PROTOC_GEN_GO_VERSION: "1.36.12"
+  PROTOC_GEN_GO_GRPC_VERSION: "1.6.2"
+  GOVULNCHECK_VERSION: "1.8.0"
+  GOLANGCI_LINT_VERSION: "2.14.0"
+  # Git information during the build process
   CB_GIT_SHA:
     sh: git rev-parse HEAD
   CB_GIT_TAG:
@@ -24,14 +31,14 @@ tasks:
   ################# Development Tools ####################
   # Additional resources:
   # - https://go.dev/doc/install
-  # - https://protobuf.dev/getting-started/gotutorial/
-  # - https://protobuf.dev/installation/
+  # - https://buf.build/docs/installation
+  # - https://buf.build/docs/lint/rules
   # - https://go.dev/doc/tutorial/govulncheck
   tools:
     desc: "Download tools required for development"
-    deps: [install-protobuf-compiler, install-go-protoc-modules, install-go-vulnerability-check, install-golangci-lint]
+    deps: [install-buf, install-go-protoc-modules, install-go-vulnerability-check, install-golangci-lint]
     cmds:
-      - protoc --version && protoc-gen-go --version && govulncheck --version && golangci-lint --version
+      - buf --version && protoc-gen-go --version && govulncheck --version && golangci-lint --version
 
   # More about benchmarks:
   # - https://pkg.go.dev/testing@go1.25.3#hdr-Benchmarks
@@ -56,80 +63,30 @@ tasks:
       - chmod +x benchmark-assert.sh
       - ./benchmark-assert.sh benchmark-results.json
 
-  install-golangci-lint:
-    desc: "Install golangci-lint"
+  # Installed via go install rather than brew so that every platform gets the
+  # pinned version.
+  install-buf:
+    desc: "Download and install the buf CLI"
     cmds:
-      - curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.13.0
+      - go install github.com/bufbuild/buf/cmd/buf@v{{.BUF_VERSION}}
 
-  # Public task to install the pre-built protobuf compiler depending on the architecture
-  install-protobuf-compiler:
-    desc: "Download and install pre-built protobuf compiler"
-    cmds:
-      - task: install-protobuf-compiler-linux-amd64
-      - task: install-protobuf-compiler-darwin
-
-  install-protobuf-compiler-linux-amd64:
-    desc: "Download and install pre-built protobuf compiler for Linux"
-    internal: true
-    platforms: ["linux/amd64"]
-    cmds:
-      # Create temporary download folder
-      - mkdir tmp-download
-      # Download specified version
-      - cd tmp-download && curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v{{.PROTOBUF_VERSION}}/protoc-{{.PROTOBUF_VERSION}}-linux-x86_64.zip
-      # Unzip download
-      - cd tmp-download && unzip protoc-{{.PROTOBUF_VERSION}}-linux-x86_64.zip -d $HOME/.local/share/protobuf/
-      # Remove temporary download folder
-      - rm -rf tmp-download
-      # Add path to .bashrc if it does not already exists
-      - grep -qx 'export PATH="$PATH:$HOME/.local/share/protobuf/bin"' ~/.bashrc || echo 'export PATH="$PATH:$HOME/.local/share/protobuf/bin"' >> ~/.bashrc
-      # Reload .bashrc
-      - source $HOME/.bashrc
-
-  install-protobuf-compiler-darwin:
-    desc: "Download and install protobuf compiler for Apple/macOS"
-    internal: true
-    platforms: ["darwin"]
-    cmds:
-      - brew install protobuf
-
-  # Public task to install Go modules needed for protobuf and gRPC generation
+  # Installed via go install rather than brew so that generated stubs are
+  # reproducible across macOS, Linux and CI.
   install-go-protoc-modules:
     desc: "Install Go modules for protobuf and gRPC support"
     cmds:
-      - task: install-go-protoc-modules-linux-amd64
-      - task: install-go-protoc-modules-darwin
+      - go install google.golang.org/protobuf/cmd/protoc-gen-go@v{{.PROTOC_GEN_GO_VERSION}}
+      - go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v{{.PROTOC_GEN_GO_GRPC_VERSION}}
 
-  install-go-protoc-modules-linux-amd64:
-    desc: "Install Go modules for protobuf and gRPC support for Linux"
-    internal: true
-    deps: [bash-add-go-path]
-    platforms: ["linux/amd64"]
-    cmds:
-      - go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-      - go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-
-  install-go-protoc-modules-darwin:
-    desc: "Install Go modules for protobuf and gRPC support for Apple/macOS"
-    internal: true
-    platforms: ["darwin"]
-    cmds:
-      - brew install protoc-gen-go
-      - brew install protoc-gen-go-grpc
-
-  bash-add-go-path:
-    desc: "Add Go binary folder to .bashrc if it does not already exists"
-    internal: true
-    platforms: ["linux/amd64"]
-    cmds:
-      - grep -qx 'export PATH="$PATH:$(go env GOPATH)/bin"' ~/.bashrc || echo 'export PATH="$PATH:$(go env GOPATH)/bin"' >> ~/.bashrc
-      - source ~/.bashrc
-
-  # Public task to install Go vulnerability checking tool
   install-go-vulnerability-check:
     desc: "Install Go vulnerability checking tool"
     cmds:
-      - go install golang.org/x/vuln/cmd/govulncheck@latest
+      - go install golang.org/x/vuln/cmd/govulncheck@v{{.GOVULNCHECK_VERSION}}
+
+  install-golangci-lint:
+    desc: "Install golangci-lint"
+    cmds:
+      - curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b $(go env GOPATH)/bin v{{.GOLANGCI_LINT_VERSION}}
 
   ################# Crypto Broker Server Execution ####################
   cleanup-socket:
@@ -162,7 +119,7 @@ tasks:
       - 'echo "Building {{.APP_NAME}} with Git SHA: {{.CB_GIT_SHA}} and Git Tag: {{.CB_GIT_TAG}}"'
       - go build -o bin/{{.APP_NAME}} -ldflags="-X main.gitSHA={{.CB_GIT_SHA}} -X main.gitTag={{.CB_GIT_TAG}}" ./cmd/server
       - go version -m bin/{{.APP_NAME}}
-    sources: 
+    sources:
       - cmd/server/*.go
       - internal/**/*.go
       - go.mod
@@ -184,11 +141,16 @@ tasks:
           -f docker/Dockerfile \
           -t ghcr.io/open-crypto-broker/server:{{.TAG}} .
 
-  proto:
-    desc: "Generates Go stubs from proto files"
+  proto-update:
+    desc: "Updates the protobuf submodule to the latest upstream schema and regenerates"
     cmds:
-      - git submodule update --init --recursive
-      - protoc --go_out=. --go-grpc_out=. protobuf/messages.proto
+      - git submodule update --remote protobuf/
+      - task: proto
+
+  proto:
+    desc: "Generates Go stubs from the pinned proto submodule"
+    cmds:
+      - buf generate
 
   ################# Continuous Improvement Tasks ####################
   check-dependencies:
