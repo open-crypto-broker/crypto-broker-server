@@ -16,6 +16,7 @@ import (
 
 type Client interface {
 	GetKey(keyID string) ([]byte, error)
+	GetCertificate(keyID string) ([]byte, error)
 }
 
 var (
@@ -23,6 +24,13 @@ var (
 	mux    sync.RWMutex
 
 	keys = cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig)
+	// Certificate entries are byte-costed and can be larger than the default
+	// cache's entire budget (1,000 bytes).
+	certificates = cache.MustNewRistretto[[]byte](cache.RistrettoConfig{
+		NumCounters: 10_000,
+		MaxCost:     4 * 1024 * 1024,
+		BufferItems: 64,
+	})
 )
 
 const cacheTTL = 60 * time.Minute
@@ -110,4 +118,45 @@ func GetKey(keyID string) ([]byte, error) {
 	}
 
 	return key, nil
+}
+
+// GetCertificate retrieves a PEM certificate using the globally configured KMS client.
+func GetCertificate(keyID string) ([]byte, error) {
+	cacheEnabled := profile.KMS().Cache
+	if cacheEnabled {
+		certificate, ok := certificates.Get(keyID)
+		if ok {
+			return bytes.Clone(certificate), nil
+		}
+	}
+
+	mux.RLock()
+	kmsClient := client
+	mux.RUnlock()
+
+	if kmsClient == nil {
+		err := Load()
+		if err != nil {
+			return nil, err
+		}
+
+		mux.RLock()
+		kmsClient = client
+		mux.RUnlock()
+		if kmsClient == nil {
+			return nil, fmt.Errorf("KMS client was not loaded")
+		}
+	}
+
+	certificate, err := kmsClient.GetCertificate(keyID)
+	if err != nil {
+		return nil, err
+	}
+
+	if cacheEnabled {
+		certificates.SetWithTTL(keyID, bytes.Clone(certificate), int64(max(1, len(certificate))), cacheTTL)
+		certificates.Wait()
+	}
+
+	return certificate, nil
 }
