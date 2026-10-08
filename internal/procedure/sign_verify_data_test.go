@@ -80,6 +80,46 @@ func TestSignVerifyData_Execute(t *testing.T) {
 	}
 }
 
+func TestSignVerifyData_ExecuteWithDERKeys(t *testing.T) {
+	loadDefaultProfiles(t)
+
+	privateKey, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
+	if err != nil {
+		t.Fatalf("generate ECDSA key: %v", err)
+	}
+	privateKeyDER, err := x509.MarshalECPrivateKey(privateKey)
+	if err != nil {
+		t.Fatalf("marshal ECDSA private key: %v", err)
+	}
+	publicKeyDER, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		t.Fatalf("marshal ECDSA public key: %v", err)
+	}
+
+	input := []byte("document contents")
+	signed, err := NewSignData(newTestLibraryNative()).Execute(&protobuf.SignDataRequest{
+		Profile:   "Default",
+		KeySource: signKeySource(privateKeyDER),
+		Input:     input,
+	})
+	if err != nil {
+		t.Fatalf("SignData.Execute() with DER private key error: %v", err)
+	}
+
+	verified, err := NewVerifyData(newTestLibraryNative()).Execute(&protobuf.VerifyDataRequest{
+		Profile:   "Default",
+		KeySource: signKeySource(publicKeyDER),
+		Input:     input,
+		Signature: signed.GetSignature(),
+	})
+	if err != nil {
+		t.Fatalf("VerifyData.Execute() with DER public key error: %v", err)
+	}
+	if !verified.GetValid() {
+		t.Fatal("VerifyData.Execute() with DER keys returned invalid")
+	}
+}
+
 func TestSignData_ExecuteRejectsKeyOutsideProfileConstraints(t *testing.T) {
 	loadDefaultProfiles(t)
 

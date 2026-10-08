@@ -76,9 +76,9 @@ func signingPrivateKey(keySource *protobuf.SignKeySource, p profile.Profile) (an
 	if err != nil {
 		return nil, err
 	}
-	privateKey, err := c10y.ParsePrivateKeyFromPEM(key)
+	privateKey, err := c10y.ParsePrivateKeyFromPEMOrDER(key)
 	if err != nil {
-		return nil, ArgumentError("could not parse PEM private key: %w", err)
+		return nil, ArgumentError("could not parse private key: %w", err)
 	}
 	if err := c10y.ValidatePrivateKey(privateKey, p.API.SignData.KeyConstraints); err != nil {
 		return nil, ArgumentError("private key does not satisfy SignData profile constraints: %w", err)

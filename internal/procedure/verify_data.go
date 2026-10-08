@@ -29,9 +29,9 @@ func (procedure *VerifyData) Execute(req *protobuf.VerifyDataRequest) (*protobuf
 	if err != nil {
 		return nil, err
 	}
-	publicKey, err := c10y.ParsePublicKeyFromPEM(key)
+	publicKey, err := c10y.ParsePublicKeyFromPEMOrDER(key)
 	if err != nil {
-		return nil, ArgumentError("could not parse PEM public key: %w", err)
+		return nil, ArgumentError("could not parse public key: %w", err)
 	}
 	if validationErr := c10y.ValidatePublicKey(publicKey, reqProfile.API.SignData.KeyConstraints); validationErr != nil {
 		return nil, ArgumentError("public key does not satisfy SignData profile constraints: %w", validationErr)
