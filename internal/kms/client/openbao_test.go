@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/openbao/openbao/api/v2"
@@ -59,6 +60,50 @@ func TestOpenBaoClientGetKey(t *testing.T) {
 
 			if !bytes.Equal(key, test.want) {
 				t.Errorf("GetKey() = %q, want %q", key, test.want)
+			}
+		})
+	}
+}
+
+func TestOpenBaoClientGetCertificate(t *testing.T) {
+	const pem = "-----BEGIN CERTIFICATE-----\nPEM content\n-----END CERTIFICATE-----\n"
+	tests := []struct {
+		name     string
+		status   int
+		response string
+		wantErr  string
+	}{
+		{name: "PEM certificate", status: http.StatusOK, response: `{"data":{"data":{"certificate":"-----BEGIN CERTIFICATE-----\nPEM content\n-----END CERTIFICATE-----\n"}}}`},
+		{name: "not found", status: http.StatusNotFound, response: `{}`, wantErr: "was not found"},
+		{name: "permission denied", status: http.StatusForbidden, response: `{"errors":["permission denied"]}`, wantErr: "permission denied"},
+		{name: "not KV v2", status: http.StatusOK, response: `{"data":{"certificate":"pem"}}`, wantErr: "KV v2 data"},
+		{name: "missing certificate", status: http.StatusOK, response: `{"data":{"data":{"key":"ab"}}}`, wantErr: "string certificate field"},
+		{name: "non-string certificate", status: http.StatusOK, response: `{"data":{"data":{"certificate":123}}}`, wantErr: "string certificate field"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != http.MethodGet || r.URL.Path != "/v1/keys2/data/ca" {
+					t.Errorf("request = %s %s, want GET /v1/keys2/data/ca", r.Method, r.URL.Path)
+				}
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(test.status)
+				_, _ = w.Write([]byte(test.response))
+			}))
+			defer server.Close()
+			client, err := Connect(strings.NewReader("address: " + server.URL + "\nmount: keys2\n"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := client.GetCertificate("ca")
+			if test.wantErr != "" {
+				if err == nil || !strings.Contains(err.Error(), test.wantErr) {
+					t.Fatalf("GetCertificate() error = %v, want %q", err, test.wantErr)
+				}
+				return
+			}
+			if err != nil || string(got) != pem {
+				t.Fatalf("GetCertificate() = %q, %v, want original PEM", got, err)
 			}
 		})
 	}
