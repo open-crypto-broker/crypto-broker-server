@@ -1,6 +1,7 @@
 package bench
 
 import (
+	"crypto/mldsa"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
@@ -169,6 +170,23 @@ func RunDecryptDataBenchmark(b *testing.B) {
 			Tag:        encrypted.Tag,
 		})
 		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+// RunSignMLDSA65DataBenchmark measures FIPS 204 ML-DSA-65 signing without key generation overhead.
+func RunSignMLDSA65DataBenchmark(b *testing.B) {
+	privateKey, err := mldsa.GenerateKey(mldsa.MLDSA65())
+	if err != nil {
+		b.Fatal(err)
+	}
+	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
+	input := c10y.MLDSASignDataInput{PrivateKey: privateKey, Data: bb}
+
+	b.ResetTimer()
+	for b.Loop() {
+		if _, err := service.SignMLDSAData(input); err != nil {
 			b.Fatal(err)
 		}
 	}

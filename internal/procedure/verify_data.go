@@ -25,6 +25,10 @@ func (procedure *VerifyData) Execute(req *protobuf.VerifyDataRequest) (*protobuf
 		return nil, err
 	}
 
+	if reqProfile.API.SignData.SigningMode == profile.SigningModePostQuantum {
+		return procedure.executeMLDSA(req, reqProfile, format)
+	}
+
 	key, err := singleRawSigningKey(req.GetKeySource())
 	if err != nil {
 		return nil, err
@@ -55,5 +59,25 @@ func (procedure *VerifyData) Execute(req *protobuf.VerifyDataRequest) (*protobuf
 		return nil, ArgumentError("could not verify data: %w", err)
 	}
 
+	return &protobuf.VerifyDataResponse{Valid: valid, Metadata: req.GetMetadata()}, nil
+}
+
+func (procedure *VerifyData) executeMLDSA(req *protobuf.VerifyDataRequest, reqProfile profile.Profile, format protobuf.SignatureFormat) (*protobuf.VerifyDataResponse, error) {
+	publicKeyBytes, err := singleRawSigningKey(req.GetKeySource())
+	if err != nil {
+		return nil, err
+	}
+	publicKey, err := c10y.ParseMLDSAPublicKey(publicKeyBytes, reqProfile.API.SignData.SignAlg)
+	if err != nil {
+		return nil, ArgumentError("could not parse ML-DSA public key: %w", err)
+	}
+	signature, err := decodeSignature(format, publicKey, req.GetSignature())
+	if err != nil {
+		return nil, err
+	}
+	valid, err := procedure.cryptographicEngineNative.VerifyMLDSAData(c10y.MLDSAVerifyDataInput{PublicKey: publicKey, Data: req.GetInput(), Signature: signature})
+	if err != nil {
+		return nil, ArgumentError("could not verify data: %w", err)
+	}
 	return &protobuf.VerifyDataResponse{Valid: valid, Metadata: req.GetMetadata()}, nil
 }
