@@ -23,6 +23,9 @@ const (
 	SHAKE_256   Algorithm = "shake-256"
 	ECDSA       Algorithm = "ecdsa"
 	RSA         Algorithm = "rsa"
+	MLDSA44     Algorithm = "ml-dsa-44"
+	MLDSA65     Algorithm = "ml-dsa-65"
+	MLDSA87     Algorithm = "ml-dsa-87"
 	AES_GCM     Algorithm = "aes-gcm"
 )
 
@@ -71,6 +74,9 @@ var EncryptDataEncryptionAlgorithmsSupported = []Algorithm{AES_GCM}
 
 // SignDataSigningAlgorithmsSupported lists legacy signature algorithms supported by the native engine.
 var SignDataSigningAlgorithmsSupported = []Algorithm{RSA, ECDSA}
+
+// SignDataPostQuantumAlgorithmsSupported lists ML-DSA parameter sets supported by the native engine.
+var SignDataPostQuantumAlgorithmsSupported = []Algorithm{MLDSA44, MLDSA65, MLDSA87}
 
 // SignDataHashingAlgorithmsSupported lists digest algorithms supported by the native signing engine.
 var SignDataHashingAlgorithmsSupported = []Algorithm{SHA_256, SHA_384, SHA_512}

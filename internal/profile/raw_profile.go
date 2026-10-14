@@ -273,7 +273,7 @@ func (api rawProfileAPISignData) validate() error {
 	if mode != SigningModeLegacy && mode != SigningModeHybrid && mode != SigningModePostQuantum {
 		return fmt.Errorf("unsupported signing mode: %q, available values: [%s %s %s]", api.SigningMode, SigningModeLegacy, SigningModeHybrid, SigningModePostQuantum)
 	}
-	if mode != SigningModeLegacy {
+	if mode == SigningModeHybrid {
 		return fmt.Errorf("signing mode %q is not supported by the configured cryptographic engine", mode)
 	}
 
@@ -286,12 +286,15 @@ func (api rawProfileAPISignData) validate() error {
 	}
 
 	signAlg := c10y.NewAlgorithm(api.SignAlg)
-	if !signAlg.IsSupported(c10y.SignDataSigning) {
+	if mode == SigningModeLegacy && !signAlg.IsSupported(c10y.SignDataSigning) {
 		return fmt.Errorf("unsupported signing algorithm: %s, available algorithms: %v", signAlg, c10y.SignDataSigningAlgorithmsSupported)
+	}
+	if mode == SigningModePostQuantum && !slices.Contains(c10y.SignDataPostQuantumAlgorithmsSupported, signAlg) {
+		return fmt.Errorf("unsupported post-quantum signing algorithm: %s, available algorithms: %v", signAlg, c10y.SignDataPostQuantumAlgorithmsSupported)
 	}
 
 	hashAlg := c10y.NewAlgorithm(api.HashAlg)
-	if !hashAlg.IsSupported(c10y.SignDataHashing) {
+	if mode == SigningModeLegacy && !hashAlg.IsSupported(c10y.SignDataHashing) {
 		return fmt.Errorf("unsupported signing hash algorithm: %s, available algorithms: %v", hashAlg, c10y.SignDataHashingAlgorithmsSupported)
 	}
 
@@ -304,10 +307,10 @@ func (api rawProfileAPISignData) validate() error {
 			break
 		}
 	}
-	if !ok {
+	if !ok && mode == SigningModeLegacy {
 		return fmt.Errorf("missing key constraints for signing algorithm %q", signAlg)
 	}
-	if constraints.MinKeySize <= 0 || constraints.MaxKeySize <= 0 || constraints.MinKeySize > constraints.MaxKeySize {
+	if ok && (constraints.MinKeySize <= 0 || constraints.MaxKeySize <= 0 || constraints.MinKeySize > constraints.MaxKeySize) {
 		return fmt.Errorf("invalid key constraints for signing algorithm %q", signAlg)
 	}
 
