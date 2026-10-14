@@ -3,6 +3,7 @@ package c10y
 import (
 	"crypto"
 	"crypto/ecdsa"
+	"crypto/mldsa"
 	"crypto/rand"
 	"crypto/rsa"
 	// #nosec G505 G401 -- SHA-1 is required for Subject Key Identifier per RFC 5280
@@ -59,6 +60,19 @@ type VerifyDataInput struct {
 	Signature []byte
 	SignAlg   Algorithm
 	HashAlg   Algorithm
+}
+
+// MLDSASignDataInput contains the ML-DSA parameters selected by a post-quantum profile.
+type MLDSASignDataInput struct {
+	PrivateKey *mldsa.PrivateKey
+	Data       []byte
+}
+
+// MLDSAVerifyDataInput contains the ML-DSA parameters selected by a post-quantum profile.
+type MLDSAVerifyDataInput struct {
+	PublicKey *mldsa.PublicKey
+	Data      []byte
+	Signature []byte
 }
 
 var (
@@ -201,6 +215,19 @@ func (service *LibraryNative) VerifyData(input VerifyDataInput) (bool, error) {
 	default:
 		return false, fmt.Errorf("unsupported public key type %T", input.PublicKey)
 	}
+}
+
+// SignMLDSAData signs arbitrary data according to FIPS 204.
+func (service *LibraryNative) SignMLDSAData(input MLDSASignDataInput) ([]byte, error) {
+	return input.PrivateKey.Sign(nil, input.Data, &mldsa.Options{})
+}
+
+// VerifyMLDSAData verifies an ML-DSA signature according to FIPS 204.
+func (service *LibraryNative) VerifyMLDSAData(input MLDSAVerifyDataInput) (bool, error) {
+	if len(input.Signature) != input.PublicKey.Parameters().SignatureSize() {
+		return false, fmt.Errorf("invalid ML-DSA signature length %d", len(input.Signature))
+	}
+	return mldsa.Verify(input.PublicKey, input.Data, input.Signature, &mldsa.Options{}) == nil, nil
 }
 
 func signingDigest(data []byte, algorithm Algorithm) ([]byte, crypto.Hash, error) {

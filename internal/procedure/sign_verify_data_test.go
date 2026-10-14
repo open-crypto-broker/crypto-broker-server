@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"crypto/mldsa"
 	"crypto/rand"
 	"crypto/x509"
 	"encoding/pem"
 	"testing"
 
+	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 )
@@ -210,6 +212,91 @@ func TestEffectiveSignatureFormat(t *testing.T) {
 
 	if _, err = decodeSignature(protobuf.SignatureFormat_SIGNATURE_PEM, &ecdsa.PublicKey{}, []byte("not pem")); err == nil {
 		t.Fatal("decodeSignature() accepted malformed PEM")
+	}
+}
+
+func TestSignVerifyData_MLDSA65(t *testing.T) {
+	loadDefaultProfiles(t)
+	privateKey, err := mldsa.GenerateKey(mldsa.MLDSA65())
+	if err != nil {
+		t.Fatalf("generate ML-DSA key: %v", err)
+	}
+
+	input := []byte("post-quantum document contents")
+	signed, err := NewSignData(newTestLibraryNative()).Execute(&protobuf.SignDataRequest{
+		Profile:   "MLDSA65",
+		KeySource: signKeySource(c10y.EncodeMLDSAPrivateKey(privateKey)),
+		Input:     input,
+	})
+	if err != nil {
+		t.Fatalf("SignData.Execute() error: %v", err)
+	}
+
+	if signed.GetDescriptor_().GetAlgorithm() != "ml-dsa-65" {
+		t.Fatalf("signature algorithm = %q, want ml-dsa-65", signed.GetDescriptor_().GetAlgorithm())
+	}
+	if len(signed.GetSignature()) != mldsa.MLDSA65().SignatureSize() {
+		t.Fatalf("signature length = %d, want %d", len(signed.GetSignature()), mldsa.MLDSA65().SignatureSize())
+	}
+
+	verified, err := NewVerifyData(newTestLibraryNative()).Execute(&protobuf.VerifyDataRequest{
+		Profile:   "MLDSA65",
+		KeySource: signKeySource(c10y.EncodeMLDSAPublicKey(privateKey.PublicKey())),
+		Input:     input,
+		Signature: signed.GetSignature(),
+	})
+	if err != nil {
+		t.Fatalf("VerifyData.Execute() error: %v", err)
+	}
+	if !verified.GetValid() {
+		t.Fatal("VerifyData.Execute() returned invalid")
+	}
+
+	tampered := append([]byte(nil), signed.GetSignature()...)
+	tampered[0] ^= 1
+	verified, err = NewVerifyData(newTestLibraryNative()).Execute(&protobuf.VerifyDataRequest{
+		Profile:   "MLDSA65",
+		KeySource: signKeySource(c10y.EncodeMLDSAPublicKey(privateKey.PublicKey())),
+		Input:     input,
+		Signature: tampered,
+	})
+	if err != nil {
+		t.Fatalf("VerifyData.Execute() error: %v", err)
+	}
+	if verified.GetValid() {
+		t.Fatal("VerifyData.Execute() accepted a tampered signature")
+	}
+
+	format := protobuf.SignatureFormat_SIGNATURE_PEM
+	signed, err = NewSignData(newTestLibraryNative()).Execute(&protobuf.SignDataRequest{
+		Profile:         "MLDSA65",
+		KeySource:       signKeySource(c10y.EncodeMLDSAPrivateKey(privateKey)),
+		Input:           input,
+		SignatureFormat: &format,
+	})
+	if err != nil {
+		t.Fatalf("SignData.Execute() PEM error: %v", err)
+	}
+
+	verified, err = NewVerifyData(newTestLibraryNative()).Execute(&protobuf.VerifyDataRequest{
+		Profile:         "MLDSA65",
+		KeySource:       signKeySource(c10y.EncodeMLDSAPublicKey(privateKey.PublicKey())),
+		Input:           input,
+		Signature:       signed.GetSignature(),
+		SignatureFormat: &format,
+	})
+	if err != nil || !verified.GetValid() {
+		t.Fatalf("VerifyData.Execute() PEM = %#v, %v", verified, err)
+	}
+
+	_, err = NewVerifyData(newTestLibraryNative()).Execute(&protobuf.VerifyDataRequest{
+		Profile:   "MLDSA65",
+		KeySource: signKeySource(c10y.EncodeMLDSAPublicKey(privateKey.PublicKey())),
+		Input:     input,
+		Signature: []byte("malformed"),
+	})
+	if err == nil {
+		t.Fatal("VerifyData.Execute() accepted a malformed ML-DSA signature")
 	}
 }
 
