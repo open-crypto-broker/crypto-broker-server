@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
+	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/kms"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 )
 
 type EncryptData struct {

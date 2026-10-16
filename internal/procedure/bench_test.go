@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
+	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 )
 
 func TestNewBenchmark(t *testing.T) {

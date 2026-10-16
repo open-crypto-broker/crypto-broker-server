@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
+	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 )
 
 func TestSignVerifyData_Execute(t *testing.T) {
@@ -34,10 +34,11 @@ func TestSignVerifyData_Execute(t *testing.T) {
 	input := []byte("document contents")
 	metadata := &protobuf.Metadata{Id: "sign-request"}
 	signed, err := NewSignData(newTestLibraryNative()).Execute(&protobuf.SignDataRequest{
-		Profile:   "Default",
-		KeySource: signKeySource(pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: privateKeyDER})),
-		Input:     input,
-		Metadata:  metadata,
+		Profile:         "Default",
+		KeySource:       signKeySource(pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: privateKeyDER})),
+		Input:           input,
+		Metadata:        metadata,
+		SignatureFormat: protobuf.SignatureFormat_SIGNATURE_FORMAT_PEM,
 	})
 	if err != nil {
 		t.Fatalf("SignData.Execute() error: %v", err)
@@ -163,24 +164,24 @@ func TestSignVerifyData_Formats(t *testing.T) {
 	publicKeyPEM := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: publicKeyDER})
 
 	for _, format := range []protobuf.SignatureFormat{
-		protobuf.SignatureFormat_SIGNATURE_RAW,
-		protobuf.SignatureFormat_SIGNATURE_DER,
-		protobuf.SignatureFormat_SIGNATURE_PEM,
+		protobuf.SignatureFormat_SIGNATURE_FORMAT_RAW,
+		protobuf.SignatureFormat_SIGNATURE_FORMAT_DER,
+		protobuf.SignatureFormat_SIGNATURE_FORMAT_PEM,
 	} {
 		t.Run(format.String(), func(t *testing.T) {
 			signed, err := NewSignData(newTestLibraryNative()).Execute(&protobuf.SignDataRequest{
 				Profile:         "Default",
 				KeySource:       signKeySource(privateKeyPEM),
 				Input:           []byte("document contents"),
-				SignatureFormat: &format,
+				SignatureFormat: format,
 			})
 			if err != nil {
 				t.Fatalf("SignData.Execute() error: %v", err)
 			}
-			if format == protobuf.SignatureFormat_SIGNATURE_RAW && len(signed.GetSignature()) != 132 {
+			if format == protobuf.SignatureFormat_SIGNATURE_FORMAT_RAW && len(signed.GetSignature()) != 132 {
 				t.Fatalf("RAW P-521 signature length = %d, want 132", len(signed.GetSignature()))
 			}
-			if format == protobuf.SignatureFormat_SIGNATURE_PEM && !bytes.HasPrefix(signed.GetSignature(), []byte("-----BEGIN SIGNATURE-----")) {
+			if format == protobuf.SignatureFormat_SIGNATURE_FORMAT_PEM && !bytes.HasPrefix(signed.GetSignature(), []byte("-----BEGIN SIGNATURE-----")) {
 				t.Fatalf("PEM signature does not have a SIGNATURE block: %q", signed.GetSignature())
 			}
 
@@ -189,7 +190,7 @@ func TestSignVerifyData_Formats(t *testing.T) {
 				KeySource:       signKeySource(publicKeyPEM),
 				Input:           []byte("document contents"),
 				Signature:       signed.GetSignature(),
-				SignatureFormat: &format,
+				SignatureFormat: format,
 			})
 			if err != nil {
 				t.Fatalf("VerifyData.Execute() error: %v", err)
@@ -202,15 +203,15 @@ func TestSignVerifyData_Formats(t *testing.T) {
 }
 
 func TestEffectiveSignatureFormat(t *testing.T) {
-	format, err := effectiveSignatureFormat(protobuf.SignatureFormat_SIGNATURE_RAW, false, profile.SignatureFormatPEM)
+	format, err := effectiveSignatureFormat(protobuf.SignatureFormat_SIGNATURE_FORMAT_RAW, false, profile.SignatureFormatPEM)
 	if err != nil {
 		t.Fatalf("effectiveSignatureFormat() error: %v", err)
 	}
-	if format != protobuf.SignatureFormat_SIGNATURE_PEM {
+	if format != protobuf.SignatureFormat_SIGNATURE_FORMAT_PEM {
 		t.Fatalf("effectiveSignatureFormat() = %s, want SIGNATURE_PEM", format)
 	}
 
-	if _, err = decodeSignature(protobuf.SignatureFormat_SIGNATURE_PEM, &ecdsa.PublicKey{}, []byte("not pem")); err == nil {
+	if _, err = decodeSignature(protobuf.SignatureFormat_SIGNATURE_FORMAT_PEM, &ecdsa.PublicKey{}, []byte("not pem")); err == nil {
 		t.Fatal("decodeSignature() accepted malformed PEM")
 	}
 }
@@ -267,12 +268,12 @@ func TestSignVerifyData_MLDSA65(t *testing.T) {
 		t.Fatal("VerifyData.Execute() accepted a tampered signature")
 	}
 
-	format := protobuf.SignatureFormat_SIGNATURE_PEM
+	format := protobuf.SignatureFormat_SIGNATURE_FORMAT_PEM
 	signed, err = NewSignData(newTestLibraryNative()).Execute(&protobuf.SignDataRequest{
 		Profile:         "MLDSA65",
 		KeySource:       signKeySource(c10y.EncodeMLDSAPrivateKey(privateKey)),
 		Input:           input,
-		SignatureFormat: &format,
+		SignatureFormat: format,
 	})
 	if err != nil {
 		t.Fatalf("SignData.Execute() PEM error: %v", err)
@@ -283,7 +284,7 @@ func TestSignVerifyData_MLDSA65(t *testing.T) {
 		KeySource:       signKeySource(c10y.EncodeMLDSAPublicKey(privateKey.PublicKey())),
 		Input:           input,
 		Signature:       signed.GetSignature(),
-		SignatureFormat: &format,
+		SignatureFormat: format,
 	})
 	if err != nil || !verified.GetValid() {
 		t.Fatalf("VerifyData.Execute() PEM = %#v, %v", verified, err)

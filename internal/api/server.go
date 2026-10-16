@@ -6,9 +6,9 @@ import (
 	"runtime"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
+	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/otel"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
@@ -16,7 +16,7 @@ import (
 
 // CryptoBrokerServer defines crypto broker's server
 type CryptoBrokerServer struct {
-	protobuf.CryptoGrpcServer
+	protobuf.CryptoServiceServer
 	procedureHashData        *procedure.HashData
 	procedureSignCertificate *procedure.SignCertificate
 	procedureSignData        *procedure.SignData
@@ -102,13 +102,13 @@ func (server *CryptoBrokerServer) HashData(ctx context.Context, req *protobuf.Ha
 	}
 
 	span.SetAttributes(
-		otel.AttributeCryptoHashAlgorithm.String(response.GetHashAlgorithm()),
+		otel.AttributeCryptoHashAlgorithm.String(response.GetDescriptor_().GetAlgorithm()),
 		otel.AttributeCryptoHashOutputSize.Int(len(response.GetHashValueHex())/2+len(response.GetHashValueRaw())),
 	)
 
 	if server.metricsEnabled {
 		otel.HashDataOperationsTotal.Add(ctx, 1, metric.WithAttributes(
-			attribute.String("algorithm", response.GetHashAlgorithm()),
+			attribute.String("algorithm", response.GetDescriptor_().GetAlgorithm()),
 		))
 
 		otel.OperationBytesProcessed.Add(ctx, int64(len(req.GetInput())), metric.WithAttributes(

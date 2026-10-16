@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
+	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 )
 
 // SignData signs arbitrary input using the legacy algorithm selected by the profile.

@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
+	pb "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/interceptors"
-	pb "github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
