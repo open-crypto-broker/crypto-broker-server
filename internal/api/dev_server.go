@@ -14,7 +14,7 @@ import (
 
 // CryptoBrokerDevServer defines crypto broker's development server
 type CryptoBrokerDevServer struct {
-	protobuf.CryptoGrpcDevServer
+	protobuf.CryptoDevServiceServer
 	procedureBenchmark    *procedure.Benchmark
 	procedureFakeEndpoint *procedure.FakeEndpoint
 }
