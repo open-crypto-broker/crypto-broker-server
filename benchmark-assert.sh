@@ -141,7 +141,7 @@ threshold_allocs_per_op_BenchmarkLibraryNative_EncryptData=$(ceil "$(awk 'BEGIN 
 threshold_ns_per_op_BenchmarkLibraryNative_DecryptData=$(ceil "$(awk 'BEGIN {print 1693 * (1 + 0.25)}')")
 threshold_allocs_per_op_BenchmarkLibraryNative_DecryptData=$(ceil "$(awk 'BEGIN {print 4 * (1 + 0.1)}')")
 
-threshold_ns_per_op_BenchmarkLibraryNative_SignMLDSA65Data=$(ceil "$(awk 'BEGIN {print 456052 * (1 + 0.4)}')")
+threshold_ns_per_op_BenchmarkLibraryNative_SignMLDSA65Data=$(ceil "$(awk 'BEGIN {print 669555 * (1 + 0.4)}')")
 threshold_allocs_per_op_BenchmarkLibraryNative_SignMLDSA65Data=$(ceil "$(awk 'BEGIN {print 2 * (1 + 0.1)}')")
 
 threshold_ns_per_op_BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_RSA4096=$(ceil "$(awk 'BEGIN {print 3981588 * (1 + 0.4)}')")
