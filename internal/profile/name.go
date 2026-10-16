@@ -3,7 +3,7 @@ package profile
 import (
 	"fmt"
 
-	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
+	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 )
 
 const MaxNameLen = int(protobuf.PayloadLimits_PAYLOAD_LIMITS_PROFILE_MAX_LEN)

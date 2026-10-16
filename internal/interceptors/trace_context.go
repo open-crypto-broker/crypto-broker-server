@@ -3,7 +3,7 @@ package interceptors
 import (
 	"context"
 
-	pb "github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
+	pb "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"

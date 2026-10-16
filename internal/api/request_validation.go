@@ -5,8 +5,8 @@ import (
 	"net/url"
 	"strings"
 
+	pb "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
-	pb "github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -248,7 +248,7 @@ func validateSignDataRequest(req *pb.SignDataRequest) error {
 	if err := checkMaxLen("input", len(req.GetInput()), maxSigningDataBytes); err != nil {
 		return err
 	}
-	if req.SignatureFormat != nil && req.GetSignatureFormat() == pb.SignatureFormat_SIGNATURE_CMS {
+	if req.GetSignatureFormat() == pb.SignatureFormat_SIGNATURE_FORMAT_CMS {
 		return invalidArg("signatureFormat", "SIGNATURE_CMS is not currently supported")
 	}
 	return validateMetadata(req.GetMetadata())
@@ -273,7 +273,7 @@ func validateVerifyDataRequest(req *pb.VerifyDataRequest) error {
 	if err := checkMaxLen("signature", len(req.GetSignature()), maxSignatureBytes); err != nil {
 		return err
 	}
-	if req.SignatureFormat != nil && req.GetSignatureFormat() == pb.SignatureFormat_SIGNATURE_CMS {
+	if req.GetSignatureFormat() == pb.SignatureFormat_SIGNATURE_FORMAT_CMS {
 		return invalidArg("signatureFormat", "SIGNATURE_CMS is not currently supported")
 	}
 	return validateMetadata(req.GetMetadata())
