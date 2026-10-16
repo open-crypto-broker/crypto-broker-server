@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
+	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
