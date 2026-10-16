@@ -38,7 +38,7 @@ func effectiveSignatureFormat(requestFormat protobuf.SignatureFormat, requestFor
 
 func signatureFormatWasSet(message protoreflect.ProtoMessage) bool {
 	reflectMessage := message.ProtoReflect()
-	field := reflectMessage.Descriptor().Fields().ByName("signatureFormat")
+	field := reflectMessage.Descriptor().Fields().ByName("signature_format")
 	return reflectMessage.Has(field)
 }
 
