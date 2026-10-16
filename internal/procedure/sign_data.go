@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
+	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 )
 
 // SignData signs arbitrary input using the legacy algorithm selected by the profile.
@@ -25,6 +25,10 @@ func (procedure *SignData) Execute(req *protobuf.SignDataRequest) (*protobuf.Sig
 	format, err := effectiveSignatureFormat(req.GetSignatureFormat(), signatureFormatWasSet(req), reqProfile.API.SignData.SignatureFormat)
 	if err != nil {
 		return nil, err
+	}
+
+	if reqProfile.API.SignData.SigningMode == profile.SigningModePostQuantum {
+		return procedure.executeMLDSA(req, reqProfile, format)
 	}
 
 	privateKey, err := signingPrivateKey(req.GetKeySource(), reqProfile)
@@ -60,6 +64,32 @@ func (procedure *SignData) Execute(req *protobuf.SignDataRequest) (*protobuf.Sig
 	}, nil
 }
 
+func (procedure *SignData) executeMLDSA(req *protobuf.SignDataRequest, reqProfile profile.Profile, format protobuf.SignatureFormat) (*protobuf.SignDataResponse, error) {
+	privateKeyBytes, err := singleRawSigningKey(req.GetKeySource())
+	if err != nil {
+		return nil, err
+	}
+
+	privateKey, err := c10y.ParseMLDSAPrivateKey(privateKeyBytes, reqProfile.API.SignData.SignAlg)
+	if err != nil {
+		return nil, ArgumentError("could not parse ML-DSA private key: %w", err)
+	}
+
+	signature, err := procedure.cryptographicEngineNative.SignMLDSAData(c10y.MLDSASignDataInput{PrivateKey: privateKey, Data: req.GetInput()})
+	if err != nil {
+		return nil, ArgumentError("could not sign data: %w", err)
+	}
+
+	signature, err = encodeSignature(format, privateKey, signature)
+	if err != nil {
+		return nil, err
+	}
+
+	return &protobuf.SignDataResponse{Signature: signature, Metadata: req.GetMetadata(), Descriptor_: &protobuf.CryptoDescriptor{
+		Profile: reqProfile.Name, Operation: "SignData", Algorithm: reqProfile.API.SignData.SignAlg.String(),
+	}}, nil
+}
+
 func signingEngine(engine *c10y.LibraryNative, p profile.Profile) (*c10y.LibraryNative, error) {
 	settings := profile.Settings()
 	if settings.CryptoLibrary != c10y.LibNative {
@@ -68,6 +98,7 @@ func signingEngine(engine *c10y.LibraryNative, p profile.Profile) (*c10y.Library
 	if !p.API.SignData.SignAlg.IsSupported(c10y.SignDataSigning) || !p.API.SignData.HashAlg.IsSupported(c10y.SignDataHashing) {
 		return nil, ArgumentError("profile does not contain a supported SignData configuration")
 	}
+
 	return engine, nil
 }
 
@@ -76,13 +107,16 @@ func signingPrivateKey(keySource *protobuf.SignKeySource, p profile.Profile) (an
 	if err != nil {
 		return nil, err
 	}
+
 	privateKey, err := c10y.ParsePrivateKeyFromPEMOrDER(key)
 	if err != nil {
 		return nil, ArgumentError("could not parse private key: %w", err)
 	}
+
 	if err := c10y.ValidatePrivateKey(privateKey, p.API.SignData.KeyConstraints); err != nil {
 		return nil, ArgumentError("private key does not satisfy SignData profile constraints: %w", err)
 	}
+
 	return privateKey, nil
 }
 
@@ -90,6 +124,7 @@ func singleRawSigningKey(keySource *protobuf.SignKeySource) ([]byte, error) {
 	if keySource == nil || keySource.GetSingle() == nil {
 		return nil, ArgumentError("keySource.single is required")
 	}
+
 	single := keySource.GetSingle()
 	if len(single.GetRawKey()) > 0 {
 		return single.GetRawKey(), nil
@@ -97,5 +132,6 @@ func singleRawSigningKey(keySource *protobuf.SignKeySource) ([]byte, error) {
 	if single.GetKeyId() != "" {
 		return nil, ArgumentError("keySource.single.keyId is not supported without a KMS implementation")
 	}
+
 	return nil, ArgumentError("keySource.single.rawKey is required")
 }

@@ -19,10 +19,10 @@ import (
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/cache"
+	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/interceptors"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -124,7 +124,7 @@ func TestCryptoBrokerServer_HashData_E2E(t *testing.T) {
 		interceptors.UnaryRemoteTraceInterceptor(),
 		interceptors.UnaryCorrelationInterceptor(),
 	))
-	protobuf.RegisterCryptoGrpcServer(s, grpcConnector)
+	protobuf.RegisterCryptoServiceServer(s, grpcConnector)
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			slog.Error("Server exited with error", slog.String("error", err.Error()))
@@ -139,7 +139,7 @@ func TestCryptoBrokerServer_HashData_E2E(t *testing.T) {
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
 	defer conn.Close()
-	client := protobuf.NewCryptoGrpcClient(conn)
+	client := protobuf.NewCryptoServiceClient(conn)
 	if err = profile.LoadProfiles("Profiles.yaml"); err != nil {
 		t.Fatalf("could not load profiles, err: %s", err)
 	}
@@ -190,7 +190,7 @@ func TestCryptoBrokerServer_EncryptDecryptData_E2E(t *testing.T) {
 		interceptors.UnaryRemoteTraceInterceptor(),
 		interceptors.UnaryCorrelationInterceptor(),
 	))
-	protobuf.RegisterCryptoGrpcServer(grpcServer, server)
+	protobuf.RegisterCryptoServiceServer(grpcServer, server)
 	go func() {
 		if err := grpcServer.Serve(lis); err != nil {
 			slog.Error("Server exited with error", slog.String("error", err.Error()))
@@ -211,7 +211,7 @@ func TestCryptoBrokerServer_EncryptDecryptData_E2E(t *testing.T) {
 		t.Fatalf("could not load profiles, err: %s", err)
 	}
 
-	client := protobuf.NewCryptoGrpcClient(conn)
+	client := protobuf.NewCryptoServiceClient(conn)
 	key := bytes.Repeat([]byte{0x42}, 32)
 	nonce := bytes.Repeat([]byte{0x24}, 12)
 	plaintext := []byte("confidential payload")
@@ -290,7 +290,7 @@ func TestCryptoBrokerServer_SignCertificate_E2E(t *testing.T) {
 		interceptors.UnaryRemoteTraceInterceptor(),
 		interceptors.UnaryCorrelationInterceptor(),
 	))
-	protobuf.RegisterCryptoGrpcServer(s, grpcConnector)
+	protobuf.RegisterCryptoServiceServer(s, grpcConnector)
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			slog.Error("Server exited with error", slog.String("error", err.Error()))
@@ -305,7 +305,7 @@ func TestCryptoBrokerServer_SignCertificate_E2E(t *testing.T) {
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
 	defer conn.Close()
-	client := protobuf.NewCryptoGrpcClient(conn)
+	client := protobuf.NewCryptoServiceClient(conn)
 	if err = profile.LoadProfiles("Profiles.yaml"); err != nil {
 		t.Fatalf("could not load profiles, err: %s", err)
 	}

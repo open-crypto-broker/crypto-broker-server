@@ -9,8 +9,8 @@ import (
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/cache"
+	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 )
 
 // SignCertificate defines the procedure for signing a certificate
@@ -60,12 +60,12 @@ func (procedure *SignCertificate) Execute(req *protobuf.SignCertificateRequest) 
 		},
 	}
 	switch req.GetOutputFormat() {
-	case protobuf.SignOutputFormat_PEM:
+	case protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_PEM:
 		block := &pem.Block{Type: "CERTIFICATE", Bytes: clientCRTRaw}
 		resp.SignedCertificate = &protobuf.SignCertificateResponse_Pem{
 			Pem: string(pem.EncodeToMemory(block)),
 		}
-	case protobuf.SignOutputFormat_DER:
+	case protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_DER:
 		resp.SignedCertificate = &protobuf.SignCertificateResponse_Der{
 			Der: clientCRTRaw,
 		}

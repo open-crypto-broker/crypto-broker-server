@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
+	pb "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
-	pb "github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -290,12 +290,12 @@ func TestValidateSignVerifyDataRequests(t *testing.T) {
 		assertInvalidArgument(t, validateVerifyDataRequest(&pb.VerifyDataRequest{Profile: "Default", KeySource: validKeySource}), "signature")
 	})
 	t.Run("accepts PEM format", func(t *testing.T) {
-		format := pb.SignatureFormat_SIGNATURE_PEM
-		assertNoError(t, validateSignDataRequest(&pb.SignDataRequest{Profile: "Default", KeySource: validKeySource, SignatureFormat: &format}))
+		format := pb.SignatureFormat_SIGNATURE_FORMAT_PEM
+		assertNoError(t, validateSignDataRequest(&pb.SignDataRequest{Profile: "Default", KeySource: validKeySource, SignatureFormat: format}))
 	})
 	t.Run("rejects unsupported CMS format", func(t *testing.T) {
-		format := pb.SignatureFormat_SIGNATURE_CMS
-		assertInvalidArgument(t, validateSignDataRequest(&pb.SignDataRequest{Profile: "Default", KeySource: validKeySource, SignatureFormat: &format}), "signatureFormat")
+		format := pb.SignatureFormat_SIGNATURE_FORMAT_CMS
+		assertInvalidArgument(t, validateSignDataRequest(&pb.SignDataRequest{Profile: "Default", KeySource: validKeySource, SignatureFormat: format}), "signatureFormat")
 	})
 	t.Run("rejects hybrid key source", func(t *testing.T) {
 		assertInvalidArgument(t, validateSignDataRequest(&pb.SignDataRequest{

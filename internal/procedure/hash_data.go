@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
+	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 )
 
 // HashData defines the procedure for hashing data
@@ -30,8 +30,7 @@ func (procedure *HashData) Execute(req *protobuf.HashDataRequest) (*protobuf.Has
 	}
 
 	resp := &protobuf.HashDataResponse{
-		HashAlgorithm: reqProfile.API.HashData.HashAlg.String(),
-		Metadata:      req.GetMetadata(),
+		Metadata: req.GetMetadata(),
 		Descriptor_: &protobuf.CryptoDescriptor{
 			Profile:   reqProfile.Name,
 			Operation: "HashData",
@@ -40,11 +39,11 @@ func (procedure *HashData) Execute(req *protobuf.HashDataRequest) (*protobuf.Has
 	}
 
 	switch req.GetOutputFormat() {
-	case protobuf.HashOutputFormat_RAW:
+	case protobuf.HashOutputFormat_HASH_OUTPUT_FORMAT_RAW:
 		resp.HashValue = &protobuf.HashDataResponse_HashValueRaw{
 			HashValueRaw: []byte(hashedBytes),
 		}
-	case protobuf.HashOutputFormat_HEX:
+	case protobuf.HashOutputFormat_HASH_OUTPUT_FORMAT_HEX:
 		resp.HashValue = &protobuf.HashDataResponse_HashValueHex{
 			HashValueHex: hashedBytes.ToHEX(),
 		}

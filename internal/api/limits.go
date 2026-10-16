@@ -1,6 +1,6 @@
 package api
 
-import "github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
+import protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 
 const (
 	KB = 1024

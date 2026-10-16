@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
+	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 )
 
 func TestNewSign(t *testing.T) {
@@ -66,7 +66,7 @@ NrPbJOOC/7QNdsuxmDFGEapyZg==
 			Csr:          csrPEM,
 			CaPrivateKey: caPrivateKeyPEM,
 			CaCert:       caCertPEM,
-			OutputFormat: protobuf.SignOutputFormat_DER,
+			OutputFormat: protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_DER,
 		})
 		if err != nil {
 			t.Fatalf("Execute() error: %v", err)
@@ -90,7 +90,7 @@ NrPbJOOC/7QNdsuxmDFGEapyZg==
 			Csr:          csrPEM,
 			CaPrivateKey: caPrivateKeyPEM,
 			CaCert:       caCertPEM,
-			OutputFormat: protobuf.SignOutputFormat_PEM,
+			OutputFormat: protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_PEM,
 		})
 		if err != nil {
 			t.Fatalf("Execute() error: %v", err)

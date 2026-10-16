@@ -15,7 +15,7 @@ func TestDevServiceRegistration(t *testing.T) {
 	t.Cleanup(server.Stop)
 	registerDevService(server)
 
-	if _, registered := server.GetServiceInfo()["CryptoBroker.CryptoGrpcDev"]; !registered {
+	if _, registered := server.GetServiceInfo()["cryptobroker.v1.CryptoDevService"]; !registered {
 		t.Fatal("dev build did not register the dev service")
 	}
 }

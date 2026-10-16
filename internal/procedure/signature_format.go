@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"math/big"
 
+	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
@@ -26,41 +26,41 @@ func effectiveSignatureFormat(requestFormat protobuf.SignatureFormat, requestFor
 
 	switch profileFormat {
 	case profile.SignatureFormatRAW:
-		return protobuf.SignatureFormat_SIGNATURE_RAW, nil
+		return protobuf.SignatureFormat_SIGNATURE_FORMAT_RAW, nil
 	case profile.SignatureFormatDER:
-		return protobuf.SignatureFormat_SIGNATURE_DER, nil
+		return protobuf.SignatureFormat_SIGNATURE_FORMAT_DER, nil
 	case profile.SignatureFormatPEM:
-		return protobuf.SignatureFormat_SIGNATURE_PEM, nil
+		return protobuf.SignatureFormat_SIGNATURE_FORMAT_PEM, nil
 	default:
-		return protobuf.SignatureFormat_SIGNATURE_RAW, ArgumentError("unsupported profile signature format %q", profileFormat)
+		return protobuf.SignatureFormat_SIGNATURE_FORMAT_RAW, ArgumentError("unsupported profile signature format %q", profileFormat)
 	}
 }
 
 func signatureFormatWasSet(message protoreflect.ProtoMessage) bool {
 	reflectMessage := message.ProtoReflect()
-	field := reflectMessage.Descriptor().Fields().ByName("signatureFormat")
+	field := reflectMessage.Descriptor().Fields().ByName("signature_format")
 	return reflectMessage.Has(field)
 }
 
 func validateSignatureFormat(format protobuf.SignatureFormat) (protobuf.SignatureFormat, error) {
 	switch format {
-	case protobuf.SignatureFormat_SIGNATURE_RAW, protobuf.SignatureFormat_SIGNATURE_DER, protobuf.SignatureFormat_SIGNATURE_PEM:
+	case protobuf.SignatureFormat_SIGNATURE_FORMAT_RAW, protobuf.SignatureFormat_SIGNATURE_FORMAT_DER, protobuf.SignatureFormat_SIGNATURE_FORMAT_PEM:
 		return format, nil
 	default:
-		return protobuf.SignatureFormat_SIGNATURE_RAW, ArgumentError("signatureFormat %s is not currently supported", format.String())
+		return protobuf.SignatureFormat_SIGNATURE_FORMAT_RAW, ArgumentError("signatureFormat %s is not currently supported", format.String())
 	}
 }
 
 func encodeSignature(format protobuf.SignatureFormat, key any, signature []byte) ([]byte, error) {
 	encoded := signature
-	if format == protobuf.SignatureFormat_SIGNATURE_RAW {
+	if format == protobuf.SignatureFormat_SIGNATURE_FORMAT_RAW {
 		var err error
 		encoded, err = ecdsaDERToRaw(key, signature)
 		if err != nil {
 			return nil, err
 		}
 	}
-	if format == protobuf.SignatureFormat_SIGNATURE_PEM {
+	if format == protobuf.SignatureFormat_SIGNATURE_FORMAT_PEM {
 		return pem.EncodeToMemory(&pem.Block{Type: signaturePEMBlockType, Bytes: encoded}), nil
 	}
 	return encoded, nil
@@ -68,14 +68,14 @@ func encodeSignature(format protobuf.SignatureFormat, key any, signature []byte)
 
 func decodeSignature(format protobuf.SignatureFormat, key any, signature []byte) ([]byte, error) {
 	decoded := signature
-	if format == protobuf.SignatureFormat_SIGNATURE_PEM {
+	if format == protobuf.SignatureFormat_SIGNATURE_FORMAT_PEM {
 		block, rest := pem.Decode(signature)
 		if block == nil || block.Type != signaturePEMBlockType || len(block.Headers) != 0 || len(bytes.TrimSpace(rest)) != 0 {
 			return nil, ArgumentError("signature must be a single %s PEM block", signaturePEMBlockType)
 		}
 		decoded = block.Bytes
 	}
-	if format == protobuf.SignatureFormat_SIGNATURE_RAW {
+	if format == protobuf.SignatureFormat_SIGNATURE_FORMAT_RAW {
 		return ecdsaRawToDER(key, decoded)
 	}
 	return decoded, nil
