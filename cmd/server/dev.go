@@ -4,8 +4,8 @@ package main
 
 import (
 	"github.com/open-crypto-broker/crypto-broker-server/internal/api"
+	pb "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
-	pb "github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 	"google.golang.org/grpc"
 )
 

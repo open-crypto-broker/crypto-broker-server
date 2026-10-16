@@ -6,8 +6,8 @@ import (
 	"context"
 	"testing"
 
+	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 )
 
 func TestCryptoBrokerDevServer_Benchmark(t *testing.T) {

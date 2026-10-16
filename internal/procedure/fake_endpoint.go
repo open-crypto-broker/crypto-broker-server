@@ -5,7 +5,7 @@ package procedure
 import (
 	"sync"
 
-	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
+	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

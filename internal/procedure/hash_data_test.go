@@ -6,8 +6,8 @@ import (
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/cache"
+	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 )
 
 func loadDefaultProfiles(t *testing.T) {
@@ -45,8 +45,8 @@ func TestHash_Execute(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Execute() error: %v", err)
 	}
-	if resp.GetHashAlgorithm() != "sha3-512" {
-		t.Fatalf("HashAlgorithm = %q, want %q", resp.GetHashAlgorithm(), "sha3-512")
+	if resp.GetDescriptor_().GetAlgorithm() != "sha3-512" {
+		t.Fatalf("HashAlgorithm = %q, want %q", resp.GetDescriptor_().GetAlgorithm(), "sha3-512")
 	}
 	if len(resp.GetHashValueHex()) != 128 { // sha3-512 is 64 bytes which is 128 hex chars
 		t.Fatalf("HashValueHex length = %d, want 128", len(resp.GetHashValueHex()))

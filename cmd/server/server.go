@@ -23,9 +23,9 @@ import (
 	"github.com/open-crypto-broker/crypto-broker-server/internal/clog"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/di"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/env"
+	pb "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/interceptors"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/otel"
-	pb "github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/propagation"
 	"google.golang.org/grpc"
@@ -180,7 +180,8 @@ func main() {
 	)
 
 	// Register crypto broker service
-	pb.RegisterCryptoGrpcServer(server, container.Server)
+	pb.RegisterCryptoServiceServer(server, container.Server)
+	// pb.RegisterCryptoBrokerServiceServer(server, container.Server)
 	registerDevService(server)
 
 	var pprofSrv *http.Server
