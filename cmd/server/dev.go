@@ -11,5 +11,5 @@ import (
 
 func registerDevService(server *grpc.Server) {
 	dev := api.NewCryptoBrokerDevServer(procedure.NewBenchmark(), procedure.NewFakeEndpoint())
-	pb.RegisterCryptoGrpcDevServer(server, dev)
+	pb.RegisterCryptoDevServiceServer(server, dev)
 }
