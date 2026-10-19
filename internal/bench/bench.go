@@ -192,6 +192,33 @@ func RunSignMLDSA65DataBenchmark(b *testing.B) {
 	}
 }
 
+// RunVerifyMLDSA65DataBenchmark measures FIPS 204 ML-DSA-65 verification without key generation or signing overhead.
+func RunVerifyMLDSA65DataBenchmark(b *testing.B) {
+	privateKey, err := mldsa.GenerateKey(mldsa.MLDSA65())
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
+	signature, err := service.SignMLDSAData(c10y.MLDSASignDataInput{PrivateKey: privateKey, Data: bb})
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	input := c10y.MLDSAVerifyDataInput{PublicKey: privateKey.PublicKey(), Data: bb, Signature: signature}
+	b.ResetTimer()
+	for b.Loop() {
+		valid, err := service.VerifyMLDSAData(input)
+		if err != nil {
+			b.Fatal(err)
+		}
+		
+		if !valid {
+			b.Fatal("ML-DSA-65 signature verification failed")
+		}
+	}
+}
+
 // RunSignCertificate_CSR_SECP256R1_CA_RSA4096Benchmark runs certificate signing benchmark with NIST SECP521R1 + RSA 4096
 func RunSignCertificate_CSR_SECP256R1_CA_RSA4096Benchmark(b *testing.B) error {
 	notAfter, err := time.ParseDuration("8760h")

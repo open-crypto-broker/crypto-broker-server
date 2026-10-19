@@ -54,6 +54,10 @@ func BenchmarkLibraryNative_SignMLDSA65Data(b *testing.B) {
 	RunSignMLDSA65DataBenchmark(b)
 }
 
+func BenchmarkLibraryNative_VerifyMLDSA65Data(b *testing.B) {
+	RunVerifyMLDSA65DataBenchmark(b)
+}
+
 func BenchmarkLibraryNative_SignCertificate_CSR_SECP256R1_CA_RSA4096(b *testing.B) {
 	err := RunSignCertificate_CSR_SECP256R1_CA_RSA4096Benchmark(b)
 	if err != nil {
