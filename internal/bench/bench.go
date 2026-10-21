@@ -212,7 +212,7 @@ func RunVerifyMLDSA65DataBenchmark(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
-		
+
 		if !valid {
 			b.Fatal("ML-DSA-65 signature verification failed")
 		}
