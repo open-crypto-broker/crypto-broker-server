@@ -1206,6 +1206,7 @@ type SignCertificateRequest struct {
 	Csr                   string                 `protobuf:"bytes,2,opt,name=csr,proto3" json:"csr,omitempty"`
 	CaPrivateKey          string                 `protobuf:"bytes,3,opt,name=ca_private_key,json=caPrivateKey,proto3" json:"ca_private_key,omitempty"`
 	CaCert                string                 `protobuf:"bytes,4,opt,name=ca_cert,json=caCert,proto3" json:"ca_cert,omitempty"`
+	KeySource             *KeySource             `protobuf:"bytes,11,opt,name=key_source,json=keySource,proto3" json:"key_source,omitempty"`
 	ValidNotBefore        *uint64                `protobuf:"varint,6,opt,name=valid_not_before,json=validNotBefore,proto3,oneof" json:"valid_not_before,omitempty"`
 	ValidNotAfter         *uint64                `protobuf:"varint,7,opt,name=valid_not_after,json=validNotAfter,proto3,oneof" json:"valid_not_after,omitempty"`
 	Subject               *string                `protobuf:"bytes,8,opt,name=subject,proto3,oneof" json:"subject,omitempty"`
@@ -1272,6 +1273,13 @@ func (x *SignCertificateRequest) GetCaCert() string {
 		return x.CaCert
 	}
 	return ""
+}
+
+func (x *SignCertificateRequest) GetKeySource() *KeySource {
+	if x != nil {
+		return x.KeySource
+	}
+	return nil
 }
 
 func (x *SignCertificateRequest) GetValidNotBefore() uint64 {
@@ -2232,12 +2240,14 @@ const file_cryptobroker_v1_messages_proto_rawDesc = "" +
 	"descriptor\x125\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x19.cryptobroker.v1.MetadataR\bmetadataB\f\n" +
 	"\n" +
-	"hash_value\"\xea\x03\n" +
+	"hash_value\"\xa5\x04\n" +
 	"\x16SignCertificateRequest\x12\x18\n" +
 	"\aprofile\x18\x01 \x01(\tR\aprofile\x12\x10\n" +
 	"\x03csr\x18\x02 \x01(\tR\x03csr\x12$\n" +
 	"\x0eca_private_key\x18\x03 \x01(\tR\fcaPrivateKey\x12\x17\n" +
-	"\aca_cert\x18\x04 \x01(\tR\x06caCert\x12-\n" +
+	"\aca_cert\x18\x04 \x01(\tR\x06caCert\x129\n" +
+	"\n" +
+	"key_source\x18\v \x01(\v2\x1a.cryptobroker.v1.KeySourceR\tkeySource\x12-\n" +
 	"\x10valid_not_before\x18\x06 \x01(\x04H\x00R\x0evalidNotBefore\x88\x01\x01\x12+\n" +
 	"\x0fvalid_not_after\x18\a \x01(\x04H\x01R\rvalidNotAfter\x88\x01\x01\x12\x1d\n" +
 	"\asubject\x18\b \x01(\tH\x02R\asubject\x88\x01\x01\x126\n" +
@@ -2429,54 +2439,55 @@ var file_cryptobroker_v1_messages_proto_depIdxs = []int32{
 	5,  // 6: cryptobroker.v1.HashDataRequest.metadata:type_name -> cryptobroker.v1.Metadata
 	6,  // 7: cryptobroker.v1.HashDataResponse.descriptor:type_name -> cryptobroker.v1.CryptoDescriptor
 	5,  // 8: cryptobroker.v1.HashDataResponse.metadata:type_name -> cryptobroker.v1.Metadata
-	1,  // 9: cryptobroker.v1.SignCertificateRequest.output_format:type_name -> cryptobroker.v1.SignOutputFormat
-	5,  // 10: cryptobroker.v1.SignCertificateRequest.metadata:type_name -> cryptobroker.v1.Metadata
-	6,  // 11: cryptobroker.v1.SignCertificateResponse.descriptor:type_name -> cryptobroker.v1.CryptoDescriptor
-	5,  // 12: cryptobroker.v1.SignCertificateResponse.metadata:type_name -> cryptobroker.v1.Metadata
-	10, // 13: cryptobroker.v1.SignDataRequest.key_source:type_name -> cryptobroker.v1.SignKeySource
-	2,  // 14: cryptobroker.v1.SignDataRequest.signature_format:type_name -> cryptobroker.v1.SignatureFormat
-	5,  // 15: cryptobroker.v1.SignDataRequest.metadata:type_name -> cryptobroker.v1.Metadata
-	6,  // 16: cryptobroker.v1.SignDataResponse.descriptor:type_name -> cryptobroker.v1.CryptoDescriptor
-	5,  // 17: cryptobroker.v1.SignDataResponse.metadata:type_name -> cryptobroker.v1.Metadata
-	10, // 18: cryptobroker.v1.VerifyDataRequest.key_source:type_name -> cryptobroker.v1.SignKeySource
-	2,  // 19: cryptobroker.v1.VerifyDataRequest.signature_format:type_name -> cryptobroker.v1.SignatureFormat
-	5,  // 20: cryptobroker.v1.VerifyDataRequest.metadata:type_name -> cryptobroker.v1.Metadata
-	5,  // 21: cryptobroker.v1.VerifyDataResponse.metadata:type_name -> cryptobroker.v1.Metadata
-	9,  // 22: cryptobroker.v1.EncryptDataRequest.key_source:type_name -> cryptobroker.v1.KeySource
-	12, // 23: cryptobroker.v1.EncryptDataRequest.encrypt_metadata:type_name -> cryptobroker.v1.EncryptMetadata
-	5,  // 24: cryptobroker.v1.EncryptDataRequest.metadata:type_name -> cryptobroker.v1.Metadata
-	13, // 25: cryptobroker.v1.EncryptDataResponse.cipher_metadata:type_name -> cryptobroker.v1.CipherMetadata
-	6,  // 26: cryptobroker.v1.EncryptDataResponse.descriptor:type_name -> cryptobroker.v1.CryptoDescriptor
-	5,  // 27: cryptobroker.v1.EncryptDataResponse.metadata:type_name -> cryptobroker.v1.Metadata
-	9,  // 28: cryptobroker.v1.DecryptDataRequest.key_source:type_name -> cryptobroker.v1.KeySource
-	14, // 29: cryptobroker.v1.DecryptDataRequest.decrypt_metadata:type_name -> cryptobroker.v1.DecryptMetadata
-	5,  // 30: cryptobroker.v1.DecryptDataRequest.metadata:type_name -> cryptobroker.v1.Metadata
-	5,  // 31: cryptobroker.v1.DecryptDataResponse.metadata:type_name -> cryptobroker.v1.Metadata
-	5,  // 32: cryptobroker.v1.BenchmarkRequest.metadata:type_name -> cryptobroker.v1.Metadata
-	5,  // 33: cryptobroker.v1.BenchmarkResponse.metadata:type_name -> cryptobroker.v1.Metadata
-	5,  // 34: cryptobroker.v1.FakeEndpointRequest.metadata:type_name -> cryptobroker.v1.Metadata
-	5,  // 35: cryptobroker.v1.FakeEndpointResponse.metadata:type_name -> cryptobroker.v1.Metadata
-	15, // 36: cryptobroker.v1.CryptoService.HashData:input_type -> cryptobroker.v1.HashDataRequest
-	17, // 37: cryptobroker.v1.CryptoService.SignCertificate:input_type -> cryptobroker.v1.SignCertificateRequest
-	19, // 38: cryptobroker.v1.CryptoService.SignData:input_type -> cryptobroker.v1.SignDataRequest
-	21, // 39: cryptobroker.v1.CryptoService.VerifyData:input_type -> cryptobroker.v1.VerifyDataRequest
-	23, // 40: cryptobroker.v1.CryptoService.EncryptData:input_type -> cryptobroker.v1.EncryptDataRequest
-	25, // 41: cryptobroker.v1.CryptoService.DecryptData:input_type -> cryptobroker.v1.DecryptDataRequest
-	27, // 42: cryptobroker.v1.CryptoDevService.Benchmark:input_type -> cryptobroker.v1.BenchmarkRequest
-	29, // 43: cryptobroker.v1.CryptoDevService.FakeEndpoint:input_type -> cryptobroker.v1.FakeEndpointRequest
-	16, // 44: cryptobroker.v1.CryptoService.HashData:output_type -> cryptobroker.v1.HashDataResponse
-	18, // 45: cryptobroker.v1.CryptoService.SignCertificate:output_type -> cryptobroker.v1.SignCertificateResponse
-	20, // 46: cryptobroker.v1.CryptoService.SignData:output_type -> cryptobroker.v1.SignDataResponse
-	22, // 47: cryptobroker.v1.CryptoService.VerifyData:output_type -> cryptobroker.v1.VerifyDataResponse
-	24, // 48: cryptobroker.v1.CryptoService.EncryptData:output_type -> cryptobroker.v1.EncryptDataResponse
-	26, // 49: cryptobroker.v1.CryptoService.DecryptData:output_type -> cryptobroker.v1.DecryptDataResponse
-	28, // 50: cryptobroker.v1.CryptoDevService.Benchmark:output_type -> cryptobroker.v1.BenchmarkResponse
-	30, // 51: cryptobroker.v1.CryptoDevService.FakeEndpoint:output_type -> cryptobroker.v1.FakeEndpointResponse
-	44, // [44:52] is the sub-list for method output_type
-	36, // [36:44] is the sub-list for method input_type
-	36, // [36:36] is the sub-list for extension type_name
-	36, // [36:36] is the sub-list for extension extendee
-	0,  // [0:36] is the sub-list for field type_name
+	9,  // 9: cryptobroker.v1.SignCertificateRequest.key_source:type_name -> cryptobroker.v1.KeySource
+	1,  // 10: cryptobroker.v1.SignCertificateRequest.output_format:type_name -> cryptobroker.v1.SignOutputFormat
+	5,  // 11: cryptobroker.v1.SignCertificateRequest.metadata:type_name -> cryptobroker.v1.Metadata
+	6,  // 12: cryptobroker.v1.SignCertificateResponse.descriptor:type_name -> cryptobroker.v1.CryptoDescriptor
+	5,  // 13: cryptobroker.v1.SignCertificateResponse.metadata:type_name -> cryptobroker.v1.Metadata
+	10, // 14: cryptobroker.v1.SignDataRequest.key_source:type_name -> cryptobroker.v1.SignKeySource
+	2,  // 15: cryptobroker.v1.SignDataRequest.signature_format:type_name -> cryptobroker.v1.SignatureFormat
+	5,  // 16: cryptobroker.v1.SignDataRequest.metadata:type_name -> cryptobroker.v1.Metadata
+	6,  // 17: cryptobroker.v1.SignDataResponse.descriptor:type_name -> cryptobroker.v1.CryptoDescriptor
+	5,  // 18: cryptobroker.v1.SignDataResponse.metadata:type_name -> cryptobroker.v1.Metadata
+	10, // 19: cryptobroker.v1.VerifyDataRequest.key_source:type_name -> cryptobroker.v1.SignKeySource
+	2,  // 20: cryptobroker.v1.VerifyDataRequest.signature_format:type_name -> cryptobroker.v1.SignatureFormat
+	5,  // 21: cryptobroker.v1.VerifyDataRequest.metadata:type_name -> cryptobroker.v1.Metadata
+	5,  // 22: cryptobroker.v1.VerifyDataResponse.metadata:type_name -> cryptobroker.v1.Metadata
+	9,  // 23: cryptobroker.v1.EncryptDataRequest.key_source:type_name -> cryptobroker.v1.KeySource
+	12, // 24: cryptobroker.v1.EncryptDataRequest.encrypt_metadata:type_name -> cryptobroker.v1.EncryptMetadata
+	5,  // 25: cryptobroker.v1.EncryptDataRequest.metadata:type_name -> cryptobroker.v1.Metadata
+	13, // 26: cryptobroker.v1.EncryptDataResponse.cipher_metadata:type_name -> cryptobroker.v1.CipherMetadata
+	6,  // 27: cryptobroker.v1.EncryptDataResponse.descriptor:type_name -> cryptobroker.v1.CryptoDescriptor
+	5,  // 28: cryptobroker.v1.EncryptDataResponse.metadata:type_name -> cryptobroker.v1.Metadata
+	9,  // 29: cryptobroker.v1.DecryptDataRequest.key_source:type_name -> cryptobroker.v1.KeySource
+	14, // 30: cryptobroker.v1.DecryptDataRequest.decrypt_metadata:type_name -> cryptobroker.v1.DecryptMetadata
+	5,  // 31: cryptobroker.v1.DecryptDataRequest.metadata:type_name -> cryptobroker.v1.Metadata
+	5,  // 32: cryptobroker.v1.DecryptDataResponse.metadata:type_name -> cryptobroker.v1.Metadata
+	5,  // 33: cryptobroker.v1.BenchmarkRequest.metadata:type_name -> cryptobroker.v1.Metadata
+	5,  // 34: cryptobroker.v1.BenchmarkResponse.metadata:type_name -> cryptobroker.v1.Metadata
+	5,  // 35: cryptobroker.v1.FakeEndpointRequest.metadata:type_name -> cryptobroker.v1.Metadata
+	5,  // 36: cryptobroker.v1.FakeEndpointResponse.metadata:type_name -> cryptobroker.v1.Metadata
+	15, // 37: cryptobroker.v1.CryptoService.HashData:input_type -> cryptobroker.v1.HashDataRequest
+	17, // 38: cryptobroker.v1.CryptoService.SignCertificate:input_type -> cryptobroker.v1.SignCertificateRequest
+	19, // 39: cryptobroker.v1.CryptoService.SignData:input_type -> cryptobroker.v1.SignDataRequest
+	21, // 40: cryptobroker.v1.CryptoService.VerifyData:input_type -> cryptobroker.v1.VerifyDataRequest
+	23, // 41: cryptobroker.v1.CryptoService.EncryptData:input_type -> cryptobroker.v1.EncryptDataRequest
+	25, // 42: cryptobroker.v1.CryptoService.DecryptData:input_type -> cryptobroker.v1.DecryptDataRequest
+	27, // 43: cryptobroker.v1.CryptoDevService.Benchmark:input_type -> cryptobroker.v1.BenchmarkRequest
+	29, // 44: cryptobroker.v1.CryptoDevService.FakeEndpoint:input_type -> cryptobroker.v1.FakeEndpointRequest
+	16, // 45: cryptobroker.v1.CryptoService.HashData:output_type -> cryptobroker.v1.HashDataResponse
+	18, // 46: cryptobroker.v1.CryptoService.SignCertificate:output_type -> cryptobroker.v1.SignCertificateResponse
+	20, // 47: cryptobroker.v1.CryptoService.SignData:output_type -> cryptobroker.v1.SignDataResponse
+	22, // 48: cryptobroker.v1.CryptoService.VerifyData:output_type -> cryptobroker.v1.VerifyDataResponse
+	24, // 49: cryptobroker.v1.CryptoService.EncryptData:output_type -> cryptobroker.v1.EncryptDataResponse
+	26, // 50: cryptobroker.v1.CryptoService.DecryptData:output_type -> cryptobroker.v1.DecryptDataResponse
+	28, // 51: cryptobroker.v1.CryptoDevService.Benchmark:output_type -> cryptobroker.v1.BenchmarkResponse
+	30, // 52: cryptobroker.v1.CryptoDevService.FakeEndpoint:output_type -> cryptobroker.v1.FakeEndpointResponse
+	45, // [45:53] is the sub-list for method output_type
+	37, // [37:45] is the sub-list for method input_type
+	37, // [37:37] is the sub-list for extension type_name
+	37, // [37:37] is the sub-list for extension extendee
+	0,  // [0:37] is the sub-list for field type_name
 }
 
 func init() { file_cryptobroker_v1_messages_proto_init() }
