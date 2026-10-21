@@ -48,7 +48,7 @@ linters:
       - legacy
       - std-error-handling
     paths:
-      - internal/protobuf
+      - internal/gen
     rules:
       - linters:
           - staticcheck
