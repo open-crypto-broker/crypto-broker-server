@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/kms"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/otel"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
@@ -121,6 +122,32 @@ func (server *CryptoBrokerServer) HashData(ctx context.Context, req *protobuf.Ha
 
 // SignCertificate contains certificate signing logic
 func (server *CryptoBrokerServer) SignCertificate(ctx context.Context, req *protobuf.SignCertificateRequest) (*protobuf.SignCertificateResponse, error) {
+	source := req.GetKeySource(); 
+
+	if source != nil {
+		if req.GetCaCert() != "" {
+			return nil, invalidArg("keySource", "must not be set together with caCert")
+		}
+
+		err := validateKMSConfiguration(source, req.GetProfile())
+		if err != nil {
+			return nil, err
+		}
+		
+		certificate := source.GetRawKey()
+
+		if keyID := source.GetKeyId(); keyID != "" {
+			var err error
+
+			certificate, err = kms.GetCertificate(keyID)
+			if err != nil {
+				return nil, fmt.Errorf("get CA certificate: %w", err)
+			}
+		}
+		
+		req.CaCert = string(certificate)
+	}
+
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(
 		otel.AttributeCryptoProfile.String(req.GetProfile()),
