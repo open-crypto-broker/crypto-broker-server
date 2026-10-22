@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/bench"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
+	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 )
 
 // Benchmark defines the procedure for benchmarking the cryptographic library

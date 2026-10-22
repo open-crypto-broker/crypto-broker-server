@@ -15,9 +15,9 @@ import (
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/cache"
+	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/protobuf"
 	"go.opentelemetry.io/otel"
 	metricnoop "go.opentelemetry.io/otel/metric/noop"
 )
@@ -91,7 +91,7 @@ func TestCryptoBrokerServer_HashData_MetricsEnabled_Success_RecordsMetricsBranch
 	if err != nil {
 		t.Fatalf("expected success, got err: %v", err)
 	}
-	if resp == nil || resp.GetHashAlgorithm() == "" || resp.GetHashValue() == nil {
+	if resp == nil || resp.GetDescriptor_().GetAlgorithm() == "" || resp.GetHashValue() == nil {
 		t.Fatalf("expected non-empty hash data response")
 	}
 }
