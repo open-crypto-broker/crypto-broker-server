@@ -99,8 +99,6 @@ tasks:
     deps: [build]
     vars:
       APP_NAME: '{{.APP_NAME | default "crypto-broker-server"}}'
-    env:
-      CRYPTO_BROKER_APP_ENV: '{{.APP_ENV}}'
     cmds:
       - defer: {task: cleanup-socket}
       - ./bin/{{.APP_NAME}}
@@ -144,7 +142,7 @@ tasks:
   proto-update:
     desc: "Updates the protobuf submodule to the latest upstream schema and regenerates"
     cmds:
-      - git submodule update --remote protobuf/
+      - git submodule update --init --remote protobuf/
       - task: proto
 
   proto:
