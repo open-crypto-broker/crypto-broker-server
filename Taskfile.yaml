@@ -63,15 +63,11 @@ tasks:
       - chmod +x benchmark-assert.sh
       - ./benchmark-assert.sh benchmark-results.json
 
-  # Installed via go install rather than brew so that every platform gets the
-  # pinned version.
   install-buf:
     desc: "Download and install the buf CLI"
     cmds:
       - go install github.com/bufbuild/buf/cmd/buf@v{{.BUF_VERSION}}
 
-  # Installed via go install rather than brew so that generated stubs are
-  # reproducible across macOS, Linux and CI.
   install-go-protoc-modules:
     desc: "Install Go modules for protobuf and gRPC support"
     cmds:
@@ -99,6 +95,8 @@ tasks:
     deps: [build]
     vars:
       APP_NAME: '{{.APP_NAME | default "crypto-broker-server"}}'
+    env:
+      CRYPTO_BROKER_APP_ENV: '{{.APP_ENV}}'
     cmds:
       - defer: {task: cleanup-socket}
       - ./bin/{{.APP_NAME}}
