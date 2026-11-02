@@ -18,7 +18,7 @@ FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS b
 
 ARG TARGETOS
 ARG TARGETARCH
-ARG GOFIPS140=off
+ARG GOFIPS140=${FIPS_MODE_MODULE_VERSION:-off}
 
 WORKDIR /app
 
@@ -48,7 +48,7 @@ RUN CGO_ENABLED=0 \
     GOOS=${TARGETOS:-linux} \
     GOARCH=${TARGETARCH:-amd64} \
     GOFIPS140=${GOFIPS140} \
-    go build -trimpath -ldflags="-s -w" -o app ./cmd/server
+    go build -trimpath -ldflags="-s -w" -o crypto-broker-server ./cmd/server
 
 ## Deploy with scratch docker image (no other binaries, dependencies, etc)
 FROM scratch
@@ -60,7 +60,7 @@ ARG APP_GID
 WORKDIR /app
 
 ## Copy server and profile
-COPY --from=build /app/app .
+COPY --from=build /app/crypto-broker-server .
 COPY --from=build /app/example-profiles ./profiles
 ## The server binds a Unix domain socket in /tmp/open-crypto-broker, a path backed
 ## by the shared `shared_data` volume that Docker seeds from this image the first
@@ -75,4 +75,4 @@ COPY --from=build --chown=${APP_UID}:${APP_GID} /socket-skel/open-crypto-broker 
 # in-cluster behaviour. Override with --build-arg APP_UID/APP_GID if required.
 USER ${APP_UID}:${APP_GID}
 
-ENTRYPOINT ["./app"]
+ENTRYPOINT ["./crypto-broker-server"]
