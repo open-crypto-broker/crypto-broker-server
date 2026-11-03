@@ -132,11 +132,12 @@ func validateSignCertificateRequest(req *pb.SignCertificateRequest) error {
 		return err
 	}
 
-	caKey := req.GetCaPrivateKey()
-	if caKey == "" {
-		return invalidArg("caPrivateKey", "required")
+	if err := validateCertificateSignKeySource(req.GetKeySource()); err != nil {
+		return err
 	}
-	if err := checkMaxLen("caPrivateKey", len(caKey), maxCAPrivateKeyBytes); err != nil {
+
+	err := validateKMSConfiguration(req.GetKeySource().GetSingle(), req.GetProfile())
+	if err != nil {
 		return err
 	}
 
@@ -309,6 +310,34 @@ func validateSignKeySource(keySource *pb.SignKeySource) error {
 	return checkMaxLen("keySource.single.rawKey", len(single.GetRawKey()), maxSigningKeyBytes)
 }
 
+func validateCertificateSignKeySource(keySource *pb.SignKeySource) error {
+	if keySource == nil || keySource.GetSource() == nil {
+		return invalidArg("keySource", "required")
+	}
+
+	if keySource.GetComponentKeys() != nil {
+		return invalidArg("keySource.componentKeys", "hybrid signing is not currently supported")
+	}
+
+	single := keySource.GetSingle()
+	if single == nil || single.GetSource() == nil {
+		return invalidArg("keySource.single", "required")
+	}
+
+	rawKey := single.GetRawKey()
+	if rawKey != nil {
+		if len(rawKey) == 0 {
+			return invalidArg("keySource.single.rawKey", "required")
+		}
+		return checkMaxLen("keySource.single.rawKey", len(rawKey), maxCAPrivateKeyBytes)
+	}
+
+	if single.GetKeyId() == "" {
+		return invalidArg("keySource.single.keyId", "required")
+	}
+	return checkMaxLen("keySource.single.keyId", len(single.GetKeyId()), maxEncryptionKeyIDLen)
+}
+
 func validateKMSConfiguration(keySource *pb.KeySource, profileName string) error {
 	keyID := keySource.GetKeyId()
 	if keyID == "" {
@@ -320,11 +349,8 @@ func validateKMSConfiguration(keySource *pb.KeySource, profileName string) error
 		return err
 	}
 
-	kms := profile.KMS()
-	configured := kms.Client != "" && kms.Config != ""
-
-	if !configured {
-		return status.Error(codes.FailedPrecondition, "KMS is not configured")
+	if !profile.KMS().Configured() {
+		return status.Error(codes.FailedPrecondition, "KMS is disabled or not configured")
 	}
 
 	return nil

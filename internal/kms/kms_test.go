@@ -2,6 +2,7 @@ package kms
 
 import (
 	"bytes"
+	"context"
 	"strings"
 	"testing"
 
@@ -45,6 +46,8 @@ type testClient struct {
 	certificate      []byte
 	certificateCalls int
 }
+
+func (c *testClient) Health(context.Context) error { return nil }
 
 func (c *testClient) GetKey(string) ([]byte, error) {
 	c.calls++

@@ -53,9 +53,12 @@ func TestRetrieve(t *testing.T) {
 		t.Fatal("could not load profiles")
 	}
 
-	wantKMS := KMSConfiguration{Client: "openbao", Config: "openbao.yaml", Cache: false}
-	if got := KMS(); got != wantKMS {
-		t.Fatalf("KMS() = %#v, want %#v from Settings.KMS", got, wantKMS)
+	gotKMS := KMS()
+	if gotKMS.Client != "openbao" || gotKMS.Config != "openbao.yaml" || gotKMS.Cache {
+		t.Fatalf("KMS() = %#v, want OpenBao configuration from Settings.KMS", gotKMS)
+	}
+	if gotKMS.Configured() != gotKMS.Enabled {
+		t.Fatalf("KMS().Configured() = %t, want Enabled value %t", gotKMS.Configured(), gotKMS.Enabled)
 	}
 
 	type args struct {

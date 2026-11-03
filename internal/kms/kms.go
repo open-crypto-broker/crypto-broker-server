@@ -3,6 +3,7 @@ package kms
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"sync"
@@ -15,6 +16,7 @@ import (
 )
 
 type Client interface {
+	Health(context.Context) error
 	GetKey(keyID string) ([]byte, error)
 	GetCertificate(keyID string) ([]byte, error)
 }
@@ -33,11 +35,15 @@ var (
 	})
 )
 
-const cacheTTL = 60 * time.Minute
+const (
+	cacheTTL             = 60 * time.Minute
+	startupHealthTimeout = 5 * time.Second
+)
 
-func Load() error {
+// Connect initializes the configured KMS client and verifies the connection.
+func Connect() error {
 	configuration := profile.KMS()
-	if configuration.Client == "" || configuration.Config == "" {
+	if !configuration.Configured() {
 		return fmt.Errorf("KMS is not configured")
 	}
 
@@ -68,7 +74,13 @@ func Load() error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("load KMS adapter: %w", err)
+		return fmt.Errorf("connect KMS adapter: %w", err)
+	}
+
+	healthCtx, cancel := context.WithTimeout(context.Background(), startupHealthTimeout)
+	defer cancel()
+	if err = kmsClient.Health(healthCtx); err != nil {
+		return fmt.Errorf("check KMS health: %w", err)
 	}
 
 	mux.Lock()
@@ -94,8 +106,7 @@ func GetKey(keyID string) ([]byte, error) {
 	mux.RUnlock()
 
 	if kmsClient == nil {
-		err := Load()
-		if err != nil {
+		if err := Connect(); err != nil {
 			return nil, err
 		}
 
@@ -135,8 +146,7 @@ func GetCertificate(keyID string) ([]byte, error) {
 	mux.RUnlock()
 
 	if kmsClient == nil {
-		err := Load()
-		if err != nil {
+		if err := Connect(); err != nil {
 			return nil, err
 		}
 

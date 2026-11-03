@@ -26,9 +26,15 @@ type ProfileAPI struct {
 }
 
 type KMSConfiguration struct {
-	Client string
-	Config string
-	Cache  bool
+	Enabled bool
+	Client  string
+	Config  string
+	Cache   bool
+}
+
+// Configured checks if kms is enabled
+func (configuration KMSConfiguration) Configured() bool {
+	return configuration.Enabled && configuration.Client != "" && configuration.Config != ""
 }
 
 type ProfileAPIHashData struct {

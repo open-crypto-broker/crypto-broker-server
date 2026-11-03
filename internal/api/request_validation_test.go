@@ -100,11 +100,18 @@ func TestValidateSignRequest_RejectsRequiredFields(t *testing.T) {
 			wantField: "csr",
 		},
 		{
-			name: "ca private key",
+			name: "signing key source",
 			mutate: func(req *pb.SignCertificateRequest) {
-				req.CaPrivateKey = ""
+				req.KeySource = nil
 			},
-			wantField: "caPrivateKey",
+			wantField: "keySource",
+		},
+		{
+			name: "empty raw certificate signing key",
+			mutate: func(req *pb.SignCertificateRequest) {
+				req.KeySource = rawCertificateSignKeySource([]byte{})
+			},
+			wantField: "keySource.single.rawKey",
 		},
 		{
 			name: "ca cert",
@@ -146,11 +153,20 @@ func TestValidateSignRequest_RejectsSizeLimits(t *testing.T) {
 			wantField: "csr",
 		},
 		{
-			name: "ca private key",
+			name: "certificate signing key",
 			mutate: func(req *pb.SignCertificateRequest) {
-				req.CaPrivateKey = strings.Repeat("A", maxCAPrivateKeyBytes+1)
+				req.KeySource = rawCertificateSignKeySource([]byte(strings.Repeat("A", maxCAPrivateKeyBytes+1)))
 			},
-			wantField: "caPrivateKey",
+			wantField: "keySource.single.rawKey",
+		},
+		{
+			name: "certificate signing KMS key ID",
+			mutate: func(req *pb.SignCertificateRequest) {
+				req.KeySource = &pb.SignKeySource{Source: &pb.SignKeySource_Single{
+					Single: &pb.KeySource{Source: &pb.KeySource_KeyId{KeyId: strings.Repeat("A", maxEncryptionKeyIDLen+1)}},
+				}}
+			},
+			wantField: "keySource.single.keyId",
 		},
 		{
 			name: "ca cert",
@@ -205,7 +221,7 @@ func TestValidateSignRequest_AllowsValidBoundaryRequest(t *testing.T) {
 	req := validSignRequest()
 	req.Profile = strings.Repeat("A", profile.MaxNameLen)
 	req.Csr = strings.Repeat("A", maxCSRBytes)
-	req.CaPrivateKey = strings.Repeat("A", maxCAPrivateKeyBytes)
+	req.KeySource = rawCertificateSignKeySource([]byte(strings.Repeat("A", maxCAPrivateKeyBytes)))
 	req.CaCert = strings.Repeat("A", maxCACertBytes)
 	req.Subject = &subject
 
@@ -400,11 +416,17 @@ func TestValidateMetadata(t *testing.T) {
 
 func validSignRequest() *pb.SignCertificateRequest {
 	return &pb.SignCertificateRequest{
-		Profile:      "Default",
-		Csr:          "csr",
-		CaPrivateKey: "key",
-		CaCert:       "cert",
+		Profile:   "Default",
+		Csr:       "csr",
+		KeySource: rawCertificateSignKeySource([]byte("key")),
+		CaCert:    "cert",
 	}
+}
+
+func rawCertificateSignKeySource(key []byte) *pb.SignKeySource {
+	return &pb.SignKeySource{Source: &pb.SignKeySource_Single{
+		Single: &pb.KeySource{Source: &pb.KeySource_RawKey{RawKey: key}},
+	}}
 }
 
 func stringPtr(s string) *string {

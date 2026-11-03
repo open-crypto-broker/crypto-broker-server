@@ -1,6 +1,7 @@
 package procedure
 
 import (
+	"bytes"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
@@ -10,6 +11,7 @@ import (
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/cache"
 	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/kms"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
 )
 
@@ -171,17 +173,13 @@ func (procedure *SignCertificate) parseRawSignRequest(req *protobuf.SignCertific
 		return signCertificateRequest{}, ArgumentError("could not parse certificate request, err: %w", err)
 	}
 
-	// Copy the PEM-encoded CA private key into a mutable buffer so it can be
-	// explicitly zeroed once parsing finishes. Go's GC does not scrub freed
-	// memory, so without this the key bytes could linger on the heap (core
-	// dumps, swap, process memory). Defer guarantees scrubbing on all paths.
-	// Note: this only clears this transient copy; the immutable protobuf string
-	// and the parsed key's big.Int material are out of reach here and are
-	// addressed by the upcoming key-management redesign.
-	rawCAPrivateKey := []byte(req.GetCaPrivateKey())
+	rawCAPrivateKey, err := certificateSigningKey(req.GetKeySource())
+	if err != nil {
+		return signCertificateRequest{}, err
+	}
 	defer c10y.ZeroBytes(rawCAPrivateKey)
 
-	caPrivateKey, err := c10y.ParsePrivateKeyFromPEM(rawCAPrivateKey)
+	caPrivateKey, err := c10y.ParsePrivateKeyFromPEMOrDER(rawCAPrivateKey)
 	if err != nil {
 		return signCertificateRequest{}, ArgumentError("could not parse private key, err: %w", err)
 	}
@@ -220,4 +218,27 @@ func (procedure *SignCertificate) parseRawSignRequest(req *protobuf.SignCertific
 	}
 
 	return input, nil
+}
+
+func certificateSigningKey(source *protobuf.SignKeySource) ([]byte, error) {
+	if source == nil || source.GetSingle() == nil {
+		return nil, ArgumentError("keySource.single is required")
+	}
+
+	single := source.GetSingle()
+	rawKey := single.GetRawKey()
+	if rawKey != nil {
+		return bytes.Clone(rawKey), nil
+	}
+
+	keyID := single.GetKeyId()
+	if keyID != "" {
+		key, err := kms.GetKey(keyID)
+		if err != nil {
+			return nil, ArgumentError("could not retrieve certificate signing key from KMS: %w", err)
+		}
+		return key, nil
+	}
+
+	return nil, ArgumentError("keySource.single must contain rawKey or keyId")
 }

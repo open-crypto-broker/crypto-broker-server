@@ -2,6 +2,7 @@
 Settings:
   CryptoLibrary: native
   KMS:
+    Enabled: false
     Client: openbao
     Config: openbao.yaml
     Cache: false

@@ -91,7 +91,7 @@ func TestOpenBaoClientGetCertificate(t *testing.T) {
 				_, _ = w.Write([]byte(test.response))
 			}))
 			defer server.Close()
-			client, err := Connect(strings.NewReader("address: " + server.URL + "\nmount: keys2\n"))
+			client, err := Connect(strings.NewReader("address: " + server.URL + "\ntoken: dev-token\nmount: keys2\n"))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -104,6 +104,27 @@ func TestOpenBaoClientGetCertificate(t *testing.T) {
 			}
 			if err != nil || string(got) != pem {
 				t.Fatalf("GetCertificate() = %q, %v, want original PEM", got, err)
+			}
+		})
+	}
+}
+
+func TestOpenBaoConnectRequiresConfiguration(t *testing.T) {
+	tests := []struct {
+		name   string
+		config string
+		field  string
+	}{
+		{name: "address", config: "token: token\nmount: keys\n", field: "address"},
+		{name: "token", config: "address: http://127.0.0.1:8200\nmount: keys\n", field: "token"},
+		{name: "mount", config: "address: http://127.0.0.1:8200\ntoken: token\n", field: "mount"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := Connect(strings.NewReader(test.config))
+			if err == nil || !strings.Contains(strings.ToLower(err.Error()), test.field) {
+				t.Fatalf("Connect() error = %v, want missing %s", err, test.field)
 			}
 		})
 	}
