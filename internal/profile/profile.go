@@ -11,6 +11,7 @@ import (
 // It should be obtained through Retrieve or Profiles.
 type Profile struct {
 	Name string
+	KMS  KMSConfiguration
 	API  ProfileAPI
 }
 
@@ -26,9 +27,15 @@ type ProfileAPI struct {
 }
 
 type KMSConfiguration struct {
-	Client string
-	Config string
-	Cache  bool
+	Enabled bool   `yaml:"Enabled"`
+	Client  string `yaml:"Client"`
+	Config  string `yaml:"Config"`
+	Cache   bool   `yaml:"Cache"`
+}
+
+// Configured checks if kms is enabled
+func (configuration KMSConfiguration) Configured() bool {
+	return configuration.Enabled && configuration.Client != "" && configuration.Config != ""
 }
 
 type ProfileAPIHashData struct {

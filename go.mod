@@ -1,6 +1,6 @@
 module github.com/open-crypto-broker/crypto-broker-server
 
-go 1.27.3
+go 1.27.4
 
 require (
 	github.com/dgraph-io/ristretto/v2 v2.4.2

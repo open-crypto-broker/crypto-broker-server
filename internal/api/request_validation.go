@@ -120,6 +120,7 @@ func validateSignCertificateRequest(req *pb.SignCertificateRequest) error {
 	if req == nil {
 		return invalidArg("request", "required")
 	}
+
 	if err := validateProfileName(req.GetProfile()); err != nil {
 		return err
 	}
@@ -128,24 +129,31 @@ func validateSignCertificateRequest(req *pb.SignCertificateRequest) error {
 	if csr == "" {
 		return invalidArg("csr", "required")
 	}
+
 	if err := checkMaxLen("csr", len(csr), maxCSRBytes); err != nil {
 		return err
 	}
 
-	caKey := req.GetCaPrivateKey()
-	if caKey == "" {
-		return invalidArg("caPrivateKey", "required")
-	}
-	if err := checkMaxLen("caPrivateKey", len(caKey), maxCAPrivateKeyBytes); err != nil {
+	if err := validateCertificateSignKeySource(req.GetKeySource()); err != nil {
 		return err
 	}
 
+	single := req.GetKeySource().GetSingle()
 	caCert := req.GetCaCert()
-	if caCert == "" {
-		return invalidArg("caCert", "required")
-	}
-	if err := checkMaxLen("caCert", len(caCert), maxCACertBytes); err != nil {
-		return err
+	if single.GetKeyId() != "" {
+		if caCert != "" {
+			return invalidArg("caCert", "must be empty when keySource.single.keyId is set")
+		}
+		if err := validateKMSConfiguration(single, req.GetProfile()); err != nil {
+			return err
+		}
+	} else {
+		if caCert == "" {
+			return invalidArg("caCert", "required")
+		}
+		if err := checkMaxLen("caCert", len(caCert), maxCACertBytes); err != nil {
+			return err
+		}
 	}
 
 	if err := checkMaxLen("subject", len(req.GetSubject()), maxSubjectLen); err != nil {
@@ -309,22 +317,48 @@ func validateSignKeySource(keySource *pb.SignKeySource) error {
 	return checkMaxLen("keySource.single.rawKey", len(single.GetRawKey()), maxSigningKeyBytes)
 }
 
+func validateCertificateSignKeySource(keySource *pb.SignKeySource) error {
+	if keySource == nil || keySource.GetSource() == nil {
+		return invalidArg("keySource", "required")
+	}
+
+	if keySource.GetComponentKeys() != nil {
+		return invalidArg("keySource.componentKeys", "hybrid signing is not currently supported")
+	}
+
+	single := keySource.GetSingle()
+	if single == nil || single.GetSource() == nil {
+		return invalidArg("keySource.single", "required")
+	}
+
+	rawKey := single.GetRawKey()
+	if rawKey != nil {
+		if len(rawKey) == 0 {
+			return invalidArg("keySource.single.rawKey", "required")
+		}
+		return checkMaxLen("keySource.single.rawKey", len(rawKey), maxCAPrivateKeyBytes)
+	}
+
+	if single.GetKeyId() == "" {
+		return invalidArg("keySource.single.keyId", "required")
+	}
+	return checkMaxLen("keySource.single.keyId", len(single.GetKeyId()), maxEncryptionKeyIDLen)
+}
+
 func validateKMSConfiguration(keySource *pb.KeySource, profileName string) error {
 	keyID := keySource.GetKeyId()
 	if keyID == "" {
 		return nil
 	}
 
-	_, err := profile.Retrieve(profileName)
+	configuredProfile, err := profile.Retrieve(profileName)
+
 	if err != nil {
 		return err
 	}
 
-	kms := profile.KMS()
-	configured := kms.Client != "" && kms.Config != ""
-
-	if !configured {
-		return status.Error(codes.FailedPrecondition, "KMS is not configured")
+	if !configuredProfile.KMS.Configured() {
+		return status.Error(codes.FailedPrecondition, "KMS is disabled or not configured")
 	}
 
 	return nil
