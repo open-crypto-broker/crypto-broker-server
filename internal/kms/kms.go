@@ -3,6 +3,7 @@ package kms
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"sync"
@@ -10,34 +11,66 @@ import (
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/cache"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/env"
-	openbao "github.com/open-crypto-broker/crypto-broker-server/internal/kms/client"
+	kmsclient "github.com/open-crypto-broker/crypto-broker-server/internal/kms/client"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
 )
 
 type Client interface {
+	Health(context.Context) error
 	GetKey(keyID string) ([]byte, error)
-	GetCertificate(keyID string) ([]byte, error)
+	GetCertificate(keyID string) (Certificate, error)
+}
+
+// Certificate contains the private key and CA certificate stored under one
+// KMS key ID.
+type Certificate struct {
+	PrivateKey []byte
+	CACert     []byte
+}
+
+type openBaoClient struct {
+	client *kmsclient.OpenBao
+}
+
+func (o *openBaoClient) Health(ctx context.Context) error {
+	return o.client.Health(ctx)
+}
+
+func (o *openBaoClient) GetKey(keyID string) ([]byte, error) {
+	return o.client.GetKey(keyID)
+}
+
+func (o *openBaoClient) GetCertificate(keyID string) (Certificate, error) {
+	privateKey, caCert, err := o.client.GetCertificate(keyID)
+	if err != nil {
+		return Certificate{}, err
+	}
+
+	return Certificate{PrivateKey: privateKey, CACert: caCert}, nil
 }
 
 var (
 	client Client
 	mux    sync.RWMutex
 
-	keys = cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig)
-	// Certificate entries are byte-costed and can be larger than the default
-	// cache's entire budget (1,000 bytes).
-	certificates = cache.MustNewRistretto[[]byte](cache.RistrettoConfig{
+	// KMS material is byte-costed and can be larger than the default cache's
+	// entire budget (1,000 bytes).
+	keyMaterials = cache.MustNewRistretto[Certificate](cache.RistrettoConfig{
 		NumCounters: 10_000,
 		MaxCost:     4 * 1024 * 1024,
 		BufferItems: 64,
 	})
 )
 
-const cacheTTL = 60 * time.Minute
+const (
+	cacheTTL             = 60 * time.Minute
+	startupHealthTimeout = 5 * time.Second
+)
 
-func Load() error {
+// Connect initializes the configured KMS client and verifies the connection.
+func Connect() error {
 	configuration := profile.KMS()
-	if configuration.Client == "" || configuration.Config == "" {
+	if !configuration.Configured() {
 		return fmt.Errorf("KMS is not configured")
 	}
 
@@ -62,13 +95,23 @@ func Load() error {
 
 	switch configuration.Client {
 	case "openbao":
-		kmsClient, err = openbao.Connect(configFile)
+		var openBao *kmsclient.OpenBao
+		openBao, err = kmsclient.Connect(configFile)
+		if err == nil {
+			kmsClient = &openBaoClient{client: openBao}
+		}
 	default:
 		return fmt.Errorf("unsupported KMS adapter %q", configuration.Client)
 	}
 
 	if err != nil {
-		return fmt.Errorf("load KMS adapter: %w", err)
+		return fmt.Errorf("connect KMS adapter: %w", err)
+	}
+
+	healthCtx, cancel := context.WithTimeout(context.Background(), startupHealthTimeout)
+	defer cancel()
+	if err = kmsClient.Health(healthCtx); err != nil {
+		return fmt.Errorf("check KMS health: %w", err)
 	}
 
 	mux.Lock()
@@ -83,9 +126,9 @@ func GetKey(keyID string) ([]byte, error) {
 	configuration := profile.KMS()
 
 	if configuration.Cache {
-		key, ok := keys.Get(keyID)
-		if ok {
-			return bytes.Clone(key), nil
+		material, ok := keyMaterials.Get(keyID)
+		if ok && material.PrivateKey != nil {
+			return bytes.Clone(material.PrivateKey), nil
 		}
 	}
 
@@ -94,8 +137,7 @@ func GetKey(keyID string) ([]byte, error) {
 	mux.RUnlock()
 
 	if kmsClient == nil {
-		err := Load()
-		if err != nil {
+		if err := Connect(); err != nil {
 			return nil, err
 		}
 
@@ -113,20 +155,22 @@ func GetKey(keyID string) ([]byte, error) {
 	}
 
 	if configuration.Cache {
-		keys.SetWithTTL(keyID, bytes.Clone(key), int64(max(1, len(key))), cacheTTL)
-		keys.Wait()
+		material := Certificate{PrivateKey: bytes.Clone(key)}
+		keyMaterials.SetWithTTL(keyID, material, certificateSize(material), cacheTTL)
+		keyMaterials.Wait()
 	}
 
 	return key, nil
 }
 
-// GetCertificate retrieves a PEM certificate using the globally configured KMS client.
-func GetCertificate(keyID string) ([]byte, error) {
+// GetCertificate retrieves a private key and its CA certificate using the
+// globally configured KMS client.
+func GetCertificate(keyID string) (Certificate, error) {
 	cacheEnabled := profile.KMS().Cache
 	if cacheEnabled {
-		certificate, ok := certificates.Get(keyID)
-		if ok {
-			return bytes.Clone(certificate), nil
+		certificate, ok := keyMaterials.Get(keyID)
+		if ok && certificate.PrivateKey != nil && certificate.CACert != nil {
+			return cloneCertificate(certificate), nil
 		}
 	}
 
@@ -135,28 +179,38 @@ func GetCertificate(keyID string) ([]byte, error) {
 	mux.RUnlock()
 
 	if kmsClient == nil {
-		err := Load()
-		if err != nil {
-			return nil, err
+		if err := Connect(); err != nil {
+			return Certificate{}, err
 		}
 
 		mux.RLock()
 		kmsClient = client
 		mux.RUnlock()
 		if kmsClient == nil {
-			return nil, fmt.Errorf("KMS client was not loaded")
+			return Certificate{}, fmt.Errorf("KMS client was not loaded")
 		}
 	}
 
 	certificate, err := kmsClient.GetCertificate(keyID)
 	if err != nil {
-		return nil, err
+		return Certificate{}, err
 	}
 
 	if cacheEnabled {
-		certificates.SetWithTTL(keyID, bytes.Clone(certificate), int64(max(1, len(certificate))), cacheTTL)
-		certificates.Wait()
+		keyMaterials.SetWithTTL(keyID, cloneCertificate(certificate), certificateSize(certificate), cacheTTL)
+		keyMaterials.Wait()
 	}
 
-	return certificate, nil
+	return cloneCertificate(certificate), nil
+}
+
+func cloneCertificate(certificate Certificate) Certificate {
+	return Certificate{
+		PrivateKey: bytes.Clone(certificate.PrivateKey),
+		CACert:     bytes.Clone(certificate.CACert),
+	}
+}
+
+func certificateSize(certificate Certificate) int64 {
+	return int64(max(1, len(certificate.PrivateKey)+len(certificate.CACert)))
 }

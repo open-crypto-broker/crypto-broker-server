@@ -29,11 +29,48 @@ func TestRawProfileSettings_validate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "accepts disabled configured KMS",
+			in: rawProfileSettings{
+				CryptoLibrary: "native",
+				KMS:           rawProfileKMS{Enabled: false, Client: "openbao", Config: "openbao.yaml"},
+			},
+		},
+		{
+			name: "accepts enabled configured KMS",
+			in: rawProfileSettings{
+				CryptoLibrary: "native",
+				KMS:           rawProfileKMS{Enabled: true, Client: "openbao", Config: "openbao.yaml"},
+			},
+		},
+		{
+			name:    "rejects enabled KMS without client and config",
+			in:      rawProfileSettings{CryptoLibrary: "native", KMS: rawProfileKMS{Enabled: true}},
+			wantErr: true,
+		},
+		{
+			name: "accepts incomplete KMS configuration when disabled",
+			in: rawProfileSettings{
+				CryptoLibrary: "native",
+				KMS:           rawProfileKMS{Client: "openbao"},
+			},
+		},
+		{
+			name:    "rejects enabled KMS without config",
+			in:      rawProfileSettings{CryptoLibrary: "native", KMS: rawProfileKMS{Enabled: true, Client: "openbao"}},
+			wantErr: true,
+		},
+		{
+			name:    "rejects enabled KMS without client",
+			in:      rawProfileSettings{CryptoLibrary: "native", KMS: rawProfileKMS{Enabled: true, Config: "openbao.yaml"}},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.in.validate()
+
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
