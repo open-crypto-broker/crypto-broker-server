@@ -120,6 +120,7 @@ func validateSignCertificateRequest(req *pb.SignCertificateRequest) error {
 	if req == nil {
 		return invalidArg("request", "required")
 	}
+
 	if err := validateProfileName(req.GetProfile()); err != nil {
 		return err
 	}
@@ -128,6 +129,7 @@ func validateSignCertificateRequest(req *pb.SignCertificateRequest) error {
 	if csr == "" {
 		return invalidArg("csr", "required")
 	}
+
 	if err := checkMaxLen("csr", len(csr), maxCSRBytes); err != nil {
 		return err
 	}
@@ -136,17 +138,22 @@ func validateSignCertificateRequest(req *pb.SignCertificateRequest) error {
 		return err
 	}
 
-	err := validateKMSConfiguration(req.GetKeySource().GetSingle(), req.GetProfile())
-	if err != nil {
-		return err
-	}
-
+	single := req.GetKeySource().GetSingle()
 	caCert := req.GetCaCert()
-	if caCert == "" {
-		return invalidArg("caCert", "required")
-	}
-	if err := checkMaxLen("caCert", len(caCert), maxCACertBytes); err != nil {
-		return err
+	if single.GetKeyId() != "" {
+		if caCert != "" {
+			return invalidArg("caCert", "must be empty when keySource.single.keyId is set")
+		}
+		if err := validateKMSConfiguration(single, req.GetProfile()); err != nil {
+			return err
+		}
+	} else {
+		if caCert == "" {
+			return invalidArg("caCert", "required")
+		}
+		if err := checkMaxLen("caCert", len(caCert), maxCACertBytes); err != nil {
+			return err
+		}
 	}
 
 	if err := checkMaxLen("subject", len(req.GetSubject()), maxSubjectLen); err != nil {

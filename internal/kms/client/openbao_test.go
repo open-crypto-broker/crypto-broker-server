@@ -73,16 +73,20 @@ func TestOpenBaoClientGetCertificate(t *testing.T) {
 		response string
 		wantErr  string
 	}{
-		{name: "PEM certificate", status: http.StatusOK, response: `{"data":{"data":{"certificate":"-----BEGIN CERTIFICATE-----\nPEM content\n-----END CERTIFICATE-----\n"}}}`},
+		{name: "private key and PEM certificate", status: http.StatusOK, response: `{"data":{"data":{"key":"4142","ca_cert":"-----BEGIN CERTIFICATE-----\nPEM content\n-----END CERTIFICATE-----\n"}}}`},
 		{name: "not found", status: http.StatusNotFound, response: `{}`, wantErr: "was not found"},
 		{name: "permission denied", status: http.StatusForbidden, response: `{"errors":["permission denied"]}`, wantErr: "permission denied"},
-		{name: "not KV v2", status: http.StatusOK, response: `{"data":{"certificate":"pem"}}`, wantErr: "KV v2 data"},
-		{name: "missing certificate", status: http.StatusOK, response: `{"data":{"data":{"key":"ab"}}}`, wantErr: "string certificate field"},
-		{name: "non-string certificate", status: http.StatusOK, response: `{"data":{"data":{"certificate":123}}}`, wantErr: "string certificate field"},
+		{name: "not KV v2", status: http.StatusOK, response: `{"data":{"ca_cert":"pem"}}`, wantErr: "KV v2 data"},
+		{name: "missing key", status: http.StatusOK, response: `{"data":{"data":{"ca_cert":"pem"}}}`, wantErr: "string key field"},
+		{name: "invalid key", status: http.StatusOK, response: `{"data":{"data":{"key":"invalid","ca_cert":"pem"}}}`, wantErr: "decode"},
+		{name: "missing certificate", status: http.StatusOK, response: `{"data":{"data":{"key":"ab"}}}`, wantErr: "string ca_cert field"},
+		{name: "non-string certificate", status: http.StatusOK, response: `{"data":{"data":{"key":"ab","ca_cert":123}}}`, wantErr: "string ca_cert field"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			requestCount := 0
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				requestCount++
 				if r.Method != http.MethodGet || r.URL.Path != "/v1/keys2/data/ca" {
 					t.Errorf("request = %s %s, want GET /v1/keys2/data/ca", r.Method, r.URL.Path)
 				}
@@ -96,14 +100,17 @@ func TestOpenBaoClientGetCertificate(t *testing.T) {
 				t.Fatal(err)
 			}
 			got, err := client.GetCertificate("ca")
+			if requestCount != 1 {
+				t.Fatalf("GetCertificate() requests = %d, want 1", requestCount)
+			}
 			if test.wantErr != "" {
 				if err == nil || !strings.Contains(err.Error(), test.wantErr) {
 					t.Fatalf("GetCertificate() error = %v, want %q", err, test.wantErr)
 				}
 				return
 			}
-			if err != nil || string(got) != pem {
-				t.Fatalf("GetCertificate() = %q, %v, want original PEM", got, err)
+			if err != nil || !bytes.Equal(got.PrivateKey, []byte("AB")) || string(got.CACert) != pem {
+				t.Fatalf("GetCertificate() = %#v, %v, want private key and original PEM", got, err)
 			}
 		})
 	}

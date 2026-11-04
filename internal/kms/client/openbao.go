@@ -124,26 +124,39 @@ func (o *OpenBao) GetKey(keyID string) ([]byte, error) {
 	return decodedKey, nil
 }
 
-func (o *OpenBao) GetCertificate(keyID string) ([]byte, error) {
+func (o *OpenBao) GetCertificate(keyID string) (Certificate, error) {
 	keyID = o.config.Mount + "/data/" + keyID
 	secret, err := o.client.Logical().Read(keyID)
 	if err != nil {
-		return nil, fmt.Errorf("read OpenBao certificate %q: %w", keyID, err)
+		return Certificate{}, fmt.Errorf("read OpenBao certificate %q: %w", keyID, err)
 	}
 
 	if secret == nil {
-		return nil, fmt.Errorf("OpenBao certificate %q was not found", keyID)
+		return Certificate{}, fmt.Errorf("OpenBao certificate %q was not found", keyID)
 	}
 
 	data, ok := secret.Data["data"].(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("OpenBao certificate %q does not contain KV v2 data", keyID)
+		return Certificate{}, fmt.Errorf("OpenBao certificate %q does not contain KV v2 data", keyID)
 	}
 
-	certificate, ok := data["certificate"].(string)
-	if !ok {
-		return nil, fmt.Errorf("OpenBao certificate %q does not contain a string certificate field", keyID)
+	key, ok := data["key"].(string)
+	if !ok || key == "" {
+		return Certificate{}, fmt.Errorf("OpenBao certificate %q does not contain a string key field", keyID)
 	}
 
-	return []byte(certificate), nil
+	privateKey, err := hex.DecodeString(key)
+	if err != nil {
+		return Certificate{}, fmt.Errorf("decode OpenBao certificate key %q: %w", keyID, err)
+	}
+
+	certificate, ok := data["ca_cert"].(string)
+	if !ok || certificate == "" {
+		return Certificate{}, fmt.Errorf("OpenBao certificate %q does not contain a string ca_cert field", keyID)
+	}
+
+	return Certificate{
+		PrivateKey: privateKey,
+		CACert:     []byte(certificate),
+	}, nil
 }

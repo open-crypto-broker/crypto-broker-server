@@ -120,6 +120,13 @@ func TestValidateSignRequest_RejectsRequiredFields(t *testing.T) {
 			},
 			wantField: "caCert",
 		},
+		{
+			name: "ca cert with KMS key ID",
+			mutate: func(req *pb.SignCertificateRequest) {
+				req.KeySource = kmsCertificateSignKeySource("ca-signing-key")
+			},
+			wantField: "caCert",
+		},
 	}
 
 	for _, tt := range tests {
@@ -426,6 +433,12 @@ func validSignRequest() *pb.SignCertificateRequest {
 func rawCertificateSignKeySource(key []byte) *pb.SignKeySource {
 	return &pb.SignKeySource{Source: &pb.SignKeySource_Single{
 		Single: &pb.KeySource{Source: &pb.KeySource_RawKey{RawKey: key}},
+	}}
+}
+
+func kmsCertificateSignKeySource(keyID string) *pb.SignKeySource {
+	return &pb.SignKeySource{Source: &pb.SignKeySource_Single{
+		Single: &pb.KeySource{Source: &pb.KeySource_KeyId{KeyId: keyID}},
 	}}
 }
 

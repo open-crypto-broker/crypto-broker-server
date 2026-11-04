@@ -173,7 +173,7 @@ func (procedure *SignCertificate) parseRawSignRequest(req *protobuf.SignCertific
 		return signCertificateRequest{}, ArgumentError("could not parse certificate request, err: %w", err)
 	}
 
-	rawCAPrivateKey, err := certificateSigningKey(req.GetKeySource())
+	rawCAPrivateKey, rawCACert, err := certificateSigningMaterial(req.GetKeySource(), req.GetCaCert())
 	if err != nil {
 		return signCertificateRequest{}, err
 	}
@@ -184,12 +184,12 @@ func (procedure *SignCertificate) parseRawSignRequest(req *protobuf.SignCertific
 		return signCertificateRequest{}, ArgumentError("could not parse private key, err: %w", err)
 	}
 
-	pemCACert := req.GetCaCert()
+	pemCACert := string(rawCACert)
 	cert, ok := procedure.caCertCache.Get(pemCACert)
 	if !ok {
 		cert, err = c10y.ParseX509Cert([]byte(pemCACert))
 		if err != nil {
-			return signCertificateRequest{}, ArgumentError("could not parse x.509 CA cert from request, err: %w", err)
+			return signCertificateRequest{}, ArgumentError("could not parse x.509 CA cert, err: %w", err)
 		}
 
 		// TTL bound to the certificate's own validity: an expired CA cert must
@@ -220,25 +220,25 @@ func (procedure *SignCertificate) parseRawSignRequest(req *protobuf.SignCertific
 	return input, nil
 }
 
-func certificateSigningKey(source *protobuf.SignKeySource) ([]byte, error) {
+func certificateSigningMaterial(source *protobuf.SignKeySource, caCert string) ([]byte, []byte, error) {
 	if source == nil || source.GetSingle() == nil {
-		return nil, ArgumentError("keySource.single is required")
+		return nil, nil, ArgumentError("keySource.single is required")
 	}
 
 	single := source.GetSingle()
 	rawKey := single.GetRawKey()
 	if rawKey != nil {
-		return bytes.Clone(rawKey), nil
+		return bytes.Clone(rawKey), []byte(caCert), nil
 	}
 
 	keyID := single.GetKeyId()
 	if keyID != "" {
-		key, err := kms.GetKey(keyID)
+		certificate, err := kms.GetCertificate(keyID)
 		if err != nil {
-			return nil, ArgumentError("could not retrieve certificate signing key from KMS: %w", err)
+			return nil, nil, ArgumentError("could not retrieve certificate signing material from KMS: %w", err)
 		}
-		return key, nil
+		return certificate.PrivateKey, certificate.CACert, nil
 	}
 
-	return nil, ArgumentError("keySource.single must contain rawKey or keyId")
+	return nil, nil, ArgumentError("keySource.single must contain rawKey or keyId")
 }
