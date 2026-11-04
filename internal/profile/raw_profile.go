@@ -32,9 +32,10 @@ type rawProfileSettings struct {
 }
 
 type rawProfileKMS struct {
-	Client string `yaml:"Client"`
-	Config string `yaml:"Config"`
-	Cache  bool   `yaml:"Cache"`
+	Enabled bool   `yaml:"Enabled"`
+	Client  string `yaml:"Client"`
+	Config  string `yaml:"Config"`
+	Cache   bool   `yaml:"Cache"`
 }
 
 type rawProfileAPI struct {
@@ -234,6 +235,10 @@ func (settings rawProfileSettings) validate() error {
 	if !slices.Contains(c10y.SupportedCryptographicLibraries, strings.ToLower(settings.CryptoLibrary)) {
 		return fmt.Errorf("unknown cryptographic library: %s, available values: %v",
 			settings.CryptoLibrary, c10y.SupportedCryptographicLibraries)
+	}
+
+	if settings.KMS.Enabled && (settings.KMS.Client == "" || settings.KMS.Config == "") {
+		return errors.New("enabled KMS requires both client and config")
 	}
 
 	return nil

@@ -2,6 +2,7 @@ package kms
 
 import (
 	"bytes"
+	"context"
 	"strings"
 	"testing"
 
@@ -42,16 +43,18 @@ type testClient struct {
 	key   []byte
 	calls int
 
-	certificate      []byte
+	certificate      Certificate
 	certificateCalls int
 }
+
+func (c *testClient) Health(context.Context) error { return nil }
 
 func (c *testClient) GetKey(string) ([]byte, error) {
 	c.calls++
 	return c.key, nil
 }
 
-func (c *testClient) GetCertificate(string) ([]byte, error) {
+func (c *testClient) GetCertificate(string) (Certificate, error) {
 	c.certificateCalls++
 	return c.certificate, nil
 }
@@ -60,20 +63,20 @@ func TestGetCertificate(t *testing.T) {
 	if err := profile.LoadProfiles("Profiles.yaml"); err != nil {
 		t.Fatal(err)
 	}
-	kmsClient := &testClient{certificate: []byte(strings.Repeat("certificate", 200))}
+	kmsClient := &testClient{certificate: Certificate{
+		PrivateKey: []byte("private-key"),
+		CACert:     []byte(strings.Repeat("certificate", 200)),
+	}}
 	client = kmsClient
 	defer func() { client = nil }()
 	const id = "certificate-id"
-	certificates.Del(id)
-	defer certificates.Del(id)
-	keys.SetWithTTL(id, []byte("key"), 3, cacheTTL)
-	keys.Wait()
-	defer keys.Del(id)
+	keyMaterials.Del(id)
+	defer keyMaterials.Del(id)
 
 	for range 2 {
 		got, err := GetCertificate(id)
-		if err != nil || !bytes.Equal(got, kmsClient.certificate) {
-			t.Fatalf("GetCertificate() = %q, %v", got, err)
+		if err != nil || !bytes.Equal(got.PrivateKey, kmsClient.certificate.PrivateKey) || !bytes.Equal(got.CACert, kmsClient.certificate.CACert) {
+			t.Fatalf("GetCertificate() = %#v, %v", got, err)
 		}
 	}
 	if kmsClient.certificateCalls != 2 {

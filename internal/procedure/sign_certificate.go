@@ -1,6 +1,7 @@
 package procedure
 
 import (
+	"bytes"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
@@ -10,6 +11,7 @@ import (
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/cache"
 	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/kms"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
 )
 
@@ -171,27 +173,23 @@ func (procedure *SignCertificate) parseRawSignRequest(req *protobuf.SignCertific
 		return signCertificateRequest{}, ArgumentError("could not parse certificate request, err: %w", err)
 	}
 
-	// Copy the PEM-encoded CA private key into a mutable buffer so it can be
-	// explicitly zeroed once parsing finishes. Go's GC does not scrub freed
-	// memory, so without this the key bytes could linger on the heap (core
-	// dumps, swap, process memory). Defer guarantees scrubbing on all paths.
-	// Note: this only clears this transient copy; the immutable protobuf string
-	// and the parsed key's big.Int material are out of reach here and are
-	// addressed by the upcoming key-management redesign.
-	rawCAPrivateKey := []byte(req.GetCaPrivateKey())
+	rawCAPrivateKey, rawCACert, err := certificateSigningMaterial(req.GetKeySource(), req.GetCaCert())
+	if err != nil {
+		return signCertificateRequest{}, err
+	}
 	defer c10y.ZeroBytes(rawCAPrivateKey)
 
-	caPrivateKey, err := c10y.ParsePrivateKeyFromPEM(rawCAPrivateKey)
+	caPrivateKey, err := c10y.ParsePrivateKeyFromPEMOrDER(rawCAPrivateKey)
 	if err != nil {
 		return signCertificateRequest{}, ArgumentError("could not parse private key, err: %w", err)
 	}
 
-	pemCACert := req.GetCaCert()
+	pemCACert := string(rawCACert)
 	cert, ok := procedure.caCertCache.Get(pemCACert)
 	if !ok {
 		cert, err = c10y.ParseX509Cert([]byte(pemCACert))
 		if err != nil {
-			return signCertificateRequest{}, ArgumentError("could not parse x.509 CA cert from request, err: %w", err)
+			return signCertificateRequest{}, ArgumentError("could not parse x.509 CA cert, err: %w", err)
 		}
 
 		// TTL bound to the certificate's own validity: an expired CA cert must
@@ -220,4 +218,27 @@ func (procedure *SignCertificate) parseRawSignRequest(req *protobuf.SignCertific
 	}
 
 	return input, nil
+}
+
+func certificateSigningMaterial(source *protobuf.SignKeySource, caCert string) ([]byte, []byte, error) {
+	if source == nil || source.GetSingle() == nil {
+		return nil, nil, ArgumentError("keySource.single is required")
+	}
+
+	single := source.GetSingle()
+	rawKey := single.GetRawKey()
+	if rawKey != nil {
+		return bytes.Clone(rawKey), []byte(caCert), nil
+	}
+
+	keyID := single.GetKeyId()
+	if keyID != "" {
+		certificate, err := kms.GetCertificate(keyID)
+		if err != nil {
+			return nil, nil, ArgumentError("could not retrieve certificate signing material from KMS: %w", err)
+		}
+		return certificate.PrivateKey, certificate.CACert, nil
+	}
+
+	return nil, nil, ArgumentError("keySource.single must contain rawKey or keyId")
 }
