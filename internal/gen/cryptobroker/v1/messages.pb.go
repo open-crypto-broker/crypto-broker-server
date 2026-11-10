@@ -1204,9 +1204,8 @@ type SignCertificateRequest struct {
 	state                 protoimpl.MessageState `protogen:"open.v1"`
 	Profile               string                 `protobuf:"bytes,1,opt,name=profile,proto3" json:"profile,omitempty"`
 	Csr                   string                 `protobuf:"bytes,2,opt,name=csr,proto3" json:"csr,omitempty"`
-	CaPrivateKey          string                 `protobuf:"bytes,3,opt,name=ca_private_key,json=caPrivateKey,proto3" json:"ca_private_key,omitempty"`
-	CaCert                string                 `protobuf:"bytes,4,opt,name=ca_cert,json=caCert,proto3" json:"ca_cert,omitempty"`
-	KeySource             *KeySource             `protobuf:"bytes,11,opt,name=key_source,json=keySource,proto3" json:"key_source,omitempty"`
+	CaCert                *string                `protobuf:"bytes,4,opt,name=ca_cert,json=caCert,proto3,oneof" json:"ca_cert,omitempty"`
+	KeySource             *SignKeySource         `protobuf:"bytes,11,opt,name=key_source,json=keySource,proto3" json:"key_source,omitempty"`
 	ValidNotBefore        *uint64                `protobuf:"varint,6,opt,name=valid_not_before,json=validNotBefore,proto3,oneof" json:"valid_not_before,omitempty"`
 	ValidNotAfter         *uint64                `protobuf:"varint,7,opt,name=valid_not_after,json=validNotAfter,proto3,oneof" json:"valid_not_after,omitempty"`
 	Subject               *string                `protobuf:"bytes,8,opt,name=subject,proto3,oneof" json:"subject,omitempty"`
@@ -1261,21 +1260,14 @@ func (x *SignCertificateRequest) GetCsr() string {
 	return ""
 }
 
-func (x *SignCertificateRequest) GetCaPrivateKey() string {
-	if x != nil {
-		return x.CaPrivateKey
-	}
-	return ""
-}
-
 func (x *SignCertificateRequest) GetCaCert() string {
-	if x != nil {
-		return x.CaCert
+	if x != nil && x.CaCert != nil {
+		return *x.CaCert
 	}
 	return ""
 }
 
-func (x *SignCertificateRequest) GetKeySource() *KeySource {
+func (x *SignCertificateRequest) GetKeySource() *SignKeySource {
 	if x != nil {
 		return x.KeySource
 	}
@@ -2240,25 +2232,26 @@ const file_cryptobroker_v1_messages_proto_rawDesc = "" +
 	"descriptor\x125\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x19.cryptobroker.v1.MetadataR\bmetadataB\f\n" +
 	"\n" +
-	"hash_value\"\xa5\x04\n" +
+	"hash_value\"\x9a\x04\n" +
 	"\x16SignCertificateRequest\x12\x18\n" +
 	"\aprofile\x18\x01 \x01(\tR\aprofile\x12\x10\n" +
-	"\x03csr\x18\x02 \x01(\tR\x03csr\x12$\n" +
-	"\x0eca_private_key\x18\x03 \x01(\tR\fcaPrivateKey\x12\x17\n" +
-	"\aca_cert\x18\x04 \x01(\tR\x06caCert\x129\n" +
+	"\x03csr\x18\x02 \x01(\tR\x03csr\x12\x1c\n" +
+	"\aca_cert\x18\x04 \x01(\tH\x00R\x06caCert\x88\x01\x01\x12=\n" +
 	"\n" +
-	"key_source\x18\v \x01(\v2\x1a.cryptobroker.v1.KeySourceR\tkeySource\x12-\n" +
-	"\x10valid_not_before\x18\x06 \x01(\x04H\x00R\x0evalidNotBefore\x88\x01\x01\x12+\n" +
-	"\x0fvalid_not_after\x18\a \x01(\x04H\x01R\rvalidNotAfter\x88\x01\x01\x12\x1d\n" +
-	"\asubject\x18\b \x01(\tH\x02R\asubject\x88\x01\x01\x126\n" +
+	"key_source\x18\v \x01(\v2\x1e.cryptobroker.v1.SignKeySourceR\tkeySource\x12-\n" +
+	"\x10valid_not_before\x18\x06 \x01(\x04H\x01R\x0evalidNotBefore\x88\x01\x01\x12+\n" +
+	"\x0fvalid_not_after\x18\a \x01(\x04H\x02R\rvalidNotAfter\x88\x01\x01\x12\x1d\n" +
+	"\asubject\x18\b \x01(\tH\x03R\asubject\x88\x01\x01\x126\n" +
 	"\x17crl_distribution_points\x18\t \x03(\tR\x15crlDistributionPoints\x12F\n" +
 	"\routput_format\x18\n" +
 	" \x01(\x0e2!.cryptobroker.v1.SignOutputFormatR\foutputFormat\x125\n" +
-	"\bmetadata\x18\x05 \x01(\v2\x19.cryptobroker.v1.MetadataR\bmetadataB\x13\n" +
+	"\bmetadata\x18\x05 \x01(\v2\x19.cryptobroker.v1.MetadataR\bmetadataB\n" +
+	"\n" +
+	"\b_ca_certB\x13\n" +
 	"\x11_valid_not_beforeB\x12\n" +
 	"\x10_valid_not_afterB\n" +
 	"\n" +
-	"\b_subject\"\xd1\x01\n" +
+	"\b_subjectJ\x04\b\x03\x10\x04\"\xd1\x01\n" +
 	"\x17SignCertificateResponse\x12\x12\n" +
 	"\x03pem\x18\x02 \x01(\tH\x00R\x03pem\x12\x12\n" +
 	"\x03der\x18\x03 \x01(\fH\x00R\x03der\x12A\n" +
@@ -2439,7 +2432,7 @@ var file_cryptobroker_v1_messages_proto_depIdxs = []int32{
 	5,  // 6: cryptobroker.v1.HashDataRequest.metadata:type_name -> cryptobroker.v1.Metadata
 	6,  // 7: cryptobroker.v1.HashDataResponse.descriptor:type_name -> cryptobroker.v1.CryptoDescriptor
 	5,  // 8: cryptobroker.v1.HashDataResponse.metadata:type_name -> cryptobroker.v1.Metadata
-	9,  // 9: cryptobroker.v1.SignCertificateRequest.key_source:type_name -> cryptobroker.v1.KeySource
+	10, // 9: cryptobroker.v1.SignCertificateRequest.key_source:type_name -> cryptobroker.v1.SignKeySource
 	1,  // 10: cryptobroker.v1.SignCertificateRequest.output_format:type_name -> cryptobroker.v1.SignOutputFormat
 	5,  // 11: cryptobroker.v1.SignCertificateRequest.metadata:type_name -> cryptobroker.v1.Metadata
 	6,  // 12: cryptobroker.v1.SignCertificateResponse.descriptor:type_name -> cryptobroker.v1.CryptoDescriptor

@@ -60,12 +60,22 @@ NrPbJOOC/7QNdsuxmDFGEapyZg==
 
 	p := newTestSign()
 
+	// Convert PEM to bytes for SignKeySource
+	caPrivateKeyBytes := []byte(caPrivateKeyPEM)
+	caCertPtr := &caCertPEM
+
 	t.Run("DER output", func(t *testing.T) {
 		resp, err := p.Execute(&protobuf.SignCertificateRequest{
-			Profile:      "Default",
-			Csr:          csrPEM,
-			CaPrivateKey: caPrivateKeyPEM,
-			CaCert:       caCertPEM,
+			Profile: "Default",
+			Csr:     csrPEM,
+			KeySource: &protobuf.SignKeySource{
+				Source: &protobuf.SignKeySource_Single{
+					Single: &protobuf.KeySource{
+						Source: &protobuf.KeySource_RawKey{RawKey: caPrivateKeyBytes},
+					},
+				},
+			},
+			CaCert:       caCertPtr,
 			OutputFormat: protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_DER,
 		})
 		if err != nil {
@@ -86,10 +96,16 @@ NrPbJOOC/7QNdsuxmDFGEapyZg==
 
 	t.Run("PEM output", func(t *testing.T) {
 		resp, err := p.Execute(&protobuf.SignCertificateRequest{
-			Profile:      "Default",
-			Csr:          csrPEM,
-			CaPrivateKey: caPrivateKeyPEM,
-			CaCert:       caCertPEM,
+			Profile: "Default",
+			Csr:     csrPEM,
+			KeySource: &protobuf.SignKeySource{
+				Source: &protobuf.SignKeySource_Single{
+					Single: &protobuf.KeySource{
+						Source: &protobuf.KeySource_RawKey{RawKey: caPrivateKeyBytes},
+					},
+				},
+			},
+			CaCert:       caCertPtr,
 			OutputFormat: protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_PEM,
 		})
 		if err != nil {
@@ -153,10 +169,20 @@ YPEvJDRcZOaQELgCfS90jAPT45yefLkIsgEWq45bKA==
 -----END EC PRIVATE KEY-----`
 
 	proc := newTestSign()
+
+	caPrivateKeyBytes := []byte(caPrivateKeyPEM)
+	caCertPtr := &caCertPEM
+
 	input, err := proc.parseRawSignRequest(&protobuf.SignCertificateRequest{
-		Csr:          csrPEM,
-		CaCert:       caCertPEM,
-		CaPrivateKey: caPrivateKeyPEM,
+		Csr: csrPEM,
+		KeySource: &protobuf.SignKeySource{
+			Source: &protobuf.SignKeySource_Single{
+				Single: &protobuf.KeySource{
+					Source: &protobuf.KeySource_RawKey{RawKey: caPrivateKeyBytes},
+				},
+			},
+		},
+		CaCert: caCertPtr,
 	})
 	if err != nil {
 		t.Fatalf("parseRawSignRequest() error: %v", err)

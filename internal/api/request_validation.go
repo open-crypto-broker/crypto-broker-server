@@ -132,11 +132,7 @@ func validateSignCertificateRequest(req *pb.SignCertificateRequest) error {
 		return err
 	}
 
-	caKey := req.GetCaPrivateKey()
-	if caKey == "" {
-		return invalidArg("caPrivateKey", "required")
-	}
-	if err := checkMaxLen("caPrivateKey", len(caKey), maxCAPrivateKeyBytes); err != nil {
+	if err := validateSignKeySource(req.GetKeySource()); err != nil {
 		return err
 	}
 
