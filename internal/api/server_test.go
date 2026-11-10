@@ -324,8 +324,14 @@ Uc5gaIJpQbckT4VCP4I23ZsJciONJt1F6qQCXKqu5P4dOz1Eq4iprNDWqnoCMQDT
 xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 -----END CERTIFICATE REQUEST-----
 `,
-			CaCert:       caCert,
-			CaPrivateKey: caPrivKey,
+			KeySource: &protobuf.SignKeySource{
+				Source: &protobuf.SignKeySource_Single{
+					Single: &protobuf.KeySource{
+						Source: &protobuf.KeySource_RawKey{RawKey: []byte(caPrivKey)},
+					},
+				},
+			},
+			CaCert: &caCert,
 		}
 		subject := pkix.Name{
 			Country:      []string{"DE"},
@@ -374,10 +380,18 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 		csrBytes, _ := x509.CreateCertificateRequest(rand.Reader, csrTemplate, privKey)
 		csrPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrBytes})
 
+		notValidCaCert := "not valid CaCERT"
 		req := &protobuf.SignCertificateRequest{
 			Profile: "Default",
 			Csr:     string(csrPEM),
-			CaCert:  "not valid CaCERT",
+			KeySource: &protobuf.SignKeySource{
+				Source: &protobuf.SignKeySource_Single{
+					Single: &protobuf.KeySource{
+						Source: &protobuf.KeySource_RawKey{RawKey: []byte(caPrivKey)},
+					},
+				},
+			},
+			CaCert: &notValidCaCert,
 		}
 
 		_, err := client.SignCertificate(ctx, req)
@@ -400,10 +414,16 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 		csrPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrBytes})
 
 		req := &protobuf.SignCertificateRequest{
-			Profile:      "Default",
-			Csr:          string(csrPEM),
-			CaCert:       caCert,
-			CaPrivateKey: caPrivKey,
+			Profile: "Default",
+			Csr:     string(csrPEM),
+			KeySource: &protobuf.SignKeySource{
+				Source: &protobuf.SignKeySource_Single{
+					Single: &protobuf.KeySource{
+						Source: &protobuf.KeySource_RawKey{RawKey: []byte(caPrivKey)},
+					},
+				},
+			},
+			CaCert: &caCert,
 		}
 
 		_, err := client.SignCertificate(ctx, req)
@@ -432,22 +452,72 @@ func TestCryptoBrokerServer_SignCertificateSource(t *testing.T) {
 		procedureSignCertificate: procedure.NewSignCertificate(library, cache.MustNewRistretto[*x509.Certificate](cache.DefaultRistrettoConfig)),
 	}
 	tests := []struct {
-		name    string
-		caCert  string
-		source  *protobuf.KeySource
-		wantErr string
+		name      string
+		caCert    *string
+		keySource *protobuf.SignKeySource
+		wantErr   string
 	}{
-		{name: "legacy certificate", caCert: certificate},
-		{name: "raw certificate", source: &protobuf.KeySource{Source: &protobuf.KeySource_RawKey{RawKey: []byte(certificate)}}},
-		{name: "empty certificate", source: &protobuf.KeySource{Source: &protobuf.KeySource_RawKey{}}, wantErr: "caCert"},
-		{name: "oversized certificate", source: &protobuf.KeySource{Source: &protobuf.KeySource_RawKey{RawKey: make([]byte, maxCACertBytes+1)}}, wantErr: "caCert"},
-		{name: "ambiguous source", caCert: certificate, source: &protobuf.KeySource{Source: &protobuf.KeySource_KeyId{KeyId: "ca"}}, wantErr: "keySource"},
+		{
+			name:   "valid certificate and key source",
+			caCert: &certificate,
+			keySource: &protobuf.SignKeySource{
+				Source: &protobuf.SignKeySource_Single{
+					Single: &protobuf.KeySource{
+						Source: &protobuf.KeySource_RawKey{RawKey: []byte(privateKey)},
+					},
+				},
+			},
+		},
+		{
+			name:   "empty key source",
+			caCert: &certificate,
+			keySource: &protobuf.SignKeySource{
+				Source: &protobuf.SignKeySource_Single{
+					Single: &protobuf.KeySource{
+						Source: &protobuf.KeySource_RawKey{RawKey: nil},
+					},
+				},
+			},
+			wantErr: "keySource.single.rawKey",
+		},
+		{
+			name:   "oversized key",
+			caCert: &certificate,
+			keySource: &protobuf.SignKeySource{
+				Source: &protobuf.SignKeySource_Single{
+					Single: &protobuf.KeySource{
+						Source: &protobuf.KeySource_RawKey{RawKey: make([]byte, maxSigningKeyBytes+1)},
+					},
+				},
+			},
+			wantErr: "keySource.single.rawKey",
+		},
+		{
+			name:   "empty certificate",
+			caCert: nil,
+			keySource: &protobuf.SignKeySource{
+				Source: &protobuf.SignKeySource_Single{
+					Single: &protobuf.KeySource{
+						Source: &protobuf.KeySource_RawKey{RawKey: []byte(privateKey)},
+					},
+				},
+			},
+			wantErr: "caCert",
+		},
+		{
+			name:      "oversized certificate",
+			caCert:    stringPtr(strings.Repeat("A", maxCACertBytes+1)),
+			keySource: nil,
+			wantErr:   "keySource",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			req := &protobuf.SignCertificateRequest{
-				Profile: "Default", Csr: csr, CaPrivateKey: privateKey,
-				CaCert: test.caCert, KeySource: test.source,
+				Profile:   "Default",
+				Csr:       csr,
+				CaCert:    test.caCert,
+				KeySource: test.keySource,
 			}
 
 			resp, err := server.SignCertificate(context.Background(), req)

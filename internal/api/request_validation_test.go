@@ -100,16 +100,16 @@ func TestValidateSignRequest_RejectsRequiredFields(t *testing.T) {
 			wantField: "csr",
 		},
 		{
-			name: "ca private key",
+			name: "key source",
 			mutate: func(req *pb.SignCertificateRequest) {
-				req.CaPrivateKey = ""
+				req.KeySource = nil
 			},
-			wantField: "caPrivateKey",
+			wantField: "keySource",
 		},
 		{
 			name: "ca cert",
 			mutate: func(req *pb.SignCertificateRequest) {
-				req.CaCert = ""
+				req.CaCert = nil
 			},
 			wantField: "caCert",
 		},
@@ -148,14 +148,21 @@ func TestValidateSignRequest_RejectsSizeLimits(t *testing.T) {
 		{
 			name: "ca private key",
 			mutate: func(req *pb.SignCertificateRequest) {
-				req.CaPrivateKey = strings.Repeat("A", maxCAPrivateKeyBytes+1)
+				req.KeySource = &pb.SignKeySource{
+					Source: &pb.SignKeySource_Single{
+						Single: &pb.KeySource{
+							Source: &pb.KeySource_RawKey{RawKey: make([]byte, maxSigningKeyBytes+1)},
+						},
+					},
+				}
 			},
-			wantField: "caPrivateKey",
+			wantField: "keySource.single.rawKey",
 		},
 		{
 			name: "ca cert",
 			mutate: func(req *pb.SignCertificateRequest) {
-				req.CaCert = strings.Repeat("A", maxCACertBytes+1)
+				oversizedCert := strings.Repeat("A", maxCACertBytes+1)
+				req.CaCert = &oversizedCert
 			},
 			wantField: "caCert",
 		},
@@ -205,8 +212,15 @@ func TestValidateSignRequest_AllowsValidBoundaryRequest(t *testing.T) {
 	req := validSignRequest()
 	req.Profile = strings.Repeat("A", profile.MaxNameLen)
 	req.Csr = strings.Repeat("A", maxCSRBytes)
-	req.CaPrivateKey = strings.Repeat("A", maxCAPrivateKeyBytes)
-	req.CaCert = strings.Repeat("A", maxCACertBytes)
+	req.KeySource = &pb.SignKeySource{
+		Source: &pb.SignKeySource_Single{
+			Single: &pb.KeySource{
+				Source: &pb.KeySource_RawKey{RawKey: make([]byte, maxSigningKeyBytes)},
+			},
+		},
+	}
+	caCert := strings.Repeat("A", maxCACertBytes)
+	req.CaCert = &caCert
 	req.Subject = &subject
 
 	crlDistributionPoints := make([]string, maxCRLDistributionPoints)
@@ -400,10 +414,16 @@ func TestValidateMetadata(t *testing.T) {
 
 func validSignRequest() *pb.SignCertificateRequest {
 	return &pb.SignCertificateRequest{
-		Profile:      "Default",
-		Csr:          "csr",
-		CaPrivateKey: "key",
-		CaCert:       "cert",
+		Profile: "Default",
+		Csr:     "csr",
+		KeySource: &pb.SignKeySource{
+			Source: &pb.SignKeySource_Single{
+				Single: &pb.KeySource{
+					Source: &pb.KeySource_RawKey{RawKey: []byte("key")},
+				},
+			},
+		},
+		CaCert: stringPtr("cert"),
 	}
 }
 
