@@ -142,10 +142,16 @@ func TestCryptoBrokerServer_SignCertificate_MetricsEnabled_Success_RecordsMetric
 	)
 
 	resp, err := server.SignCertificate(context.Background(), &protobuf.SignCertificateRequest{
-		Profile:      "Default",
-		Csr:          csrPEM,
-		CaCert:       caCertPEM,
-		CaPrivateKey: caKeyPEM,
+		Profile: "Default",
+		Csr:     csrPEM,
+		KeySource: &protobuf.SignKeySource{
+			Source: &protobuf.SignKeySource_Single{
+				Single: &protobuf.KeySource{
+					Source: &protobuf.KeySource_RawKey{RawKey: []byte(caKeyPEM)},
+				},
+			},
+		},
+		CaCert: &caCertPEM,
 	})
 	if err != nil {
 		t.Fatalf("expected success, got err: %v", err)

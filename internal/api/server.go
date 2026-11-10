@@ -7,7 +7,6 @@ import (
 
 	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
 	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
-	"github.com/open-crypto-broker/crypto-broker-server/internal/kms"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/otel"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/procedure"
 	"go.opentelemetry.io/otel/attribute"
@@ -122,38 +121,11 @@ func (server *CryptoBrokerServer) HashData(ctx context.Context, req *protobuf.Ha
 
 // SignCertificate contains certificate signing logic
 func (server *CryptoBrokerServer) SignCertificate(ctx context.Context, req *protobuf.SignCertificateRequest) (*protobuf.SignCertificateResponse, error) {
-	source := req.GetKeySource()
-
-	if source != nil {
-		if req.GetCaCert() != "" {
-			return nil, invalidArg("keySource", "must not be set together with caCert")
-		}
-
-		err := validateKMSConfiguration(source, req.GetProfile())
-		if err != nil {
-			return nil, err
-		}
-
-		certificate := source.GetRawKey()
-
-		if keyID := source.GetKeyId(); keyID != "" {
-			var err error
-
-			certificate, err = kms.GetCertificate(keyID)
-			if err != nil {
-				return nil, fmt.Errorf("get CA certificate: %w", err)
-			}
-		}
-
-		req.CaCert = string(certificate)
-	}
-
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(
 		otel.AttributeCryptoProfile.String(req.GetProfile()),
 		otel.AttributeCryptoCsrSize.Int(len(req.GetCsr())),
 		otel.AttributeCryptoCaCertSize.Int(len(req.GetCaCert())),
-		otel.AttributeCryptoCaKeySize.Int(len(req.GetCaPrivateKey())),
 	)
 	if err := validateSignCertificateRequest(req); err != nil {
 		return nil, fmt.Errorf("something went wrong while signing certificate: %w", err)
@@ -168,11 +140,15 @@ func (server *CryptoBrokerServer) SignCertificate(ctx context.Context, req *prot
 	span.SetAttributes(otel.AttributeCryptoSignedCertSize.Int(len(response.GetDer()) + len(response.GetPem())))
 
 	if server.metricsEnabled {
+		keySize := 0
+		if req.GetKeySource() != nil && req.GetKeySource().GetSingle() != nil {
+			keySize = len(req.GetKeySource().GetSingle().GetRawKey())
+		}
 		otel.SignCertificateOperationsTotal.Add(ctx, 1, metric.WithAttributes(
 			attribute.String("profile", req.GetProfile()),
 		))
 
-		otel.OperationBytesProcessed.Add(ctx, int64(len(req.GetCsr())+len(req.GetCaCert())+len(req.GetCaPrivateKey())), metric.WithAttributes(
+		otel.OperationBytesProcessed.Add(ctx, int64(len(req.GetCsr())+len(req.GetCaCert())+keySize), metric.WithAttributes(
 			attribute.String("rpc_method", otel.RPCMethodSignCertificate),
 		))
 	}
