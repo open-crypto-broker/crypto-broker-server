@@ -1,15 +1,16 @@
 ---
 Settings:
   CryptoLibrary: native
-  KMS:
-    Client: openbao
-    Config: openbao.yaml
-    Cache: false
 Profiles:
   # Default profile kept minimal – broad demo; not tied to a single external standard.
   #   Reasoning: Showcases widest hash (sha3-512) and high-strength hash/sign combo for testing.
   - Name: Default
-    API:
+    KMS:
+      Enabled: false
+      Client: openbao
+      Config: openbao.yaml
+      Cache: false
+    API: &default_api
       HashData:
         HashAlg: sha3-512
       SignData:
@@ -47,3 +48,12 @@ Profiles:
         ExtendedKeyUsage: [clientAuth]
         BasicConstraints:
           CA: false
+
+  # Default algorithms for KMS-backed keys.
+  - Name: Default-KMS
+    KMS:
+      Enabled: true
+      Client: openbao
+      Config: openbao.yaml
+      Cache: false
+    API: *default_api

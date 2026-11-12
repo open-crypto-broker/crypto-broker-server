@@ -41,6 +41,52 @@ func TestRawProfileSettings_validate(t *testing.T) {
 	}
 }
 
+func TestKMSConfiguration_validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		in      KMSConfiguration
+		wantErr bool
+	}{
+		{
+			name: "accepts disabled configured KMS",
+			in:   KMSConfiguration{Enabled: false, Client: "openbao", Config: "openbao.yaml"},
+		},
+		{
+			name: "accepts enabled configured KMS",
+			in:   KMSConfiguration{Enabled: true, Client: "openbao", Config: "openbao.yaml"},
+		},
+		{
+			name:    "rejects enabled KMS without client and config",
+			in:      KMSConfiguration{Enabled: true},
+			wantErr: true,
+		},
+		{
+			name: "accepts incomplete KMS configuration when disabled",
+			in:   KMSConfiguration{Client: "openbao"},
+		},
+		{
+			name:    "rejects enabled KMS without config",
+			in:      KMSConfiguration{Enabled: true, Client: "openbao"},
+			wantErr: true,
+		},
+		{
+			name:    "rejects enabled KMS without client",
+			in:      KMSConfiguration{Enabled: true, Config: "openbao.yaml"},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.in.validate()
+
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestRawProfileAPI_validate_requiresAtLeastOneAPI(t *testing.T) {
 	err := (rawProfileAPI{}).validate()
 	if err == nil {

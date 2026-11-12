@@ -14,7 +14,7 @@ import (
 )
 
 // rawProfilesConfig represents the top-level YAML configuration.
-// Settings, including KMS, are shared by all profiles.
+// Settings are shared by all profiles.
 type rawProfilesConfig struct {
 	Settings rawProfileSettings `yaml:"Settings"`
 	Profiles []rawProfile       `yaml:"Profiles"`
@@ -22,19 +22,13 @@ type rawProfilesConfig struct {
 
 // rawProfile is used to parse a profile and convert it into an exported Profile.
 type rawProfile struct {
-	Name string        `yaml:"Name"`
-	API  rawProfileAPI `yaml:"API"`
+	Name string           `yaml:"Name"`
+	KMS  KMSConfiguration `yaml:"KMS"`
+	API  rawProfileAPI    `yaml:"API"`
 }
 
 type rawProfileSettings struct {
-	CryptoLibrary string        `yaml:"CryptoLibrary"`
-	KMS           rawProfileKMS `yaml:"KMS"`
-}
-
-type rawProfileKMS struct {
-	Client string `yaml:"Client"`
-	Config string `yaml:"Config"`
-	Cache  bool   `yaml:"Cache"`
+	CryptoLibrary string `yaml:"CryptoLibrary"`
 }
 
 type rawProfileAPI struct {
@@ -222,12 +216,21 @@ func (p rawProfile) mapToProfile() (Profile, error) {
 
 	return Profile{
 		Name: p.Name,
+		KMS:  p.KMS,
 		API:  api,
 	}, nil
 }
 
 func (p rawProfile) validate() error {
-	return errors.Join(ValidateName(p.Name), p.API.validate())
+	return errors.Join(ValidateName(p.Name), p.KMS.validate(), p.API.validate())
+}
+
+func (kms KMSConfiguration) validate() error {
+	if kms.Enabled && !kms.Configured() {
+		return errors.New("enabled KMS requires both client and config")
+	}
+
+	return nil
 }
 
 func (settings rawProfileSettings) validate() error {

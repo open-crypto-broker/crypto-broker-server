@@ -25,7 +25,9 @@ import (
 	"github.com/open-crypto-broker/crypto-broker-server/internal/env"
 	pb "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/interceptors"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/kms"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/otel"
+	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/propagation"
 	"google.golang.org/grpc"
@@ -93,6 +95,15 @@ func main() {
 	rpcLogger.Info("Server info", slog.String("git.sha", gitSHA), slog.String("git.tag", gitTag))
 	rpcLogger.Debug("Bootstrapping server dependencies")
 	container := di.NewContainer(ctx, defaultProfiles)
+
+	// Connect and do KMS health check.
+	if profile.KMS().Configured() {
+		err := kms.Connect()
+		if err != nil {
+			panic(fmt.Errorf("connect configured KMS: %w", err))
+		}
+	}
+
 	rpcLogger.Debug("Server dependencies bootstrapped")
 
 	if fips140.Enabled() {

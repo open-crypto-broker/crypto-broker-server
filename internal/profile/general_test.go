@@ -53,9 +53,12 @@ func TestRetrieve(t *testing.T) {
 		t.Fatal("could not load profiles")
 	}
 
-	wantKMS := KMSConfiguration{Client: "openbao", Config: "openbao.yaml", Cache: false}
-	if got := KMS(); got != wantKMS {
-		t.Fatalf("KMS() = %#v, want %#v from Settings.KMS", got, wantKMS)
+	gotKMS := KMS()
+	if gotKMS.Client != "openbao" || gotKMS.Config != "openbao.yaml" || gotKMS.Cache {
+		t.Fatalf("KMS() = %#v, want OpenBao configuration from Default-KMS", gotKMS)
+	}
+	if gotKMS.Configured() != gotKMS.Enabled {
+		t.Fatalf("KMS().Configured() = %t, want Enabled value %t", gotKMS.Configured(), gotKMS.Enabled)
 	}
 
 	type args struct {
@@ -74,6 +77,12 @@ func TestRetrieve(t *testing.T) {
 			},
 			want: Profile{
 				Name: "Default",
+				KMS: KMSConfiguration{
+					Enabled: false,
+					Client:  "openbao",
+					Config:  "openbao.yaml",
+					Cache:   false,
+				},
 				API: ProfileAPI{
 					HashData: ProfileAPIHashData{HashAlg: "sha3-512"},
 					SignData: ProfileAPISignData{
@@ -130,6 +139,34 @@ func TestRetrieve(t *testing.T) {
 				t.Errorf("Retrieve() = %#v,\n want %#v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestKMSIsEnabledOnlyForDefaultKMSProfile(t *testing.T) {
+	if err := LoadProfiles("Profiles.yaml"); err != nil {
+		t.Fatal(err)
+	}
+
+	defaultProfile, err := Retrieve("Default")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defaultKMSProfile, err := Retrieve("Default-KMS")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if defaultProfile.KMS.Enabled {
+		t.Fatal("Default profile must have KMS disabled")
+	}
+
+	if !defaultKMSProfile.KMS.Enabled {
+		t.Fatal("Default-KMS profile must have KMS enabled")
+	}
+
+	if !reflect.DeepEqual(defaultProfile.API, defaultKMSProfile.API) {
+		t.Fatal("Default and Default-KMS profiles must use the same API configuration")
 	}
 }
 
