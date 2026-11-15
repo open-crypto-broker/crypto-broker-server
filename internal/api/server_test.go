@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"crypto/fips140"
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -228,6 +229,13 @@ func TestCryptoBrokerServer_EncryptDecryptData_E2E(t *testing.T) {
 		},
 		Metadata: metadata,
 	})
+	if fips140.Enforced() {
+		if status.Code(err) != codes.FailedPrecondition ||
+			!strings.Contains(status.Convert(err).Message(), "caller-supplied nonce") {
+			t.Fatalf("EncryptData() with a caller-supplied nonce: got %v, want FailedPrecondition with a nonce error", err)
+		}
+		return
+	}
 	if err != nil {
 		t.Fatalf("EncryptData() error: %v", err)
 	}
