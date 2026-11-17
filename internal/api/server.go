@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"crypto/fips140"
 	"fmt"
 	"runtime"
 
@@ -12,6 +13,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // CryptoBrokerServer defines crypto broker's server
@@ -164,6 +167,10 @@ func (server *CryptoBrokerServer) EncryptData(ctx context.Context, req *protobuf
 	)
 	if err := validateEncryptDataRequest(req); err != nil {
 		return nil, fmt.Errorf("something went wrong while encrypting data: %w", err)
+	}
+
+	if fips140.Enforced() && len(req.GetEncryptMetadata().GetNonce()) != 0 {
+		return nil, status.Error(codes.FailedPrecondition, "AES-GCM encryption with a caller-supplied nonce is unavailable in strict FIPS mode")
 	}
 
 	response, err := server.procedureEncryptData.Execute(req)

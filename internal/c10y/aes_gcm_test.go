@@ -2,11 +2,12 @@ package c10y
 
 import (
 	"bytes"
+	"crypto/fips140"
 	"encoding/hex"
 	"testing"
 )
 
-func TestLibraryNative_EncryptData_KnownAnswerTests(t *testing.T) {
+func TestLibraryNative_AESGCM_KnownAnswerTests(t *testing.T) {
 	tests := []struct {
 		name       string
 		key        string
@@ -50,20 +51,22 @@ func TestLibraryNative_EncryptData_KnownAnswerTests(t *testing.T) {
 			wantCiphertext := decodeHex(t, tt.ciphertext)
 			wantTag := decodeHex(t, tt.tag)
 
-			result, err := service.EncryptData(EncryptDataInput{
-				Key:       key,
-				Nonce:     nonce,
-				Plaintext: []byte("Welcome CryptoBroker"),
-				AAD:       aad,
-			})
-			if err != nil {
-				t.Fatalf("EncryptData() error: %v", err)
-			}
-			if !bytes.Equal(result.Ciphertext, wantCiphertext) {
-				t.Fatalf("Ciphertext = %x, want %x", result.Ciphertext, wantCiphertext)
-			}
-			if !bytes.Equal(result.Tag, wantTag) {
-				t.Fatalf("Tag = %x, want %x", result.Tag, wantTag)
+			if !fips140.Enforced() {
+				result, err := service.EncryptData(EncryptDataInput{
+					Key:       key,
+					Nonce:     nonce,
+					Plaintext: []byte("Welcome CryptoBroker"),
+					AAD:       aad,
+				})
+				if err != nil {
+					t.Fatalf("EncryptData() error: %v", err)
+				}
+				if !bytes.Equal(result.Ciphertext, wantCiphertext) {
+					t.Fatalf("Ciphertext = %x, want %x", result.Ciphertext, wantCiphertext)
+				}
+				if !bytes.Equal(result.Tag, wantTag) {
+					t.Fatalf("Tag = %x, want %x", result.Tag, wantTag)
+				}
 			}
 
 			plaintext, err := service.DecryptData(DecryptDataInput{
