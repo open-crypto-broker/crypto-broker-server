@@ -60,21 +60,13 @@ NrPbJOOC/7QNdsuxmDFGEapyZg==
 
 	p := newTestSign()
 
-	// Convert PEM to bytes for SignKeySource
-	caPrivateKeyBytes := []byte(caPrivateKeyPEM)
 	caCertPtr := &caCertPEM
 
 	t.Run("DER output", func(t *testing.T) {
 		resp, err := p.Execute(&protobuf.SignCertificateRequest{
-			Profile: "Default",
-			Csr:     csrPEM,
-			KeySource: &protobuf.SignKeySource{
-				Source: &protobuf.SignKeySource_Single{
-					Single: &protobuf.KeySource{
-						Source: &protobuf.KeySource_RawKey{RawKey: caPrivateKeyBytes},
-					},
-				},
-			},
+			Profile:      "Default",
+			Csr:          csrPEM,
+			KeySource:    certificateSignKeySource([]byte(caPrivateKeyPEM)),
 			CaCert:       caCertPtr,
 			OutputFormat: protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_DER,
 		})
@@ -96,15 +88,9 @@ NrPbJOOC/7QNdsuxmDFGEapyZg==
 
 	t.Run("PEM output", func(t *testing.T) {
 		resp, err := p.Execute(&protobuf.SignCertificateRequest{
-			Profile: "Default",
-			Csr:     csrPEM,
-			KeySource: &protobuf.SignKeySource{
-				Source: &protobuf.SignKeySource_Single{
-					Single: &protobuf.KeySource{
-						Source: &protobuf.KeySource_RawKey{RawKey: caPrivateKeyBytes},
-					},
-				},
-			},
+			Profile:      "Default",
+			Csr:          csrPEM,
+			KeySource:    certificateSignKeySource([]byte(caPrivateKeyPEM)),
 			CaCert:       caCertPtr,
 			OutputFormat: protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_PEM,
 		})
@@ -125,6 +111,27 @@ NrPbJOOC/7QNdsuxmDFGEapyZg==
 		}
 		if len(cert.Raw) == 0 {
 			t.Fatalf("expected parsed certificate with raw bytes")
+		}
+	})
+
+	t.Run("DER signing key", func(t *testing.T) {
+		block, _ := pem.Decode([]byte(caPrivateKeyPEM))
+		if block == nil {
+			t.Fatal("failed to PEM-decode CA private key fixture")
+		}
+
+		resp, err := p.Execute(&protobuf.SignCertificateRequest{
+			Profile:      "Default",
+			Csr:          csrPEM,
+			KeySource:    certificateSignKeySource(block.Bytes),
+			CaCert:       caCertPtr,
+			OutputFormat: protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_DER,
+		})
+		if err != nil {
+			t.Fatalf("Execute() error: %v", err)
+		}
+		if len(resp.GetDer()) == 0 {
+			t.Fatal("expected non-empty signed certificate DER")
 		}
 	})
 }
@@ -170,19 +177,12 @@ YPEvJDRcZOaQELgCfS90jAPT45yefLkIsgEWq45bKA==
 
 	proc := newTestSign()
 
-	caPrivateKeyBytes := []byte(caPrivateKeyPEM)
 	caCertPtr := &caCertPEM
 
 	input, err := proc.parseRawSignRequest(&protobuf.SignCertificateRequest{
-		Csr: csrPEM,
-		KeySource: &protobuf.SignKeySource{
-			Source: &protobuf.SignKeySource_Single{
-				Single: &protobuf.KeySource{
-					Source: &protobuf.KeySource_RawKey{RawKey: caPrivateKeyBytes},
-				},
-			},
-		},
-		CaCert: caCertPtr,
+		Csr:       csrPEM,
+		CaCert:    caCertPtr,
+		KeySource: certificateSignKeySource([]byte(caPrivateKeyPEM)),
 	})
 	if err != nil {
 		t.Fatalf("parseRawSignRequest() error: %v", err)
@@ -201,4 +201,10 @@ YPEvJDRcZOaQELgCfS90jAPT45yefLkIsgEWq45bKA==
 	if block == nil {
 		t.Fatalf("expected CSR PEM to decode")
 	}
+}
+
+func certificateSignKeySource(key []byte) *protobuf.SignKeySource {
+	return &protobuf.SignKeySource{Source: &protobuf.SignKeySource_Single{
+		Single: &protobuf.KeySource{Source: &protobuf.KeySource_RawKey{RawKey: key}},
+	}}
 }
