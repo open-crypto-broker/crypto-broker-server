@@ -333,7 +333,7 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 -----END CERTIFICATE REQUEST-----
 `,
 			CaCert:    &caCert,
-			KeySource: rawCertificateSignKeySource([]byte(caPrivKey)),
+			KeySource: rawCertificateSignKeySource(decodePrivateKeyPEM(t, caPrivKey)),
 		}
 		subject := pkix.Name{
 			Country:      []string{"DE"},
@@ -389,7 +389,7 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 			KeySource: &protobuf.SignKeySource{
 				Source: &protobuf.SignKeySource_Single{
 					Single: &protobuf.KeySource{
-						Source: &protobuf.KeySource_RawKey{RawKey: []byte(caPrivKey)},
+						Source: &protobuf.KeySource_RawKey{RawKey: decodePrivateKeyPEM(t, caPrivKey)},
 					},
 				},
 			},
@@ -419,7 +419,7 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 			Profile:   "Default",
 			Csr:       string(csrPEM),
 			CaCert:    &caCert,
-			KeySource: rawCertificateSignKeySource([]byte(caPrivKey)),
+			KeySource: rawCertificateSignKeySource(decodePrivateKeyPEM(t, caPrivKey)),
 		}
 
 		_, err := client.SignCertificate(ctx, req)
@@ -436,6 +436,15 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 func toPointerUint64(value int64) *uint64 {
 	v := uint64(value)
 	return &v
+}
+
+func decodePrivateKeyPEM(t *testing.T, encoded string) []byte {
+	t.Helper()
+	block, _ := pem.Decode([]byte(encoded))
+	if block == nil {
+		t.Fatal("could not decode private key PEM")
+	}
+	return block.Bytes
 }
 
 func TestCryptoBrokerServer_SignCertificateSource(t *testing.T) {
@@ -456,7 +465,7 @@ func TestCryptoBrokerServer_SignCertificateSource(t *testing.T) {
 		{
 			name:      "valid certificate and key source",
 			caCert:    &certificate,
-			keySource: rawCertificateSignKeySource([]byte(privateKey)),
+			keySource: rawCertificateSignKeySource(decodePrivateKeyPEM(t, privateKey)),
 		},
 		{
 			name:      "empty key source",
@@ -472,7 +481,7 @@ func TestCryptoBrokerServer_SignCertificateSource(t *testing.T) {
 		},
 		{
 			name:      "empty certificate",
-			keySource: rawCertificateSignKeySource([]byte(privateKey)),
+			keySource: rawCertificateSignKeySource(decodePrivateKeyPEM(t, privateKey)),
 			wantErr:   "caCert",
 		},
 		{

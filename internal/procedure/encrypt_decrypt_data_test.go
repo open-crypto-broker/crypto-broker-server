@@ -82,6 +82,17 @@ func TestEncryptData_ExecuteRejectsUnsupportedKeySource(t *testing.T) {
 	}
 }
 
+func TestGetKeyReturnsRawKeyBytes(t *testing.T) {
+	rawKey := []byte("0123456789abcdef0123456789abcdef")
+	got, err := GetKey(&protobuf.KeySource{Source: &protobuf.KeySource_RawKey{RawKey: rawKey}})
+	if err != nil {
+		t.Fatalf("GetKey() error: %v", err)
+	}
+	if !bytes.Equal(got, rawKey) {
+		t.Fatalf("GetKey() = %q, want %q", got, rawKey)
+	}
+}
+
 func TestDecryptData_ExecuteRejectsTamperedTag(t *testing.T) {
 	loadDefaultProfiles(t)
 
