@@ -188,7 +188,7 @@ func (procedure *SignCertificate) parseRawSignRequest(req *protobuf.SignCertific
 	copy(rawCAPrivateKeyCopy, rawCAPrivateKey)
 	defer c10y.ZeroBytes(rawCAPrivateKeyCopy)
 
-	caPrivateKey, err := c10y.ParsePrivateKeyFromPEMOrDER(rawCAPrivateKeyCopy)
+	caPrivateKey, err := c10y.ParsePrivateKeyFromDER(rawCAPrivateKeyCopy)
 	if err != nil {
 		return signCertificateRequest{}, ArgumentError("could not parse private key, err: %w", err)
 	}

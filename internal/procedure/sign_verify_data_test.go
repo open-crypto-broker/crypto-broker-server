@@ -34,7 +34,7 @@ func TestSignVerifyData_Execute(t *testing.T) {
 	metadata := &protobuf.Metadata{Id: "sign-request"}
 	signed, err := NewSignData(newTestLibraryNative()).Execute(&protobuf.SignDataRequest{
 		Profile:   "Default",
-		KeySource: signKeySource(pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: privateKeyDER})),
+		KeySource: signKeySource(privateKeyDER),
 		Input:     input,
 		Metadata:  metadata,
 	})
@@ -53,7 +53,7 @@ func TestSignVerifyData_Execute(t *testing.T) {
 
 	verified, err := NewVerifyData(newTestLibraryNative()).Execute(&protobuf.VerifyDataRequest{
 		Profile:   "Default",
-		KeySource: signKeySource(pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: publicKeyDER})),
+		KeySource: signKeySource(publicKeyDER),
 		Input:     input,
 		Signature: signed.GetSignature(),
 		Metadata:  metadata,
@@ -69,7 +69,7 @@ func TestSignVerifyData_Execute(t *testing.T) {
 	tamperedSignature[0] ^= 1
 	verified, err = NewVerifyData(newTestLibraryNative()).Execute(&protobuf.VerifyDataRequest{
 		Profile:   "Default",
-		KeySource: signKeySource(pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: publicKeyDER})),
+		KeySource: signKeySource(publicKeyDER),
 		Input:     input,
 		Signature: tamperedSignature,
 	})
@@ -121,6 +121,29 @@ func TestSignVerifyData_ExecuteWithDERKeys(t *testing.T) {
 	}
 }
 
+func TestSignData_RejectsPEMEncodedProtoKey(t *testing.T) {
+	loadDefaultProfiles(t)
+
+	privateKey, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
+	if err != nil {
+		t.Fatalf("generate ECDSA key: %v", err)
+	}
+	privateKeyDER, err := x509.MarshalECPrivateKey(privateKey)
+	if err != nil {
+		t.Fatalf("marshal ECDSA private key: %v", err)
+	}
+	privateKeyPEM := pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: privateKeyDER})
+
+	_, err = NewSignData(newTestLibraryNative()).Execute(&protobuf.SignDataRequest{
+		Profile:   "Default",
+		KeySource: signKeySource(privateKeyPEM),
+		Input:     []byte("document contents"),
+	})
+	if err == nil {
+		t.Fatal("SignData.Execute() accepted a PEM-encoded proto key")
+	}
+}
+
 func TestSignData_ExecuteRejectsKeyOutsideProfileConstraints(t *testing.T) {
 	loadDefaultProfiles(t)
 
@@ -158,9 +181,6 @@ func TestSignVerifyData_Formats(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshal ECDSA public key: %v", err)
 	}
-	privateKeyPEM := pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: privateKeyDER})
-	publicKeyPEM := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: publicKeyDER})
-
 	for _, format := range []protobuf.SignatureFormat{
 		protobuf.SignatureFormat_SIGNATURE_FORMAT_RAW,
 		protobuf.SignatureFormat_SIGNATURE_FORMAT_DER,
@@ -169,7 +189,7 @@ func TestSignVerifyData_Formats(t *testing.T) {
 		t.Run(format.String(), func(t *testing.T) {
 			signed, err := NewSignData(newTestLibraryNative()).Execute(&protobuf.SignDataRequest{
 				Profile:         "Default",
-				KeySource:       signKeySource(privateKeyPEM),
+				KeySource:       signKeySource(privateKeyDER),
 				Input:           []byte("document contents"),
 				SignatureFormat: format,
 			})
@@ -185,7 +205,7 @@ func TestSignVerifyData_Formats(t *testing.T) {
 
 			verified, err := NewVerifyData(newTestLibraryNative()).Execute(&protobuf.VerifyDataRequest{
 				Profile:         "Default",
-				KeySource:       signKeySource(publicKeyPEM),
+				KeySource:       signKeySource(publicKeyDER),
 				Input:           []byte("document contents"),
 				Signature:       signed.GetSignature(),
 				SignatureFormat: format,

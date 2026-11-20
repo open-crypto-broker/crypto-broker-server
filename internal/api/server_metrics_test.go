@@ -147,7 +147,7 @@ func TestCryptoBrokerServer_SignCertificate_MetricsEnabled_Success_RecordsMetric
 		KeySource: &protobuf.SignKeySource{
 			Source: &protobuf.SignKeySource_Single{
 				Single: &protobuf.KeySource{
-					Source: &protobuf.KeySource_RawKey{RawKey: []byte(caKeyPEM)},
+					Source: &protobuf.KeySource_RawKey{RawKey: decodePrivateKeyPEM(t, caKeyPEM)},
 				},
 			},
 		},

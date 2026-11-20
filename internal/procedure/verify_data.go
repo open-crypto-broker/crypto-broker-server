@@ -33,7 +33,7 @@ func (procedure *VerifyData) Execute(req *protobuf.VerifyDataRequest) (*protobuf
 	if err != nil {
 		return nil, err
 	}
-	publicKey, err := c10y.ParsePublicKeyFromPEMOrDER(key)
+	publicKey, err := c10y.ParsePublicKeyFromDER(key)
 	if err != nil {
 		return nil, ArgumentError("could not parse public key: %w", err)
 	}

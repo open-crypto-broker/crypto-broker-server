@@ -61,7 +61,11 @@ NrPbJOOC/7QNdsuxmDFGEapyZg==
 	p := newTestSign()
 
 	// Convert PEM to bytes for SignKeySource
-	caPrivateKeyBytes := []byte(caPrivateKeyPEM)
+	caPrivateKeyBlock, _ := pem.Decode([]byte(caPrivateKeyPEM))
+	if caPrivateKeyBlock == nil {
+		t.Fatal("could not decode CA private key PEM")
+	}
+	caPrivateKeyBytes := caPrivateKeyBlock.Bytes
 	caCertPtr := &caCertPEM
 
 	t.Run("DER output", func(t *testing.T) {
@@ -170,7 +174,11 @@ YPEvJDRcZOaQELgCfS90jAPT45yefLkIsgEWq45bKA==
 
 	proc := newTestSign()
 
-	caPrivateKeyBytes := []byte(caPrivateKeyPEM)
+	caPrivateKeyBlock, _ := pem.Decode([]byte(caPrivateKeyPEM))
+	if caPrivateKeyBlock == nil {
+		t.Fatal("could not decode CA private key PEM")
+	}
+	caPrivateKeyBytes := caPrivateKeyBlock.Bytes
 	caCertPtr := &caCertPEM
 
 	input, err := proc.parseRawSignRequest(&protobuf.SignCertificateRequest{
