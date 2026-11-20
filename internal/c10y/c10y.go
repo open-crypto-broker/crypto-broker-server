@@ -159,12 +159,8 @@ func ParsePrivateKeyFromPEM(key []byte) (any, error) {
 	}
 }
 
-// ParsePrivateKeyFromPEMOrDER parses a PEM- or DER-encoded private key.
-func ParsePrivateKeyFromPEMOrDER(key []byte) (any, error) {
-	if block, _ := pem.Decode(key); block != nil {
-		return ParsePrivateKeyFromPEM(key)
-	}
-
+// ParsePrivateKeyFromDER parses a DER-encoded private key.
+func ParsePrivateKeyFromDER(key []byte) (any, error) {
 	if parsedKey, err := x509.ParsePKCS1PrivateKey(key); err == nil {
 		return parsedKey, nil
 	}
@@ -174,7 +170,7 @@ func ParsePrivateKeyFromPEMOrDER(key []byte) (any, error) {
 	if parsedKey, err := x509.ParseECPrivateKey(key); err == nil {
 		return parsedKey, nil
 	}
-	return nil, fmt.Errorf("key must be PEM or supported DER private key")
+	return nil, fmt.Errorf("key must be supported DER private key")
 }
 
 // ParsePublicKeyFromPEM parses a PEM-encoded public key or certificate.
@@ -200,22 +196,15 @@ func ParsePublicKeyFromPEM(key []byte) (any, error) {
 	}
 }
 
-// ParsePublicKeyFromPEMOrDER parses a PEM- or DER-encoded public key or certificate.
-func ParsePublicKeyFromPEMOrDER(key []byte) (any, error) {
-	if block, _ := pem.Decode(key); block != nil {
-		return ParsePublicKeyFromPEM(key)
-	}
-
+// ParsePublicKeyFromDER parses a DER-encoded public key.
+func ParsePublicKeyFromDER(key []byte) (any, error) {
 	if parsedKey, err := x509.ParsePKIXPublicKey(key); err == nil {
 		return parsedKey, nil
 	}
 	if parsedKey, err := x509.ParsePKCS1PublicKey(key); err == nil {
 		return parsedKey, nil
 	}
-	if certificate, err := x509.ParseCertificate(key); err == nil {
-		return certificate.PublicKey, nil
-	}
-	return nil, fmt.Errorf("key must be PEM or supported DER public key")
+	return nil, fmt.Errorf("key must be supported DER public key")
 }
 
 // MapKeyUsageToExtension maps x509.KeyUsage to pkix.Extension or returns non-nil error if any

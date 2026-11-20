@@ -11,22 +11,14 @@ const (
 	mlDSAPublicKeyPEMType  = "ML-DSA PUBLIC KEY"
 )
 
-// ParseMLDSAPrivateKey parses a PEM-encoded ML-DSA private-key seed.
+// ParseMLDSAPrivateKey parses raw ML-DSA private-key seed bytes.
 func ParseMLDSAPrivateKey(encoded []byte, algorithm Algorithm) (*mldsa.PrivateKey, error) {
-	block, rest := pem.Decode(encoded)
-	if block == nil || block.Type != mlDSAPrivateKeyPEMType || len(rest) != 0 {
-		return nil, fmt.Errorf("key must be a single %s PEM block", mlDSAPrivateKeyPEMType)
-	}
-	return mldsa.NewPrivateKey(MLDSAParameters(algorithm), block.Bytes)
+	return mldsa.NewPrivateKey(MLDSAParameters(algorithm), encoded)
 }
 
-// ParseMLDSAPublicKey parses a PEM-encoded ML-DSA public key.
+// ParseMLDSAPublicKey parses raw ML-DSA public-key bytes.
 func ParseMLDSAPublicKey(encoded []byte, algorithm Algorithm) (*mldsa.PublicKey, error) {
-	block, rest := pem.Decode(encoded)
-	if block == nil || block.Type != mlDSAPublicKeyPEMType || len(rest) != 0 {
-		return nil, fmt.Errorf("key must be a single %s PEM block", mlDSAPublicKeyPEMType)
-	}
-	return mldsa.NewPublicKey(MLDSAParameters(algorithm), block.Bytes)
+	return mldsa.NewPublicKey(MLDSAParameters(algorithm), encoded)
 }
 
 // MLDSAParameters returns the FIPS 204 parameter set configured by a profile.

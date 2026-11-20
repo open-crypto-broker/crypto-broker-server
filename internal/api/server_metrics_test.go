@@ -145,7 +145,7 @@ func TestCryptoBrokerServer_SignCertificate_MetricsEnabled_Success_RecordsMetric
 		Profile:   "Default",
 		Csr:       csrPEM,
 		CaCert:    &caCertPEM,
-		KeySource: rawCertificateSignKeySource([]byte(caKeyPEM)),
+		KeySource: rawCertificateSignKeySource(decodePrivateKeyPEM(t, caKeyPEM)),
 	})
 	if err != nil {
 		t.Fatalf("expected success, got err: %v", err)
