@@ -335,7 +335,7 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 			KeySource: &protobuf.SignKeySource{
 				Source: &protobuf.SignKeySource_Single{
 					Single: &protobuf.KeySource{
-						Source: &protobuf.KeySource_RawKey{RawKey: []byte(caPrivKey)},
+						Source: &protobuf.KeySource_RawKey{RawKey: decodePrivateKeyPEM(t, caPrivKey)},
 					},
 				},
 			},
@@ -395,7 +395,7 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 			KeySource: &protobuf.SignKeySource{
 				Source: &protobuf.SignKeySource_Single{
 					Single: &protobuf.KeySource{
-						Source: &protobuf.KeySource_RawKey{RawKey: []byte(caPrivKey)},
+						Source: &protobuf.KeySource_RawKey{RawKey: decodePrivateKeyPEM(t, caPrivKey)},
 					},
 				},
 			},
@@ -427,7 +427,7 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 			KeySource: &protobuf.SignKeySource{
 				Source: &protobuf.SignKeySource_Single{
 					Single: &protobuf.KeySource{
-						Source: &protobuf.KeySource_RawKey{RawKey: []byte(caPrivKey)},
+						Source: &protobuf.KeySource_RawKey{RawKey: decodePrivateKeyPEM(t, caPrivKey)},
 					},
 				},
 			},
@@ -448,6 +448,15 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 func toPointerUint64(value int64) *uint64 {
 	v := uint64(value)
 	return &v
+}
+
+func decodePrivateKeyPEM(t *testing.T, encoded string) []byte {
+	t.Helper()
+	block, _ := pem.Decode([]byte(encoded))
+	if block == nil {
+		t.Fatal("could not decode private key PEM")
+	}
+	return block.Bytes
 }
 
 func TestCryptoBrokerServer_SignCertificateSource(t *testing.T) {
@@ -471,7 +480,7 @@ func TestCryptoBrokerServer_SignCertificateSource(t *testing.T) {
 			keySource: &protobuf.SignKeySource{
 				Source: &protobuf.SignKeySource_Single{
 					Single: &protobuf.KeySource{
-						Source: &protobuf.KeySource_RawKey{RawKey: []byte(privateKey)},
+						Source: &protobuf.KeySource_RawKey{RawKey: decodePrivateKeyPEM(t, privateKey)},
 					},
 				},
 			},
@@ -506,7 +515,7 @@ func TestCryptoBrokerServer_SignCertificateSource(t *testing.T) {
 			keySource: &protobuf.SignKeySource{
 				Source: &protobuf.SignKeySource_Single{
 					Single: &protobuf.KeySource{
-						Source: &protobuf.KeySource_RawKey{RawKey: []byte(privateKey)},
+						Source: &protobuf.KeySource_RawKey{RawKey: decodePrivateKeyPEM(t, privateKey)},
 					},
 				},
 			},

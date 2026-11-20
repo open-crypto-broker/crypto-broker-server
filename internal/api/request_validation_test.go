@@ -248,6 +248,22 @@ func TestValidateEncryptionRequests(t *testing.T) {
 		}))
 	})
 
+	t.Run("accepts maximum raw symmetric key", func(t *testing.T) {
+		assertNoError(t, validateEncryptDataRequest(&pb.EncryptDataRequest{
+			Profile:         "Default",
+			KeySource:       &pb.KeySource{Source: &pb.KeySource_RawKey{RawKey: make([]byte, maxEncryptionKeyBytes)}},
+			EncryptMetadata: &pb.EncryptMetadata{Nonce: validNonce},
+		}))
+	})
+
+	t.Run("rejects oversized raw symmetric key", func(t *testing.T) {
+		assertInvalidArgument(t, validateEncryptDataRequest(&pb.EncryptDataRequest{
+			Profile:         "Default",
+			KeySource:       &pb.KeySource{Source: &pb.KeySource_RawKey{RawKey: make([]byte, maxEncryptionKeyBytes+1)}},
+			EncryptMetadata: &pb.EncryptMetadata{Nonce: validNonce},
+		}), "keySource.rawKey")
+	})
+
 	t.Run("rejects missing key source", func(t *testing.T) {
 		assertInvalidArgument(t, validateEncryptDataRequest(&pb.EncryptDataRequest{
 			Profile:         "Default",
