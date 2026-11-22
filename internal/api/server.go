@@ -124,11 +124,13 @@ func (server *CryptoBrokerServer) HashData(ctx context.Context, req *protobuf.Ha
 
 // SignCertificate contains certificate signing logic
 func (server *CryptoBrokerServer) SignCertificate(ctx context.Context, req *protobuf.SignCertificateRequest) (*protobuf.SignCertificateResponse, error) {
+	keySize := len(req.GetKeySource().GetSingle().GetRawKey())
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(
 		otel.AttributeCryptoProfile.String(req.GetProfile()),
 		otel.AttributeCryptoCsrSize.Int(len(req.GetCsr())),
 		otel.AttributeCryptoCaCertSize.Int(len(req.GetCaCert())),
+		otel.AttributeCryptoCaKeySize.Int(keySize),
 	)
 	if err := validateSignCertificateRequest(req); err != nil {
 		return nil, fmt.Errorf("something went wrong while signing certificate: %w", err)
@@ -143,10 +145,6 @@ func (server *CryptoBrokerServer) SignCertificate(ctx context.Context, req *prot
 	span.SetAttributes(otel.AttributeCryptoSignedCertSize.Int(len(response.GetDer()) + len(response.GetPem())))
 
 	if server.metricsEnabled {
-		keySize := 0
-		if req.GetKeySource() != nil && req.GetKeySource().GetSingle() != nil {
-			keySize = len(req.GetKeySource().GetSingle().GetRawKey())
-		}
 		otel.SignCertificateOperationsTotal.Add(ctx, 1, metric.WithAttributes(
 			attribute.String("profile", req.GetProfile()),
 		))

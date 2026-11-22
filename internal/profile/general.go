@@ -79,9 +79,10 @@ func LoadProfiles(profilesFileName string) error {
 	profiles = parsedProfiles
 	settingsConfiguration = rawConfig.Settings.configuration()
 	kmsConfiguration = KMSConfiguration{
-		Client: rawConfig.Settings.KMS.Client,
-		Config: rawConfig.Settings.KMS.Config,
-		Cache:  rawConfig.Settings.KMS.Cache,
+		Enabled: rawConfig.Settings.KMS.Enabled,
+		Client:  rawConfig.Settings.KMS.Client,
+		Config:  rawConfig.Settings.KMS.Config,
+		Cache:   rawConfig.Settings.KMS.Cache,
 	}
 
 	return nil
