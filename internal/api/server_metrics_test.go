@@ -129,7 +129,7 @@ func TestCryptoBrokerServer_SignCertificate_MetricsEnabled_Success_RecordsMetric
 		t.Fatalf("could not load profiles: %v", err)
 	}
 
-	caCertPEM, caKeyPEM, csrPEM := mustMakeTestCAAndCSR(t)
+	caCertPEM, caKeyDER, csrPEM := mustMakeTestCAAndCSR(t)
 
 	libraryNative := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	server := NewCryptoBrokerServer(
@@ -145,7 +145,7 @@ func TestCryptoBrokerServer_SignCertificate_MetricsEnabled_Success_RecordsMetric
 		Profile:   "Default",
 		Csr:       csrPEM,
 		CaCert:    &caCertPEM,
-		KeySource: rawCertificateSignKeySource(decodePrivateKeyPEM(t, caKeyPEM)),
+		KeySource: rawCertificateSignKeySource(caKeyDER),
 	})
 	if err != nil {
 		t.Fatalf("expected success, got err: %v", err)
@@ -155,7 +155,7 @@ func TestCryptoBrokerServer_SignCertificate_MetricsEnabled_Success_RecordsMetric
 	}
 }
 
-func mustMakeTestCAAndCSR(t *testing.T) (caCertPEM string, caKeyPEM string, csrPEM string) {
+func mustMakeTestCAAndCSR(t *testing.T) (caCertPEM string, caKeyDER []byte, csrPEM string) {
 	t.Helper()
 
 	caPriv, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
@@ -192,12 +192,11 @@ func mustMakeTestCAAndCSR(t *testing.T) (caCertPEM string, caKeyPEM string, csrP
 	}
 
 	caCertPEMBytes := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: caDER})
-	caKeyDER, err := x509.MarshalPKCS8PrivateKey(caPriv)
+	caKeyDER, err = x509.MarshalPKCS8PrivateKey(caPriv)
 	if err != nil {
 		t.Fatalf("marshal ca pkcs8: %v", err)
 	}
-	caKeyPEMBytes := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: caKeyDER})
 	csrPEMBytes := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrDER})
 
-	return string(caCertPEMBytes), string(caKeyPEMBytes), string(csrPEMBytes)
+	return string(caCertPEMBytes), caKeyDER, string(csrPEMBytes)
 }

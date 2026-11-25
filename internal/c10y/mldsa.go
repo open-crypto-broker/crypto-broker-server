@@ -2,23 +2,33 @@ package c10y
 
 import (
 	"crypto/mldsa"
-	"encoding/pem"
 	"fmt"
 )
 
-const (
-	mlDSAPrivateKeyPEMType = "ML-DSA PRIVATE KEY"
-	mlDSAPublicKeyPEMType  = "ML-DSA PUBLIC KEY"
-)
-
-// ParseMLDSAPrivateKey parses raw ML-DSA private-key seed bytes.
-func ParseMLDSAPrivateKey(encoded []byte, algorithm Algorithm) (*mldsa.PrivateKey, error) {
-	return mldsa.NewPrivateKey(MLDSAParameters(algorithm), encoded)
+// ParseMLDSAPrivateKey parses a PKCS#8 DER-encoded ML-DSA private key.
+func ParseMLDSAPrivateKey(derBytes []byte, algorithm Algorithm) (*mldsa.PrivateKey, error) {
+	key, err := ParsePrivateKeyFromPKCS8DER(derBytes)
+	if err != nil {
+		return nil, err
+	}
+	privateKey, ok := key.(*mldsa.PrivateKey)
+	if !ok || privateKey.PublicKey().Parameters() != MLDSAParameters(algorithm) {
+		return nil, fmt.Errorf("PKCS#8 DER private key must use %s", algorithm)
+	}
+	return privateKey, nil
 }
 
-// ParseMLDSAPublicKey parses raw ML-DSA public-key bytes.
-func ParseMLDSAPublicKey(encoded []byte, algorithm Algorithm) (*mldsa.PublicKey, error) {
-	return mldsa.NewPublicKey(MLDSAParameters(algorithm), encoded)
+// ParseMLDSAPublicKey parses a SubjectPublicKeyInfo DER-encoded ML-DSA public key.
+func ParseMLDSAPublicKey(derBytes []byte, algorithm Algorithm) (*mldsa.PublicKey, error) {
+	key, err := ParsePublicKeyFromDER(derBytes)
+	if err != nil {
+		return nil, err
+	}
+	publicKey, ok := key.(*mldsa.PublicKey)
+	if !ok || publicKey.Parameters() != MLDSAParameters(algorithm) {
+		return nil, fmt.Errorf("SubjectPublicKeyInfo DER public key must use %s", algorithm)
+	}
+	return publicKey, nil
 }
 
 // MLDSAParameters returns the FIPS 204 parameter set configured by a profile.
@@ -33,14 +43,4 @@ func MLDSAParameters(algorithm Algorithm) mldsa.Parameters {
 	default:
 		panic(fmt.Sprintf("unsupported ML-DSA algorithm %q", algorithm))
 	}
-}
-
-// EncodeMLDSAPrivateKey encodes an ML-DSA private-key seed as PEM.
-func EncodeMLDSAPrivateKey(key *mldsa.PrivateKey) []byte {
-	return pem.EncodeToMemory(&pem.Block{Type: mlDSAPrivateKeyPEMType, Bytes: key.Bytes()})
-}
-
-// EncodeMLDSAPublicKey encodes an ML-DSA public key as PEM.
-func EncodeMLDSAPublicKey(key *mldsa.PublicKey) []byte {
-	return pem.EncodeToMemory(&pem.Block{Type: mlDSAPublicKeyPEMType, Bytes: key.Bytes()})
 }
