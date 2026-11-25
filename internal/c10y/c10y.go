@@ -123,88 +123,30 @@ func ZeroBytes(b []byte) {
 	runtime.KeepAlive(b)
 }
 
-// ParsePrivateKeyFromPEM parses a PEM-encoded private key.
-// It dispatches by PEM block type to avoid unnecessary parse attempts.
-func ParsePrivateKeyFromPEM(key []byte) (any, error) {
-	// Parse PEM block
-	var block *pem.Block
-	if block, _ = pem.Decode(key); block == nil {
-		return nil, fmt.Errorf("key must be PEM encoded")
+// ParsePrivateKeyFromPKCS8DER parses a PKCS#8 DER-encoded private key.
+func ParsePrivateKeyFromPKCS8DER(key []byte) (any, error) {
+	var element asn1.RawValue
+	rest, err := asn1.Unmarshal(key, &element)
+	if err != nil {
+		return nil, fmt.Errorf("key must be PKCS#8 DER: %w", err)
 	}
-
-	// block.Bytes holds the raw DER private key. The x509 parsers copy the
-	// secret material they need into the returned key object, so the decoded
-	// DER buffer can be scrubbed once parsing has completed (on every path).
-	defer ZeroBytes(block.Bytes)
-
-	switch block.Type {
-	case "RSA PRIVATE KEY":
-		return x509.ParsePKCS1PrivateKey(block.Bytes)
-	case "EC PRIVATE KEY":
-		return x509.ParseECPrivateKey(block.Bytes)
-	case "PRIVATE KEY":
-		return x509.ParsePKCS8PrivateKey(block.Bytes)
-	default:
-		// Fallback for uncommon/mislabelled PEMs to preserve compatibility.
-		if parsedKey, err := x509.ParsePKCS1PrivateKey(block.Bytes); err == nil {
-			return parsedKey, nil
-		}
-		if parsedKey, err := x509.ParsePKCS8PrivateKey(block.Bytes); err == nil {
-			return parsedKey, nil
-		}
-		if parsedKey, err := x509.ParseECPrivateKey(block.Bytes); err == nil {
-			return parsedKey, nil
-		}
-		return nil, fmt.Errorf("unsupported private key PEM block type: %q", block.Type)
+	if len(rest) != 0 {
+		return nil, fmt.Errorf("key must be PKCS#8 DER without trailing data")
 	}
+	parsedKey, err := x509.ParsePKCS8PrivateKey(key)
+	if err != nil {
+		return nil, fmt.Errorf("key must be PKCS#8 DER: %w", err)
+	}
+	return parsedKey, nil
 }
 
-// ParsePrivateKeyFromDER parses a DER-encoded private key.
-func ParsePrivateKeyFromDER(key []byte) (any, error) {
-	if parsedKey, err := x509.ParsePKCS1PrivateKey(key); err == nil {
-		return parsedKey, nil
-	}
-	if parsedKey, err := x509.ParsePKCS8PrivateKey(key); err == nil {
-		return parsedKey, nil
-	}
-	if parsedKey, err := x509.ParseECPrivateKey(key); err == nil {
-		return parsedKey, nil
-	}
-	return nil, fmt.Errorf("key must be supported DER private key")
-}
-
-// ParsePublicKeyFromPEM parses a PEM-encoded public key or certificate.
-func ParsePublicKeyFromPEM(key []byte) (any, error) {
-	block, _ := pem.Decode(key)
-	if block == nil {
-		return nil, fmt.Errorf("key must be PEM encoded")
-	}
-	switch block.Type {
-	case "PUBLIC KEY", "RSA PUBLIC KEY":
-		if block.Type == "RSA PUBLIC KEY" {
-			return x509.ParsePKCS1PublicKey(block.Bytes)
-		}
-		return x509.ParsePKIXPublicKey(block.Bytes)
-	case "CERTIFICATE":
-		certificate, err := x509.ParseCertificate(block.Bytes)
-		if err != nil {
-			return nil, err
-		}
-		return certificate.PublicKey, nil
-	default:
-		return nil, fmt.Errorf("unsupported public key PEM block type: %q", block.Type)
-	}
-}
-
-// ParsePublicKeyFromDER parses a DER-encoded public key.
+// ParsePublicKeyFromDER parses a DER-encoded SubjectPublicKeyInfo.
 func ParsePublicKeyFromDER(key []byte) (any, error) {
-	if parsedKey, err := x509.ParsePKIXPublicKey(key); err == nil {
-		return parsedKey, nil
+	parsedKey, err := x509.ParsePKIXPublicKey(key)
+	if err != nil {
+		return nil, fmt.Errorf("key must be SubjectPublicKeyInfo DER: %w", err)
 	}
-	if parsedKey, err := x509.ParsePKCS1PublicKey(key); err == nil {
-		return parsedKey, nil
-	}
-	return nil, fmt.Errorf("key must be supported DER public key")
+	return parsedKey, nil
 }
 
 // MapKeyUsageToExtension maps x509.KeyUsage to pkix.Extension or returns non-nil error if any

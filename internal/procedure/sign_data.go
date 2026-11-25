@@ -108,7 +108,7 @@ func signingPrivateKey(keySource *protobuf.SignKeySource, p profile.Profile) (an
 		return nil, err
 	}
 
-	privateKey, err := c10y.ParsePrivateKeyFromDER(key)
+	privateKey, err := c10y.ParsePrivateKeyFromPKCS8DER(key)
 	if err != nil {
 		return nil, ArgumentError("could not parse private key: %w", err)
 	}

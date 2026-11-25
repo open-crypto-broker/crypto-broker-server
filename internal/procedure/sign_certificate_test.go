@@ -9,6 +9,25 @@ import (
 	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 )
 
+var caPrivateKeyPKCS8DER = []byte(
+	"\x30\x81\xee\x02\x01\x00\x30\x10\x06\x07\x2a\x86\x48\xce\x3d\x02" +
+		"\x01\x06\x05\x2b\x81\x04\x00\x23\x04\x81\xd6\x30\x81\xd3\x02\x01" +
+		"\x01\x04\x42\x00\xb1\xa4\xaf\xc0\x64\xb4\x9d\xf3\xd7\x08\x15\xfb" +
+		"\x31\x8d\x27\xb7\x65\x58\x62\x43\xab\x7f\x57\x72\x82\xf1\xfc\xa0" +
+		"\x8c\x72\x0c\x4f\x4b\xc9\x62\x7b\x78\x30\x71\x4f\xbe\xed\x29\x75" +
+		"\xbb\xd5\xf3\xb5\x2a\xad\x16\x39\xca\x1c\x36\x9f\x3d\xc2\x0e\x8f" +
+		"\x32\xc5\x05\x67\x15\xa1\x81\x89\x03\x81\x86\x00\x04\x01\x11\x95" +
+		"\xd7\x5b\x41\x94\x4d\x15\x05\x36\xd6\x56\xfc\x8c\x95\x29\x8d\xa4" +
+		"\xb6\x50\x6d\x93\x1f\x70\x85\x74\x5c\x66\x0b\x01\x68\xeb\xa2\xc8" +
+		"\xec\xd1\x7a\x2a\x00\x1b\x72\xe9\x41\xcf\x8f\xbe\x15\xb0\xfb\x7d" +
+		"\xc6\xf4\x0e\xd8\xf3\x1e\xb7\x49\xfa\x78\xf8\x39\x46\x91\x63\x00" +
+		"\xf8\x8e\x3b\xfc\x67\xb8\x04\x89\x0f\x46\x60\xcf\x21\x3e\xcc\xaf" +
+		"\x01\x72\x5b\x6c\xcb\x22\x52\x8f\xa5\x72\xc5\xcd\x59\xae\x1a\xed" +
+		"\x99\x86\x60\xf1\x2f\x24\x34\x5c\x64\xe6\x90\x10\xb8\x02\x7d\x2f" +
+		"\x74\x8c\x03\xd3\xe3\x9c\x9e\x7c\xb9\x08\xb2\x01\x16\xab\x8e\x5b" +
+		"\x28",
+)
+
 func TestNewSign(t *testing.T) {
 	p := newTestSign()
 	if p == nil {
@@ -38,15 +57,6 @@ dAHEn4LToNX0cl1oAkIB8Cv/F/7TJ0tJn0FpwtCBbNWzlUpz6TJj2wz5e4t80dzi
 DKXl/HVVm/pvigXURZC+DzE90ztDcthH55yHm+sMhuE=
 -----END CERTIFICATE-----`
 
-	// #nosec G101 -- trusted test input
-	caPrivateKeyPEM := `-----BEGIN EC PRIVATE KEY-----
-MIHcAgEBBEIAsaSvwGS0nfPXCBX7MY0nt2VYYkOrf1dygvH8oIxyDE9LyWJ7eDBx
-T77tKXW71fO1Kq0WOcocNp89wg6PMsUFZxWgBwYFK4EEACOhgYkDgYYABAERlddb
-QZRNFQU21lb8jJUpjaS2UG2TH3CFdFxmCwFo66LI7NF6KgAbculBz4++FbD7fcb0
-DtjzHrdJ+nj4OUaRYwD4jjv8Z7gEiQ9GYM8hPsyvAXJbbMsiUo+lcsXNWa4a7ZmG
-YPEvJDRcZOaQELgCfS90jAPT45yefLkIsgEWq45bKA==
------END EC PRIVATE KEY-----`
-
 	csrPEM := `-----BEGIN CERTIFICATE REQUEST-----
 MIIBXzCCAQUCAQAwgaIxCzAJBgNVBAYTAkRFMREwDwYDVQQKDAhUZXN0IE9yZzEl
 MCMGA1UECwwcVGVzdCBPcmcgQ2VydGlmaWNhdGUgU2VydmljZTEMMAoGA1UECwwD
@@ -66,7 +76,7 @@ NrPbJOOC/7QNdsuxmDFGEapyZg==
 		resp, err := p.Execute(&protobuf.SignCertificateRequest{
 			Profile:      "Default",
 			Csr:          csrPEM,
-			KeySource:    certificateSignKeySource([]byte(caPrivateKeyPEM)),
+			KeySource:    certificateSignKeySource(caPrivateKeyPKCS8DER),
 			CaCert:       caCertPtr,
 			OutputFormat: protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_DER,
 		})
@@ -90,7 +100,7 @@ NrPbJOOC/7QNdsuxmDFGEapyZg==
 		resp, err := p.Execute(&protobuf.SignCertificateRequest{
 			Profile:      "Default",
 			Csr:          csrPEM,
-			KeySource:    certificateSignKeySource([]byte(caPrivateKeyPEM)),
+			KeySource:    certificateSignKeySource(caPrivateKeyPKCS8DER),
 			CaCert:       caCertPtr,
 			OutputFormat: protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_PEM,
 		})
@@ -114,24 +124,14 @@ NrPbJOOC/7QNdsuxmDFGEapyZg==
 		}
 	})
 
-	t.Run("DER signing key", func(t *testing.T) {
-		block, _ := pem.Decode([]byte(caPrivateKeyPEM))
-		if block == nil {
-			t.Fatal("failed to PEM-decode CA private key fixture")
-		}
-
-		resp, err := p.Execute(&protobuf.SignCertificateRequest{
-			Profile:      "Default",
-			Csr:          csrPEM,
-			KeySource:    certificateSignKeySource(block.Bytes),
-			CaCert:       caCertPtr,
-			OutputFormat: protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_DER,
+	t.Run("reject PEM signing key", func(t *testing.T) {
+		keyPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: caPrivateKeyPKCS8DER})
+		_, err := p.Execute(&protobuf.SignCertificateRequest{
+			Profile: "Default", Csr: csrPEM, KeySource: certificateSignKeySource(keyPEM),
+			CaCert: caCertPtr, OutputFormat: protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_DER,
 		})
-		if err != nil {
-			t.Fatalf("Execute() error: %v", err)
-		}
-		if len(resp.GetDer()) == 0 {
-			t.Fatal("expected non-empty signed certificate DER")
+		if err == nil {
+			t.Fatal("expected PEM signing key to be rejected")
 		}
 	})
 }
@@ -166,15 +166,6 @@ dAHEn4LToNX0cl1oAkIB8Cv/F/7TJ0tJn0FpwtCBbNWzlUpz6TJj2wz5e4t80dzi
 DKXl/HVVm/pvigXURZC+DzE90ztDcthH55yHm+sMhuE=
 -----END CERTIFICATE-----`
 
-	// #nosec G101 -- trusted test input
-	caPrivateKeyPEM := `-----BEGIN EC PRIVATE KEY-----
-MIHcAgEBBEIAsaSvwGS0nfPXCBX7MY0nt2VYYkOrf1dygvH8oIxyDE9LyWJ7eDBx
-T77tKXW71fO1Kq0WOcocNp89wg6PMsUFZxWgBwYFK4EEACOhgYkDgYYABAERlddb
-QZRNFQU21lb8jJUpjaS2UG2TH3CFdFxmCwFo66LI7NF6KgAbculBz4++FbD7fcb0
-DtjzHrdJ+nj4OUaRYwD4jjv8Z7gEiQ9GYM8hPsyvAXJbbMsiUo+lcsXNWa4a7ZmG
-YPEvJDRcZOaQELgCfS90jAPT45yefLkIsgEWq45bKA==
------END EC PRIVATE KEY-----`
-
 	proc := newTestSign()
 
 	caCertPtr := &caCertPEM
@@ -182,7 +173,7 @@ YPEvJDRcZOaQELgCfS90jAPT45yefLkIsgEWq45bKA==
 	input, err := proc.parseRawSignRequest(&protobuf.SignCertificateRequest{
 		Csr:       csrPEM,
 		CaCert:    caCertPtr,
-		KeySource: certificateSignKeySource([]byte(caPrivateKeyPEM)),
+		KeySource: certificateSignKeySource(caPrivateKeyPKCS8DER),
 	})
 	if err != nil {
 		t.Fatalf("parseRawSignRequest() error: %v", err)

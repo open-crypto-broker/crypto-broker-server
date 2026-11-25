@@ -8,7 +8,7 @@
 | `CRYPTO_BROKER_LOG_FORMAT` | No | `json` | Log output format | `json`, `text` |
 | `CRYPTO_BROKER_LOG_OUTPUT` | No | `stdout` | Log output destination | `stdout`, `stderr` |
 | `CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_CA_CERT` | No | - | Full OS path to CA certificate file used in benchmark tests for signing certificates | Any valid file path |
-| `CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_PRIVATE_KEY` | No | - | Full OS path to CA private key file used in benchmark tests for signing certificates | Any valid file path |
+| `CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_PRIVATE_KEY` | No | - | Full OS path to the CA private key used in certificate-signing benchmarks | PKCS#8 DER private key matching the CA certificate |
 | `CRYPTO_BROKER_BENCHMARKING_SIGNCERTIFICATE_CSR` | No | - | Full OS path to CSR file used in benchmark tests for signing certificates | Any valid file path |
 | `OTEL_SERVICE_NAME` | No | `crypto-broker-server` | Service name for OpenTelemetry traces | Any string |
 | `OTEL_SERVICE_VERSION` | No | `unknown service version` | Service version for OpenTelemetry traces | Any string |

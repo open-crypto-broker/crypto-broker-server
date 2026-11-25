@@ -92,13 +92,20 @@ PQQDBANoADBlAjBZSOidA5V09Tp/Q/jD68/+XIKcwxgurh+S7OuFjIGdDGweuwcR
 -----END CERTIFICATE-----
 `
 
-var caPrivKey = `-----BEGIN PRIVATE KEY-----
-MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDAV/ttOZfVpsZfERB0K
-ukqCAMHD0M3kJVIiqyqTCuRf52V4gO88h62YDQYeiOzNkvihZANiAARhX4UvkUKT
-eYRe0U/r/B70ALGU8L/wR2qDx4e5SbWyJfZZpT2Qk/QUFN2Mrt6yodOrPqW2kYWk
-TLMhGrEVDwuywR+ol4Sg2cogP86upiZzWv4a1J+0ySFUyBDOEjicmfo=
------END PRIVATE KEY-----
-`
+var caPrivKey = []byte(
+	"\x30\x81\xb6\x02\x01\x00\x30\x10\x06\x07\x2a\x86\x48\xce\x3d\x02" +
+		"\x01\x06\x05\x2b\x81\x04\x00\x22\x04\x81\x9e\x30\x81\x9b\x02\x01" +
+		"\x01\x04\x30\x15\xfe\xdb\x4e\x65\xf5\x69\xb1\x97\xc4\x44\x1d\x0a" +
+		"\xba\x4a\x82\x00\xc1\xc3\xd0\xcd\xe4\x25\x52\x22\xab\x2a\x93\x0a" +
+		"\xe4\x5f\xe7\x65\x78\x80\xef\x3c\x87\xad\x98\x0d\x06\x1e\x88\xec" +
+		"\xcd\x92\xf8\xa1\x64\x03\x62\x00\x04\x61\x5f\x85\x2f\x91\x42\x93" +
+		"\x79\x84\x5e\xd1\x4f\xeb\xfc\x1e\xf4\x00\xb1\x94\xf0\xbf\xf0\x47" +
+		"\x6a\x83\xc7\x87\xb9\x49\xb5\xb2\x25\xf6\x59\xa5\x3d\x90\x93\xf4" +
+		"\x14\x14\xdd\x8c\xae\xde\xb2\xa1\xd3\xab\x3e\xa5\xb6\x91\x85\xa4" +
+		"\x4c\xb3\x21\x1a\xb1\x15\x0f\x0b\xb2\xc1\x1f\xa8\x97\x84\xa0\xd9" +
+		"\xca\x20\x3f\xce\xae\xa6\x26\x73\x5a\xfe\x1a\xd4\x9f\xb4\xc9\x21" +
+		"\x54\xc8\x10\xce\x12\x38\x9c\x99\xfa",
+)
 
 const bufSize = 1024 * 1024
 
@@ -333,7 +340,7 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 -----END CERTIFICATE REQUEST-----
 `,
 			CaCert:    &caCert,
-			KeySource: rawCertificateSignKeySource(decodePrivateKeyPEM(t, caPrivKey)),
+			KeySource: rawCertificateSignKeySource(caPrivKey),
 		}
 		subject := pkix.Name{
 			Country:      []string{"DE"},
@@ -389,7 +396,7 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 			KeySource: &protobuf.SignKeySource{
 				Source: &protobuf.SignKeySource_Single{
 					Single: &protobuf.KeySource{
-						Source: &protobuf.KeySource_RawKey{RawKey: decodePrivateKeyPEM(t, caPrivKey)},
+						Source: &protobuf.KeySource_RawKey{RawKey: caPrivKey},
 					},
 				},
 			},
@@ -419,7 +426,7 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 			Profile:   "Default",
 			Csr:       string(csrPEM),
 			CaCert:    &caCert,
-			KeySource: rawCertificateSignKeySource(decodePrivateKeyPEM(t, caPrivKey)),
+			KeySource: rawCertificateSignKeySource(caPrivKey),
 		}
 
 		_, err := client.SignCertificate(ctx, req)
@@ -436,15 +443,6 @@ xRlYLN6hgen+Bu3SnqCZqTuNXM/LDckE/i3LOAxFTXv9QkvGhGLEvEMIu0/RmXg=
 func toPointerUint64(value int64) *uint64 {
 	v := uint64(value)
 	return &v
-}
-
-func decodePrivateKeyPEM(t *testing.T, encoded string) []byte {
-	t.Helper()
-	block, _ := pem.Decode([]byte(encoded))
-	if block == nil {
-		t.Fatal("could not decode private key PEM")
-	}
-	return block.Bytes
 }
 
 func TestCryptoBrokerServer_SignCertificateSource(t *testing.T) {
@@ -465,7 +463,7 @@ func TestCryptoBrokerServer_SignCertificateSource(t *testing.T) {
 		{
 			name:      "valid certificate and key source",
 			caCert:    &certificate,
-			keySource: rawCertificateSignKeySource(decodePrivateKeyPEM(t, privateKey)),
+			keySource: rawCertificateSignKeySource(privateKey),
 		},
 		{
 			name:      "empty key source",
@@ -481,13 +479,13 @@ func TestCryptoBrokerServer_SignCertificateSource(t *testing.T) {
 		},
 		{
 			name:      "empty certificate",
-			keySource: rawCertificateSignKeySource(decodePrivateKeyPEM(t, privateKey)),
+			keySource: rawCertificateSignKeySource(privateKey),
 			wantErr:   "caCert",
 		},
 		{
 			name:      "oversized certificate",
 			caCert:    stringPtr(strings.Repeat("A", maxCACertBytes+1)),
-			keySource: rawCertificateSignKeySource([]byte(privateKey)),
+			keySource: rawCertificateSignKeySource(privateKey),
 			wantErr:   "caCert",
 		},
 		{

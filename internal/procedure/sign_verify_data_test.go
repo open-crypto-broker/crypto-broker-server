@@ -4,15 +4,48 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"crypto/mldsa"
 	"crypto/rand"
 	"crypto/x509"
 	"encoding/pem"
 	"testing"
 
+	"github.com/open-crypto-broker/crypto-broker-server/internal/c10y"
 	protobuf "github.com/open-crypto-broker/crypto-broker-server/internal/gen/cryptobroker/v1"
 	"github.com/open-crypto-broker/crypto-broker-server/internal/profile"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
+
+func TestSignVerifyData_MLDSADERKeys(t *testing.T) {
+	key, err := mldsa.GenerateKey(mldsa.MLDSA65())
+	if err != nil {
+		t.Fatal(err)
+	}
+	privateDER, err := x509.MarshalPKCS8PrivateKey(key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	publicDER, err := x509.MarshalPKIXPublicKey(key.PublicKey())
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := profile.Profile{Name: "MLDSA"}
+	p.API.SignData.SignAlg = c10y.MLDSA65
+	format := protobuf.SignatureFormat_SIGNATURE_FORMAT_RAW
+	input := []byte("document contents")
+	signed, err := NewSignData(newTestLibraryNative()).executeMLDSA(&protobuf.SignDataRequest{
+		KeySource: signKeySource(privateDER), Input: input,
+	}, p, format)
+	if err != nil {
+		t.Fatalf("sign ML-DSA DER: %v", err)
+	}
+	verified, err := NewVerifyData(newTestLibraryNative()).executeMLDSA(&protobuf.VerifyDataRequest{
+		KeySource: signKeySource(publicDER), Input: input, Signature: signed.GetSignature(),
+	}, p, format)
+	if err != nil || !verified.GetValid() {
+		t.Fatalf("verify ML-DSA DER: valid=%t, err=%v", verified.GetValid(), err)
+	}
+}
 
 func TestSignVerifyData_Execute(t *testing.T) {
 	loadDefaultProfiles(t)
@@ -21,7 +54,7 @@ func TestSignVerifyData_Execute(t *testing.T) {
 	if err != nil {
 		t.Fatalf("generate ECDSA key: %v", err)
 	}
-	privateKeyDER, err := x509.MarshalECPrivateKey(privateKey)
+	privateKeyDER, err := x509.MarshalPKCS8PrivateKey(privateKey)
 	if err != nil {
 		t.Fatalf("marshal ECDSA private key: %v", err)
 	}
@@ -88,7 +121,7 @@ func TestSignVerifyData_ExecuteWithDERKeys(t *testing.T) {
 	if err != nil {
 		t.Fatalf("generate ECDSA key: %v", err)
 	}
-	privateKeyDER, err := x509.MarshalECPrivateKey(privateKey)
+	privateKeyDER, err := x509.MarshalPKCS8PrivateKey(privateKey)
 	if err != nil {
 		t.Fatalf("marshal ECDSA private key: %v", err)
 	}
@@ -151,14 +184,14 @@ func TestSignData_ExecuteRejectsKeyOutsideProfileConstraints(t *testing.T) {
 	if err != nil {
 		t.Fatalf("generate ECDSA key: %v", err)
 	}
-	privateKeyDER, err := x509.MarshalECPrivateKey(privateKey)
+	privateKeyDER, err := x509.MarshalPKCS8PrivateKey(privateKey)
 	if err != nil {
 		t.Fatalf("marshal ECDSA private key: %v", err)
 	}
 
 	_, err = NewSignData(newTestLibraryNative()).Execute(&protobuf.SignDataRequest{
 		Profile:   "Default",
-		KeySource: signKeySource(pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: privateKeyDER})),
+		KeySource: signKeySource(privateKeyDER),
 		Input:     []byte("document contents"),
 	})
 	if err == nil {
@@ -173,7 +206,7 @@ func TestSignVerifyData_Formats(t *testing.T) {
 	if err != nil {
 		t.Fatalf("generate ECDSA key: %v", err)
 	}
-	privateKeyDER, err := x509.MarshalECPrivateKey(privateKey)
+	privateKeyDER, err := x509.MarshalPKCS8PrivateKey(privateKey)
 	if err != nil {
 		t.Fatalf("marshal ECDSA private key: %v", err)
 	}
@@ -257,6 +290,41 @@ func TestEffectiveSignatureFormat(t *testing.T) {
 
 	if _, err = decodeSignature(protobuf.SignatureFormat_SIGNATURE_FORMAT_PEM, &ecdsa.PublicKey{}, []byte("not pem")); err == nil {
 		t.Fatal("decodeSignature() accepted malformed PEM")
+	}
+}
+
+func TestDecodeSignature_RejectsCustomMLDSAHeaders(t *testing.T) {
+	privateKey, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
+	if err != nil {
+		t.Fatalf("generate ECDSA key: %v", err)
+	}
+
+	signature := []byte("test signature data")
+
+	pemBlockWithHeaders := &pem.Block{
+		Type:    signaturePEMBlockType,
+		Headers: map[string]string{"MLDSAVariant": "ml-dsa-65", "CustomHeader": "value"},
+		Bytes:   signature,
+	}
+	pemWithHeaders := pem.EncodeToMemory(pemBlockWithHeaders)
+
+	_, err = decodeSignature(protobuf.SignatureFormat_SIGNATURE_FORMAT_PEM, &privateKey.PublicKey, pemWithHeaders)
+	if err == nil {
+		t.Fatal("decodeSignature() accepted PEM block with custom headers")
+	}
+
+	pemBlockWithoutHeaders := &pem.Block{
+		Type:  signaturePEMBlockType,
+		Bytes: signature,
+	}
+	pemWithoutHeaders := pem.EncodeToMemory(pemBlockWithoutHeaders)
+
+	decoded, err := decodeSignature(protobuf.SignatureFormat_SIGNATURE_FORMAT_PEM, &privateKey.PublicKey, pemWithoutHeaders)
+	if err != nil {
+		t.Fatalf("decodeSignature() rejected valid PEM block without headers: %v", err)
+	}
+	if !bytes.Equal(decoded, signature) {
+		t.Fatalf("decodeSignature() returned incorrect decoded signature")
 	}
 }
 

@@ -14,7 +14,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
-	"encoding/pem"
 	"fmt"
 	"strings"
 	"time"
@@ -430,22 +429,16 @@ func (service *LibraryNative) composeAttributeTypeAndValue(part string) ([]pkix.
 	return []pkix.AttributeTypeAndValue{{Type: oid, Value: v}}, nil
 }
 
-// parseRSAPrivateKeyFromPEM parses a PEM encoded PKCS1 or PKCS8 private key
-func (service *LibraryNative) parseRSAPrivateKeyFromPEM(key []byte) (any, error) {
-	var err error
-
-	// Parse PEM block
-	var block *pem.Block
-	if block, _ = pem.Decode(key); block == nil {
-		return nil, fmt.Errorf("key must be PEM encoded")
+// parseRSAPrivateKeyFromPKCS8DER parses a PKCS#8 DER-encoded RSA private key.
+func (service *LibraryNative) parseRSAPrivateKeyFromPKCS8DER(key []byte) (*rsa.PrivateKey, error) {
+	parsedKey, err := ParsePrivateKeyFromPKCS8DER(key)
+	if err != nil {
+		return nil, err
 	}
 
-	var parsedKey any
-	if parsedKey, err = x509.ParsePKCS1PrivateKey(block.Bytes); err != nil {
-		if parsedKey, err = x509.ParsePKCS8PrivateKey(block.Bytes); err != nil {
-			return nil, err
-		}
+	rsaKey, ok := parsedKey.(*rsa.PrivateKey)
+	if !ok {
+		return nil, fmt.Errorf("expected RSA private key, got %T", parsedKey)
 	}
-
-	return parsedKey, nil
+	return rsaKey, nil
 }
