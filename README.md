@@ -51,6 +51,10 @@ Server can be build with PGO for fine tuning. Please familarize yourself with [p
 
 `crypto-broker-server` implements OTEL standard for `logs`, `traces` and `metrics` [Click here to learn more](./docs/otel.md).
 
+## Hashing
+
+See [SHAKE output size](./docs/shake.md) for profile limits, request sizing, and migration of existing SHAKE hashes.
+
 ## Development
 
 This [guide](./docs/development.md) covers how to contribute to the project and develop it further.

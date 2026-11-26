@@ -30,6 +30,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
+	"google.golang.org/protobuf/proto"
 )
 
 var caCert = `Certificate:
@@ -178,6 +179,51 @@ func TestCryptoBrokerServer_HashData_E2E(t *testing.T) {
 		_, err := client.HashData(ctx, req)
 		if status.Code(err) != codes.InvalidArgument {
 			t.Fatalf("Expected status code 3 (InvalidArgument), got %d", status.Code(err))
+		}
+	})
+
+	t.Run("SHAKE output size", func(t *testing.T) {
+		if err := profile.LoadProfiles("SHAKE.yaml"); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() {
+			if err := profile.LoadProfiles("Profiles.yaml"); err != nil {
+				t.Fatal(err)
+			}
+		})
+		tests := []struct {
+			name, profile string
+			wantAlgorithm string
+			outputBytes   *uint32
+			wantSize      int
+			wantCode      codes.Code
+		}{
+			{name: "SHAKE128 default", profile: "SHAKE128", wantSize: 32, wantAlgorithm: "shake-128/256"},
+			{name: "SHAKE256 default", profile: "SHAKE256", wantSize: 64, wantAlgorithm: "shake-256/512"},
+			{name: "explicit size", profile: "SHAKE256", outputBytes: proto.Uint32(96), wantSize: 96, wantAlgorithm: "shake-256/768"},
+			{name: "custom profile minimum", profile: "SHAKE256Custom", wantSize: 96, wantAlgorithm: "shake-256/768"},
+			{name: "below custom minimum", profile: "SHAKE256Custom", outputBytes: proto.Uint32(64), wantCode: codes.InvalidArgument},
+			{name: "server maximum", profile: "SHAKE256Custom", outputBytes: proto.Uint32(1024), wantSize: 1024, wantAlgorithm: "shake-256/8192"},
+			{name: "explicit zero", profile: "SHAKE256", outputBytes: proto.Uint32(0), wantCode: codes.InvalidArgument},
+			{name: "below minimum", profile: "SHAKE128", outputBytes: proto.Uint32(31), wantCode: codes.InvalidArgument},
+			{name: "above maximum", profile: "SHAKE256", outputBytes: proto.Uint32(129), wantCode: codes.InvalidArgument},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				response, err := client.HashData(ctx, &protobuf.HashDataRequest{Profile: tt.profile, Input: []byte("Welcome CryptoBroker"), OutputBytes: tt.outputBytes, OutputFormat: protobuf.HashOutputFormat_HASH_OUTPUT_FORMAT_RAW})
+				if status.Code(err) != tt.wantCode {
+					t.Fatalf("HashData() = %v, want %s", err, tt.wantCode)
+				}
+				if tt.wantCode != codes.OK {
+					return
+				}
+				if len(response.GetHashValueRaw()) != tt.wantSize {
+					t.Fatalf("output length = %d, want %d", len(response.GetHashValueRaw()), tt.wantSize)
+				}
+				if got := response.GetDescriptor_().GetAlgorithm(); got != tt.wantAlgorithm {
+					t.Fatalf("descriptor algorithm = %q, want %q", got, tt.wantAlgorithm)
+				}
+			})
 		}
 	})
 }

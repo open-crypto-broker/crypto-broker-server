@@ -24,17 +24,35 @@ func (procedure *HashData) Execute(req *protobuf.HashDataRequest) (*protobuf.Has
 		return nil, ArgumentError("could not retrieve profile, err: %w", err)
 	}
 
-	hashedBytes, err := procedure.hashData(req.GetInput(), reqProfile)
+	hashConfig := reqProfile.API.HashData
+	outputBytes := hashConfig.MinOutputBytes
+	if req.OutputBytes != nil {
+		if !hashConfig.HashAlg.IsSHAKE() {
+			return nil, ArgumentError("output_bytes is only allowed for SHAKE, not %s", hashConfig.HashAlg)
+		}
+		requested := req.GetOutputBytes()
+		if requested < uint32(hashConfig.MinOutputBytes) || requested > uint32(hashConfig.MaxOutputBytes) {
+			return nil, ArgumentError("output_bytes %d is outside the allowed range [%d, %d] bytes",
+				requested, hashConfig.MinOutputBytes, hashConfig.MaxOutputBytes)
+		}
+		outputBytes = int(requested)
+	}
+
+	hashedBytes, err := procedure.hashData(req.GetInput(), reqProfile, outputBytes)
 	if err != nil {
 		return nil, fmt.Errorf("error while hashing data: %w", err)
 	}
 
+	algorithm := hashConfig.HashAlg.String()
+	if hashConfig.HashAlg.IsSHAKE() {
+		algorithm = fmt.Sprintf("%s/%d", algorithm, outputBytes*8)
+	}
 	resp := &protobuf.HashDataResponse{
 		Metadata: req.GetMetadata(),
 		Descriptor_: &protobuf.CryptoDescriptor{
 			Profile:   reqProfile.Name,
 			Operation: "HashData",
-			Algorithm: reqProfile.API.HashData.HashAlg.String(),
+			Algorithm: algorithm,
 		},
 	}
 
@@ -57,7 +75,7 @@ func (procedure *HashData) Execute(req *protobuf.HashDataRequest) (*protobuf.Has
 }
 
 // hashData hashes provided data according to profile rules
-func (procedure *HashData) hashData(data []byte, p profile.Profile) (c10y.Hash, error) {
+func (procedure *HashData) hashData(data []byte, p profile.Profile, outputBytes int) (c10y.Hash, error) {
 
 	// hasher defines abstraction over hashing library/engine.
 	type hasher interface {
@@ -102,9 +120,9 @@ func (procedure *HashData) hashData(data []byte, p profile.Profile) (c10y.Hash, 
 	case c10y.SHA_512_256:
 		hash, err = h.HashSHA_512_256(data)
 	case c10y.SHAKE_128:
-		hash, err = h.HashShake_128(16, data)
+		hash, err = h.HashShake_128(outputBytes, data)
 	case c10y.SHAKE_256:
-		hash, err = h.HashShake_256(32, data)
+		hash, err = h.HashShake_256(outputBytes, data)
 	default:
 		return nil, ArgumentError("unknown '%s' algorithm value, available values: %v", p.API.HashData.HashAlg, c10y.HashDataAlgorithmsSupported)
 	}

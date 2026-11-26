@@ -29,6 +29,13 @@ const (
 	AES_GCM     Algorithm = "aes-gcm"
 )
 
+// SHAKE output limits preserve full collision security and bound output allocation.
+const (
+	SHAKE128MinOutputBytes = 32
+	SHAKE256MinOutputBytes = 64
+	MaxSHAKEOutputBytes    = 1024
+)
+
 // Here are listed all operations that are part of various APIs
 const (
 
@@ -97,6 +104,23 @@ type Operation string
 // NewAlgorithm takes string representation of algorithm, normalizes it and return Algorithm
 func NewAlgorithm(algorithm string) Algorithm {
 	return Algorithm(normalize(algorithm))
+}
+
+// IsSHAKE reports whether the algorithm has a configurable output length.
+func (alg Algorithm) IsSHAKE() bool {
+	return alg == SHAKE_128 || alg == SHAKE_256
+}
+
+// MinSHAKEOutputBytes returns the full-collision-security minimum, or zero for other algorithms.
+func (alg Algorithm) MinSHAKEOutputBytes() int {
+	switch alg {
+	case SHAKE_128:
+		return SHAKE128MinOutputBytes
+	case SHAKE_256:
+		return SHAKE256MinOutputBytes
+	default:
+		return 0
+	}
 }
 
 // IsSupported tells whether given algorithm is supported by particular Operation.
