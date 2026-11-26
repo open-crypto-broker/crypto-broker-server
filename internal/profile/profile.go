@@ -38,7 +38,9 @@ func (configuration KMSConfiguration) Configured() bool {
 }
 
 type ProfileAPIHashData struct {
-	HashAlg c10y.Algorithm
+	HashAlg        c10y.Algorithm
+	MinOutputBytes int
+	MaxOutputBytes int
 }
 
 type ProfileAPISignData struct {

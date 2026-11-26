@@ -145,7 +145,7 @@ func RunHashSHA_512_256Benchmark(b *testing.B) {
 func RunHashShake_128Benchmark(b *testing.B) {
 	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	for b.Loop() {
-		_, err := service.HashShake_128(32, bb)
+		_, err := service.HashShake_128(c10y.SHAKE128MinOutputBytes, bb)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -155,7 +155,7 @@ func RunHashShake_128Benchmark(b *testing.B) {
 func RunHashShake_256Benchmark(b *testing.B) {
 	service := c10y.NewLibraryNative(cache.MustNewRistretto[[]byte](cache.DefaultRistrettoConfig))
 	for b.Loop() {
-		_, err := service.HashShake_256(32, bb)
+		_, err := service.HashShake_256(c10y.SHAKE256MinOutputBytes, bb)
 		if err != nil {
 			b.Fatal(err)
 		}

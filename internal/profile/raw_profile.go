@@ -46,7 +46,9 @@ type rawProfileAPI struct {
 }
 
 type rawProfileAPIHashData struct {
-	HashAlg string `yaml:"HashAlg"`
+	HashAlg        string `yaml:"HashAlg"`
+	MinOutputBytes *int   `yaml:"MinOutputBytes"`
+	MaxOutputBytes *int   `yaml:"MaxOutputBytes"`
 }
 
 type rawProfileAPISignData struct {
@@ -105,9 +107,7 @@ func (p rawProfile) mapToProfile() (Profile, error) {
 
 	api := ProfileAPI{}
 	if !reflect.DeepEqual(p.API.HashData, rawProfileAPIHashData{}) {
-		api.HashData = ProfileAPIHashData{
-			HashAlg: c10y.NewAlgorithm(p.API.HashData.HashAlg),
-		}
+		api.HashData = p.API.HashData.configuration()
 	}
 
 	if !reflect.DeepEqual(p.API.SignData, rawProfileAPISignData{}) {
@@ -322,13 +322,44 @@ func (api rawProfileAPISignData) validate() error {
 	return nil
 }
 
+func (dataHashing rawProfileAPIHashData) configuration() ProfileAPIHashData {
+	configured := ProfileAPIHashData{HashAlg: c10y.NewAlgorithm(dataHashing.HashAlg)}
+	configured.MinOutputBytes = configured.HashAlg.MinSHAKEOutputBytes()
+	if dataHashing.MinOutputBytes != nil {
+		configured.MinOutputBytes = *dataHashing.MinOutputBytes
+	}
+	configured.MaxOutputBytes = configured.MinOutputBytes
+	if dataHashing.MaxOutputBytes != nil {
+		configured.MaxOutputBytes = *dataHashing.MaxOutputBytes
+	}
+	return configured
+}
+
 func (dataHashing rawProfileAPIHashData) validate() error {
 	alg := c10y.NewAlgorithm(dataHashing.HashAlg)
 	if !alg.IsSupported(c10y.HashData) {
 		return fmt.Errorf("unsupported algorithm: %s for operation %s, available algorithms: %v",
 			alg, c10y.HashData, c10y.HashDataAlgorithmsSupported)
 	}
+	if !alg.IsSHAKE() {
+		if dataHashing.MinOutputBytes != nil || dataHashing.MaxOutputBytes != nil {
+			return fmt.Errorf("MinOutputBytes and MaxOutputBytes are only allowed for SHAKE, not %s", alg)
+		}
+		return nil
+	}
 
+	configured := dataHashing.configuration()
+	minimum := alg.MinSHAKEOutputBytes()
+	if configured.MinOutputBytes < minimum {
+		return fmt.Errorf("%s MinOutputBytes %d is below %d bytes required for %d-bit collision security",
+			alg, configured.MinOutputBytes, minimum, minimum*4)
+	}
+	if configured.MaxOutputBytes > c10y.MaxSHAKEOutputBytes {
+		return fmt.Errorf("%s MaxOutputBytes %d exceeds the server limit of %d bytes", alg, configured.MaxOutputBytes, c10y.MaxSHAKEOutputBytes)
+	}
+	if configured.MinOutputBytes > configured.MaxOutputBytes {
+		return fmt.Errorf("%s MinOutputBytes %d exceeds MaxOutputBytes %d", alg, configured.MinOutputBytes, configured.MaxOutputBytes)
+	}
 	return nil
 }
 

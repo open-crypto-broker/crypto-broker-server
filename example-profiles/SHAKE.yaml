@@ -1,0 +1,21 @@
+Settings:
+  CryptoLibrary: native
+Profiles:
+  - Name: SHAKE128
+    API:
+      HashData:
+        HashAlg: shake-128
+        MinOutputBytes: 32
+        MaxOutputBytes: 128
+  - Name: SHAKE256
+    API:
+      HashData:
+        HashAlg: shake-256
+        MinOutputBytes: 64
+        MaxOutputBytes: 128
+  - Name: SHAKE256Custom
+    API:
+      HashData:
+        HashAlg: shake-256
+        MinOutputBytes: 96
+        MaxOutputBytes: 1024
